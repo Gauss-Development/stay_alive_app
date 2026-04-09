@@ -8,6 +8,7 @@ class TrackerCategoryModel extends TrackerCategory {
     required super.targetCount,
     required super.displayOrder,
     required super.iconKey,
+    required super.isActive,
   });
 
   factory TrackerCategoryModel.fromJson(Map<String, dynamic> data) {

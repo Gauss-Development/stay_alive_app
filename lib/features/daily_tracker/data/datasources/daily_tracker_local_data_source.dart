@@ -190,11 +190,15 @@ class InMemoryDailyTrackerLocalDataSource implements DailyTrackerLocalDataSource
   }
 
   DailyLogModel _buildInitialLog(String dateKey) {
+    final DateTime now = DateTime.now().toUtc();
     final List<DailyLogItem> items = _defaultCategories
         .map(
           (TrackerCategoryModel category) => DailyLogItemModel(
+            id: '${dateKey}_${category.id}',
             category: category,
             completedCount: 0,
+            createdAt: now,
+            updatedAt: now,
           ),
         )
         .toList(growable: false);

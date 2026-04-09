@@ -16,6 +16,8 @@ class DailyLogItem extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  String get categoryId => category.id;
+  String get title => category.title;
   int get targetCount => category.targetCount;
   bool get isCompleted => completedCount >= targetCount;
 

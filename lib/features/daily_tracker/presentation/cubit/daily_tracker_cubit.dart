@@ -116,7 +116,7 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
 
   void _emitLoadedWithSummary(DailyLog log) {
     final Result<CompletionSummary> summaryResult = _getCompletionSummaryUseCase(
-      GetCompletionSummaryParams(logDate: log.logDate),
+      log,
     );
     summaryResult.fold(
       _emitError,
