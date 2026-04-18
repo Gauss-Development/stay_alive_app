@@ -4,7 +4,6 @@ import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/features/auth/data/models/auth_session_model.dart';
 import 'package:stay_alive/features/auth/data/models/auth_user_model.dart';
-import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
 
 abstract class AuthRemoteDataSource {
   Future<AuthSessionModel> loginWithEmail({
@@ -90,7 +89,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       data: <String, Object?>{'sessionId': session.$id},
     );
 
-    final appwrite_models.User<Map<String, dynamic>> user = await _account
+    final appwrite_models.User user = await _account
         .get();
     return AuthUserModel.fromAppwrite(user);
   }
@@ -121,7 +120,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
 
   @override
   Future<AuthUserModel> getCurrentUser() async {
-    final appwrite_models.User<Map<String, dynamic>> user = await _account
+    final appwrite_models.User user = await _account
         .get();
     return AuthUserModel.fromAppwrite(user);
   }
@@ -145,13 +144,13 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<AuthUserModel> updatePreferences({
     required Map<String, dynamic> preferences,
   }) async {
-    final appwrite_models.User<Map<String, dynamic>> currentUser = await _account
+    final appwrite_models.User currentUser = await _account
         .get();
     final Map<String, dynamic> prefs = <String, dynamic>{
       ...currentUser.prefs.data,
       ...preferences,
     };
-    final appwrite_models.User<Map<String, dynamic>> updatedUser = await _account
+    final appwrite_models.User updatedUser = await _account
         .updatePrefs(prefs: prefs);
     _logger.info('Updated user preferences', data: <String, Object?>{'userId': updatedUser.$id});
     return AuthUserModel.fromAppwrite(updatedUser);

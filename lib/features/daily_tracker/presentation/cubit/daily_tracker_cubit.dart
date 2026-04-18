@@ -22,14 +22,14 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
     required ResetTodayLogUseCase resetTodayLogUseCase,
     required GetCompletionSummaryUseCase getCompletionSummaryUseCase,
     required AppLogger logger,
-  })  : _getTodayLogUseCase = getTodayLogUseCase,
-        _initializeTodayLogUseCase = initializeTodayLogUseCase,
-        _incrementCategoryProgressUseCase = incrementCategoryProgressUseCase,
-        _decrementCategoryProgressUseCase = decrementCategoryProgressUseCase,
-        _resetTodayLogUseCase = resetTodayLogUseCase,
-        _getCompletionSummaryUseCase = getCompletionSummaryUseCase,
-        _logger = logger,
-        super(const DailyTrackerState.initial());
+  }) : _getTodayLogUseCase = getTodayLogUseCase,
+       _initializeTodayLogUseCase = initializeTodayLogUseCase,
+       _incrementCategoryProgressUseCase = incrementCategoryProgressUseCase,
+       _decrementCategoryProgressUseCase = decrementCategoryProgressUseCase,
+       _resetTodayLogUseCase = resetTodayLogUseCase,
+       _getCompletionSummaryUseCase = getCompletionSummaryUseCase,
+       _logger = logger,
+       super(const DailyTrackerState.initial());
 
   final GetTodayLogUseCase _getTodayLogUseCase;
   final InitializeTodayLogUseCase _initializeTodayLogUseCase;
@@ -40,7 +40,14 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
   final AppLogger _logger;
 
   Future<void> loadToday() async {
-    emit(state.copyWith(status: DailyTrackerStatus.loading, clearError: true));
+    final bool shouldShowLoader = state.log == null;
+    if (shouldShowLoader) {
+      emit(
+        state.copyWith(status: DailyTrackerStatus.loading, clearError: true),
+      );
+    } else if (state.errorMessage != null) {
+      emit(state.copyWith(clearError: true));
+    }
 
     final result = await _getTodayLogUseCase(const NoParams());
     await result.fold(
@@ -78,12 +85,16 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
   }
 
   Future<void> resetToday() async {
-    emit(state.copyWith(status: DailyTrackerStatus.loading, clearError: true));
-    final result = await _resetTodayLogUseCase(const NoParams());
-    result.fold(
-      _emitError,
-      _emitLoadedWithSummary,
-    );
+    final bool shouldShowLoader = state.log == null;
+    if (shouldShowLoader) {
+      emit(
+        state.copyWith(status: DailyTrackerStatus.loading, clearError: true),
+      );
+    } else if (state.errorMessage != null) {
+      emit(state.copyWith(clearError: true));
+    }
+    final result = await _resetTodayLogUseCase(const ResetTodayLogParams());
+    result.fold(_emitError, _emitLoadedWithSummary);
   }
 
   Future<void> _initializeAndEmit() async {
@@ -96,28 +107,31 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
     required String operationName,
     required String categoryId,
   }) async {
-    emit(state.copyWith(status: DailyTrackerStatus.loading, clearError: true));
+    final bool shouldShowLoader = state.log == null;
+    if (shouldShowLoader) {
+      emit(
+        state.copyWith(status: DailyTrackerStatus.loading, clearError: true),
+      );
+    } else if (state.errorMessage != null) {
+      emit(state.copyWith(clearError: true));
+    }
     final Result<DailyLog> result = await operation();
-    result.fold(
-      (Failure failure) {
-        _logger.error(
-          'Daily tracker mutation failed',
-          data: <String, Object?>{
-            'operation': operationName,
-            'categoryId': categoryId,
-            'error': failure.message,
-          },
-        );
-        _emitError(failure);
-      },
-      (DailyLog log) => _emitLoadedWithSummary(log),
-    );
+    result.fold((Failure failure) {
+      _logger.error(
+        'Daily tracker mutation failed',
+        data: <String, Object?>{
+          'operation': operationName,
+          'categoryId': categoryId,
+          'error': failure.message,
+        },
+      );
+      _emitError(failure);
+    }, (DailyLog log) => _emitLoadedWithSummary(log));
   }
 
   void _emitLoadedWithSummary(DailyLog log) {
-    final Result<CompletionSummary> summaryResult = _getCompletionSummaryUseCase(
-      log,
-    );
+    final Result<CompletionSummary> summaryResult =
+        _getCompletionSummaryUseCase(log);
     summaryResult.fold(
       _emitError,
       (summary) => emit(
@@ -134,7 +148,9 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
   void _emitError(Failure failure) {
     emit(
       state.copyWith(
-        status: DailyTrackerStatus.error,
+        status: state.log == null
+            ? DailyTrackerStatus.error
+            : DailyTrackerStatus.loaded,
         errorMessage: failure.message,
       ),
     );

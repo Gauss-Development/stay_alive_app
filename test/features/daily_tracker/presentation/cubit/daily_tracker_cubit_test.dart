@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
-import 'package:stay_alive/core/result/result.dart';
+import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
@@ -35,6 +35,16 @@ class _MockGetCompletionSummaryUseCase extends Mock
     implements GetCompletionSummaryUseCase {}
 
 class _MockAppLogger extends Mock implements AppLogger {}
+
+class _FakeNoParams extends Fake implements NoParams {}
+
+class _FakeIncrementCategoryProgressParams extends Fake
+    implements IncrementCategoryProgressParams {}
+
+class _FakeDecrementCategoryProgressParams extends Fake
+    implements DecrementCategoryProgressParams {}
+
+class _FakeResetTodayLogParams extends Fake implements ResetTodayLogParams {}
 
 DailyLog _buildDailyLog({required int completed}) {
   const TrackerCategory category = TrackerCategory(
@@ -68,12 +78,20 @@ DailyLog _buildDailyLog({required int completed}) {
 }
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(_FakeNoParams());
+    registerFallbackValue(_FakeIncrementCategoryProgressParams());
+    registerFallbackValue(_FakeDecrementCategoryProgressParams());
+    registerFallbackValue(_FakeResetTodayLogParams());
+    registerFallbackValue(_buildDailyLog(completed: 0));
+  });
+
   late _MockGetTodayLogUseCase mockGetTodayLogUseCase;
   late _MockInitializeTodayLogUseCase mockInitializeTodayLogUseCase;
   late _MockIncrementCategoryProgressUseCase
-      mockIncrementCategoryProgressUseCase;
+  mockIncrementCategoryProgressUseCase;
   late _MockDecrementCategoryProgressUseCase
-      mockDecrementCategoryProgressUseCase;
+  mockDecrementCategoryProgressUseCase;
   late _MockResetTodayLogUseCase mockResetTodayLogUseCase;
   late _MockGetCompletionSummaryUseCase mockGetCompletionSummaryUseCase;
   late _MockAppLogger mockAppLogger;
@@ -99,19 +117,24 @@ void main() {
       isFullyCompleted: false,
     );
 
-    when(() => mockGetTodayLogUseCase.call(any()))
-        .thenAnswer((_) async => Right<Failure, DailyLog>(log));
-    when(() => mockInitializeTodayLogUseCase.call(any()))
-        .thenAnswer((_) async => Right<Failure, DailyLog>(log));
-    when(() => mockIncrementCategoryProgressUseCase.call(any()))
-        .thenAnswer((_) async => Right<Failure, DailyLog>(log));
-    when(() => mockDecrementCategoryProgressUseCase.call(any()))
-        .thenAnswer((_) async => Right<Failure, DailyLog>(log));
-    when(() => mockResetTodayLogUseCase.call(any()))
-        .thenAnswer((_) async => Right<Failure, DailyLog>(log));
-    when(() => mockGetCompletionSummaryUseCase.call(any())).thenReturn(
-      const Right<Failure, CompletionSummary>(summary),
-    );
+    when(
+      () => mockGetTodayLogUseCase.call(any()),
+    ).thenAnswer((_) async => Right<Failure, DailyLog>(log));
+    when(
+      () => mockInitializeTodayLogUseCase.call(any()),
+    ).thenAnswer((_) async => Right<Failure, DailyLog>(log));
+    when(
+      () => mockIncrementCategoryProgressUseCase.call(any()),
+    ).thenAnswer((_) async => Right<Failure, DailyLog>(log));
+    when(
+      () => mockDecrementCategoryProgressUseCase.call(any()),
+    ).thenAnswer((_) async => Right<Failure, DailyLog>(log));
+    when(
+      () => mockResetTodayLogUseCase.call(any()),
+    ).thenAnswer((_) async => Right<Failure, DailyLog>(log));
+    when(
+      () => mockGetCompletionSummaryUseCase.call(any()),
+    ).thenReturn(const Right<Failure, CompletionSummary>(summary));
 
     cubit = DailyTrackerCubit(
       getTodayLogUseCase: mockGetTodayLogUseCase,
@@ -173,6 +196,42 @@ void main() {
             (DailyTrackerState state) => state.errorMessage,
             'errorMessage',
             'Invalid totals',
+          ),
+    ],
+  );
+
+  blocTest<DailyTrackerCubit, DailyTrackerState>(
+    'keeps loaded state when increment fails after data is available',
+    build: () {
+      when(() => mockIncrementCategoryProgressUseCase.call(any())).thenAnswer(
+        (_) async => const Left<Failure, DailyLog>(
+          ValidationFailure('Could not update progress'),
+        ),
+      );
+      return cubit;
+    },
+    seed: () => DailyTrackerState(
+      status: DailyTrackerStatus.loaded,
+      log: _buildDailyLog(completed: 1),
+      summary: const CompletionSummary(
+        totalCompleted: 1,
+        totalTarget: 3,
+        completionPercentage: 33.3,
+        isFullyCompleted: false,
+      ),
+    ),
+    act: (DailyTrackerCubit cubit) => cubit.increment('beans'),
+    expect: () => <Matcher>[
+      isA<DailyTrackerState>()
+          .having(
+            (DailyTrackerState state) => state.status,
+            'status',
+            DailyTrackerStatus.loaded,
+          )
+          .having(
+            (DailyTrackerState state) => state.errorMessage,
+            'errorMessage',
+            'Could not update progress',
           ),
     ],
   );

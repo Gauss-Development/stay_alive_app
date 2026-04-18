@@ -1,1 +1,3 @@
+#include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+APPWRITE_PROJECT_ID=69de16de001dfb5c1e5d

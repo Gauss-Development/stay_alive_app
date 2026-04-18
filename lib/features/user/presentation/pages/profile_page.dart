@@ -37,16 +37,22 @@ class _ProfilePageState extends State<ProfilePage> {
             return const SizedBox.shrink();
           }
 
+          final profile = state.profile;
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
-              Text(state.profile.displayName, style: Theme.of(context).textTheme.titleLarge),
+              Text(profile.name, style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              Text(state.profile.email),
+              Text(profile.email),
               const SizedBox(height: 16),
-              Text('Locale: ${state.profile.locale}'),
-              Text('Units: ${state.profile.unitsPreference}'),
-              Text('Onboarding completed: ${state.profile.onboardingCompleted ? 'Yes' : 'No'}'),
+              Text('Age: ${profile.age}'),
+              Text('Weight: ${profile.weightKg} kg'),
+              if (profile.heightCm != null) Text('Height: ${profile.heightCm} cm'),
+              if (profile.gender != null) Text('Gender: ${profile.gender}'),
+              if (profile.preferredDiet != null) Text('Diet: ${profile.preferredDiet}'),
+              Text('Locale: ${profile.locale ?? '—'}'),
+              Text('Units: ${profile.unitsPreference ?? '—'}'),
+              Text('Onboarding completed: ${profile.onboardingCompleted ? 'Yes' : 'No'}'),
             ],
           );
         },

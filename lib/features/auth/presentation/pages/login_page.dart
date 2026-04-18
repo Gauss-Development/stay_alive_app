@@ -33,9 +33,9 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
     context.read<AuthCubit>().signInWithEmail(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
   }
 
   @override
@@ -46,17 +46,9 @@ class _LoginPageState extends State<LoginPage> {
         child: BlocListener<AuthCubit, AuthState>(
           listener: (BuildContext context, AuthState state) {
             if (state is AuthError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.message)),
-              );
-            }
-
-            if (state is AuthAuthenticated) {
-              if (state.user.onboardingCompleted) {
-                context.go(AppRoutes.home);
-              } else {
-                context.go(AppRoutes.onboarding);
-              }
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.message)));
             }
           },
           child: Padding(
@@ -129,9 +121,11 @@ class _LoginPageState extends State<LoginPage> {
                             child: OutlinedButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => context.read<AuthCubit>().signInWithOAuth(
-                                        provider: OAuthSignInProvider.google,
-                                      ),
+                                  : () => context
+                                        .read<AuthCubit>()
+                                        .signInWithOAuth(
+                                          provider: OAuthSignInProvider.google,
+                                        ),
                               child: const Text('Google'),
                             ),
                           ),
@@ -140,9 +134,11 @@ class _LoginPageState extends State<LoginPage> {
                             child: OutlinedButton(
                               onPressed: isLoading
                                   ? null
-                                  : () => context.read<AuthCubit>().signInWithOAuth(
-                                        provider: OAuthSignInProvider.apple,
-                                      ),
+                                  : () => context
+                                        .read<AuthCubit>()
+                                        .signInWithOAuth(
+                                          provider: OAuthSignInProvider.apple,
+                                        ),
                               child: const Text('Apple'),
                             ),
                           ),

@@ -61,7 +61,9 @@ void main() {
     );
 
     when(() => cubit.state).thenReturn(loadedState);
-    when(() => cubit.stream).thenAnswer((_) => Stream<DailyTrackerState>.value(loadedState));
+    when(
+      () => cubit.stream,
+    ).thenAnswer((_) => Stream<DailyTrackerState>.value(loadedState));
     when(() => cubit.loadToday()).thenAnswer((_) async {});
     when(() => cubit.increment(any())).thenAnswer((_) async {});
     when(() => cubit.decrement(any())).thenAnswer((_) async {});
@@ -85,7 +87,7 @@ void main() {
 
     expect(find.text('Today\'s Checklist'), findsOneWidget);
     expect(find.text('Beans / Legumes'), findsOneWidget);
-    expect(find.text('1/3 completed'), findsOneWidget);
+    expect(find.text('1/3 completed'), findsNWidgets(2));
   });
 
   testWidgets('calls increment when add icon is tapped', (

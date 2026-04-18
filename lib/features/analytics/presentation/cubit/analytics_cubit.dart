@@ -16,9 +16,12 @@ class AnalyticsCubit extends Cubit<AnalyticsState> {
     emit(const AnalyticsLoading());
     final result = await _trackEventUseCase(
       TrackEventParams(
-        name: eventName,
-        screenName: screenName,
-        metadata: metadata ?? <String, dynamic>{},
+        event: AnalyticsEvent(
+          name: eventName,
+          screenName: screenName,
+          metadata: metadata ?? <String, dynamic>{},
+          createdAt: DateTime.now().toUtc(),
+        ),
       ),
     );
     result.fold(

@@ -32,14 +32,10 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthCubit, AuthState>(
       listener: (BuildContext context, AuthState state) {
-        if (state is AuthAuthenticated) {
-          context.go(AppRoutes.onboarding);
-        }
-
         if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       builder: (BuildContext context, AuthState state) {
@@ -105,10 +101,10 @@ class _SignUpPageState extends State<SignUpPage> {
                       onPressed: () {
                         if (_formKey.currentState?.validate() ?? false) {
                           context.read<AuthCubit>().signUpWithEmail(
-                                email: _emailController.text.trim(),
-                                password: _passwordController.text,
-                                name: _nameController.text.trim(),
-                              );
+                            email: _emailController.text.trim(),
+                            password: _passwordController.text,
+                            name: _nameController.text.trim(),
+                          );
                         }
                       },
                     ),

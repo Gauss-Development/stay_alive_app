@@ -1,9 +1,18 @@
 import 'package:equatable/equatable.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+/// Unified Appwrite / app configuration.
+///
+/// Values are resolved in order:
+/// 1. `--dart-define=KEY=value` (CI / flavors)
+/// 2. `assets/env/app.env` (optional; gitignored — use for secrets / local overrides)
+/// 3. `assets/env/app.env.example` (committed defaults) if .env was missing or empty
+/// 4. Hardcoded fallbacks in this file
 class EnvConfig extends Equatable {
   const EnvConfig({
     required this.appwriteEndpoint,
     required this.appwriteProjectId,
+    required this.appwriteProjectName,
     required this.appwriteDatabaseId,
     required this.usersCollectionId,
     required this.categoryDefinitionsCollectionId,
@@ -20,6 +29,7 @@ class EnvConfig extends Equatable {
 
   final String appwriteEndpoint;
   final String appwriteProjectId;
+  final String appwriteProjectName;
   final String appwriteDatabaseId;
   final String usersCollectionId;
   final String categoryDefinitionsCollectionId;
@@ -33,87 +43,105 @@ class EnvConfig extends Equatable {
   final String contentAssetsBucketId;
   final bool allowSelfSigned;
 
-  static EnvConfig fromEnvironment() {
-    const String endpoint = String.fromEnvironment(
-      'APPWRITE_ENDPOINT',
-      defaultValue: 'https://fra.cloud.appwrite.io/v1',
+  /// Call after [loadEnvFiles] has run in [main].
+  factory EnvConfig.fromEnv() {
+    return EnvConfig(
+      appwriteEndpoint: _str(
+        'APPWRITE_ENDPOINT',
+        'https://sfo.cloud.appwrite.io/v1',
+      ),
+      appwriteProjectId: _str(
+        'APPWRITE_PROJECT_ID',
+        '69de16de001dfb5c1e5d',
+      ),
+      appwriteProjectName: _str(
+        'APPWRITE_PROJECT_NAME',
+        'Stay Alive',
+      ),
+      appwriteDatabaseId: _str(
+        'APPWRITE_DATABASE_ID',
+        'daily_dozen_db',
+      ),
+      usersCollectionId: _str(
+        'APPWRITE_USERS_COLLECTION_ID',
+        'users',
+      ),
+      categoryDefinitionsCollectionId: _str(
+        'APPWRITE_CATEGORY_DEFINITIONS_COLLECTION_ID',
+        'category_definitions',
+      ),
+      dailyLogsCollectionId: _str(
+        'APPWRITE_DAILY_LOGS_COLLECTION_ID',
+        'daily_logs',
+      ),
+      dailyLogItemsCollectionId: _str(
+        'APPWRITE_DAILY_LOG_ITEMS_COLLECTION_ID',
+        'daily_log_items',
+      ),
+      subscriptionsCollectionId: _str(
+        'APPWRITE_SUBSCRIPTIONS_COLLECTION_ID',
+        'subscriptions',
+      ),
+      analyticsEventsCollectionId: _str(
+        'APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID',
+        'analytics_events',
+      ),
+      educationalContentCollectionId: _str(
+        'APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID',
+        'educational_content',
+      ),
+      avatarsBucketId: _str(
+        'APPWRITE_AVATARS_BUCKET_ID',
+        'avatars',
+      ),
+      userUploadsBucketId: _str(
+        'APPWRITE_USER_UPLOADS_BUCKET_ID',
+        'user_uploads',
+      ),
+      contentAssetsBucketId: _str(
+        'APPWRITE_CONTENT_ASSETS_BUCKET_ID',
+        'content_assets',
+      ),
+      allowSelfSigned: _bool(
+        'APPWRITE_SELF_SIGNED',
+        false,
+      ),
     );
-    const String projectId = String.fromEnvironment(
-      'APPWRITE_PROJECT_ID',
-      defaultValue: 'daily-dozen-dev-project-id',
-    );
-    const String databaseId = String.fromEnvironment(
-      'APPWRITE_DATABASE_ID',
-      defaultValue: 'daily_dozen_db',
-    );
-    const String usersCollectionId = String.fromEnvironment(
-      'APPWRITE_USERS_COLLECTION_ID',
-      defaultValue: 'users',
-    );
-    const String categoryDefinitionsCollectionId = String.fromEnvironment(
-      'APPWRITE_CATEGORY_DEFINITIONS_COLLECTION_ID',
-      defaultValue: 'category_definitions',
-    );
-    const String dailyLogsCollectionId = String.fromEnvironment(
-      'APPWRITE_DAILY_LOGS_COLLECTION_ID',
-      defaultValue: 'daily_logs',
-    );
-    const String dailyLogItemsCollectionId = String.fromEnvironment(
-      'APPWRITE_DAILY_LOG_ITEMS_COLLECTION_ID',
-      defaultValue: 'daily_log_items',
-    );
-    const String subscriptionsCollectionId = String.fromEnvironment(
-      'APPWRITE_SUBSCRIPTIONS_COLLECTION_ID',
-      defaultValue: 'subscriptions',
-    );
-    const String analyticsEventsCollectionId = String.fromEnvironment(
-      'APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID',
-      defaultValue: 'analytics_events',
-    );
-    const String educationalContentCollectionId = String.fromEnvironment(
-      'APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID',
-      defaultValue: 'educational_content',
-    );
-    const String avatarsBucketId = String.fromEnvironment(
-      'APPWRITE_AVATARS_BUCKET_ID',
-      defaultValue: 'avatars',
-    );
-    const String userUploadsBucketId = String.fromEnvironment(
-      'APPWRITE_USER_UPLOADS_BUCKET_ID',
-      defaultValue: 'user_uploads',
-    );
-    const String contentAssetsBucketId = String.fromEnvironment(
-      'APPWRITE_CONTENT_ASSETS_BUCKET_ID',
-      defaultValue: 'content_assets',
-    );
-    const String allowSelfSignedRaw = String.fromEnvironment(
-      'APPWRITE_SELF_SIGNED',
-      defaultValue: 'false',
-    );
-    const bool allowSelfSigned = allowSelfSignedRaw == 'true';
+  }
 
-    return const EnvConfig(
-      appwriteEndpoint: endpoint,
-      appwriteProjectId: projectId,
-      appwriteDatabaseId: databaseId,
-      usersCollectionId: usersCollectionId,
-      categoryDefinitionsCollectionId: categoryDefinitionsCollectionId,
-      dailyLogsCollectionId: dailyLogsCollectionId,
-      dailyLogItemsCollectionId: dailyLogItemsCollectionId,
-      subscriptionsCollectionId: subscriptionsCollectionId,
-      analyticsEventsCollectionId: analyticsEventsCollectionId,
-      educationalContentCollectionId: educationalContentCollectionId,
-      avatarsBucketId: avatarsBucketId,
-      userUploadsBucketId: userUploadsBucketId,
-      contentAssetsBucketId: contentAssetsBucketId,
-      allowSelfSigned: allowSelfSigned,
-    );
+  static String _str(String key, String fallback) {
+    final String fromDefine = String.fromEnvironment(key, defaultValue: '');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine;
+    }
+    if (dotenv.isInitialized) {
+      final String? v = dotenv.env[key];
+      if (v != null && v.trim().isNotEmpty) {
+        return v.trim();
+      }
+    }
+    return fallback;
+  }
+
+  static bool _bool(String key, bool fallback) {
+    final String fromDefine = String.fromEnvironment(key, defaultValue: '');
+    if (fromDefine.isNotEmpty) {
+      return fromDefine == 'true';
+    }
+    if (dotenv.isInitialized) {
+      final String? v = dotenv.env[key];
+      if (v != null && v.trim().isNotEmpty) {
+        return v.trim().toLowerCase() == 'true';
+      }
+    }
+    return fallback;
   }
 
   @override
   List<Object?> get props => <Object?>[
         appwriteEndpoint,
         appwriteProjectId,
+        appwriteProjectName,
         appwriteDatabaseId,
         usersCollectionId,
         categoryDefinitionsCollectionId,

@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/usecase/usecase.dart';
+import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
 import 'package:stay_alive/features/auth/domain/usecases/complete_onboarding_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/get_current_user_usecase.dart';

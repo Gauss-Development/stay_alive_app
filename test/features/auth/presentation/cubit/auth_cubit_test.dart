@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
-import 'package:stay_alive/core/result/result.dart';
 import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_session.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';

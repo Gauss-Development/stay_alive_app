@@ -26,11 +26,23 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Daily Dozen'),
-      ),
+      appBar: AppBar(title: const Text('Daily Dozen')),
       body: SafeArea(
-        child: BlocBuilder<DailyTrackerCubit, DailyTrackerState>(
+        child: BlocConsumer<DailyTrackerCubit, DailyTrackerState>(
+          listenWhen: (DailyTrackerState previous, DailyTrackerState current) =>
+              previous.errorMessage != current.errorMessage &&
+              current.errorMessage != null &&
+              current.status == DailyTrackerStatus.loaded,
+          listener: (BuildContext context, DailyTrackerState state) {
+            final String? errorMessage = state.errorMessage;
+            if (errorMessage == null) {
+              return;
+            }
+
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(errorMessage)));
+          },
           builder: (BuildContext context, DailyTrackerState state) {
             if (state.status == DailyTrackerStatus.initial ||
                 state.status == DailyTrackerStatus.loading) {
@@ -79,7 +91,8 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 16),
                   OutlinedButton(
-                    onPressed: () => context.read<DailyTrackerCubit>().resetToday(),
+                    onPressed: () =>
+                        context.read<DailyTrackerCubit>().resetToday(),
                     child: const Text('Reset Today'),
                   ),
                 ],

@@ -11,11 +11,10 @@ import 'package:stay_alive/features/auth/presentation/pages/onboarding_page.dart
 import 'package:stay_alive/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:stay_alive/features/auth/presentation/pages/splash_page.dart';
 import 'package:stay_alive/features/categories/presentation/pages/categories_page.dart';
-import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
 import 'package:stay_alive/features/education/presentation/pages/education_page.dart';
 import 'package:stay_alive/features/history/presentation/pages/history_page.dart';
 import 'package:stay_alive/features/subscription/presentation/pages/premium_page.dart';
-import 'package:stay_alive/features/user/presentation/pages/profile_page.dart';
+import 'package:stay_alive/shared/widgets/main_shell_page.dart';
 
 class AppRouter {
   AppRouter(this._authCubit);
@@ -36,7 +35,8 @@ class AppRouter {
       final bool requiresOnboarding =
           authState is AuthAuthenticated && !authState.user.onboardingCompleted;
 
-      final bool isAuthRoute = state.matchedLocation == AppRoutes.login ||
+      final bool isAuthRoute =
+          state.matchedLocation == AppRoutes.login ||
           state.matchedLocation == AppRoutes.signUp;
 
       if (!isAuthenticated && !isAuthRoute) {
@@ -45,6 +45,12 @@ class AppRouter {
 
       if (isAuthenticated && isAuthRoute) {
         return requiresOnboarding ? AppRoutes.onboarding : AppRoutes.home;
+      }
+
+      if (isAuthenticated &&
+          !requiresOnboarding &&
+          state.matchedLocation == AppRoutes.onboarding) {
+        return AppRoutes.home;
       }
 
       if (isAuthenticated &&
@@ -78,7 +84,8 @@ class AppRouter {
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (BuildContext context, GoRouterState state) => const HomePage(),
+        builder: (BuildContext context, GoRouterState state) =>
+            const MainShellPage(initialIndex: 0),
       ),
       GoRoute(
         path: AppRoutes.history,
@@ -88,7 +95,7 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.profile,
         builder: (BuildContext context, GoRouterState state) =>
-            const ProfilePage(),
+            const MainShellPage(initialIndex: 1),
       ),
       GoRoute(
         path: AppRoutes.premium,

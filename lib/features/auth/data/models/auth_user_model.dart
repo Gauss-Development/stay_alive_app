@@ -10,13 +10,8 @@ class AuthUserModel extends AuthUser {
     required super.preferences,
   });
 
-  factory AuthUserModel.fromAppwrite(
-    appwrite_models.User<Map<String, dynamic>> user,
-  ) {
-    final dynamic prefs = user.prefs.data;
-    final Map<String, dynamic> mappedPrefs = prefs is Map<String, dynamic>
-        ? prefs
-        : <String, dynamic>{};
+  factory AuthUserModel.fromAppwrite(appwrite_models.User user) {
+    final Map<String, dynamic> mappedPrefs = user.prefs.data;
 
     return AuthUserModel(
       id: user.$id,

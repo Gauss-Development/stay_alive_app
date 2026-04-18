@@ -35,8 +35,9 @@ import 'package:stay_alive/features/history/domain/repositories/history_reposito
 import 'package:stay_alive/features/history/domain/usecases/get_history_summary_usecase.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/history/data/repositories_impl/in_memory_history_repository.dart';
+import 'package:stay_alive/features/user/data/datasources/user_remote_data_source.dart';
+import 'package:stay_alive/features/user/data/repositories_impl/user_repository_impl.dart';
 import 'package:stay_alive/features/user/domain/repositories/user_repository.dart';
-import 'package:stay_alive/features/user/data/repositories_impl/in_memory_user_repository.dart';
 import 'package:stay_alive/features/user/domain/usecases/get_user_profile_usecase.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 
@@ -53,13 +54,14 @@ Future<void> configureDependencies() async {
 
 void _registerCore() {
   sl
-    ..registerLazySingleton<EnvConfig>(EnvConfig.fromEnvironment)
+    ..registerLazySingleton<EnvConfig>(EnvConfig.fromEnv)
     ..registerLazySingleton<AppLogger>(() => const LoggerService())
     ..registerLazySingleton<NetworkService>(() => const DefaultNetworkService())
     ..registerLazySingleton<Client>(
       () => AppwriteClientProvider(sl<EnvConfig>()).build(),
     )
-    ..registerLazySingleton<Account>(() => Account(sl<Client>()));
+    ..registerLazySingleton<Account>(() => Account(sl<Client>()))
+    ..registerLazySingleton<Databases>(() => Databases(sl<Client>()));
 }
 
 void _registerAuthFeature() {
@@ -158,14 +160,24 @@ void _registerDailyTrackerFeature() {
 
 void _registerUserFeature() {
   sl
+    ..registerLazySingleton<UserRemoteDataSource>(
+      () => AppwriteUserRemoteDataSource(
+        account: sl<Account>(),
+        databases: sl<Databases>(),
+        envConfig: sl<EnvConfig>(),
+        logger: sl<AppLogger>(),
+      ),
+    )
     ..registerLazySingleton<UserRepository>(
-      InMemoryUserRepository.new,
+      () => UserRepositoryImpl(sl<UserRemoteDataSource>()),
     )
     ..registerLazySingleton<GetUserProfileUseCase>(
       () => GetUserProfileUseCase(sl<UserRepository>()),
     )
     ..registerFactory<UserProfileCubit>(
-      () => UserProfileCubit(sl<GetUserProfileUseCase>()),
+      () => UserProfileCubit(
+        getUserProfileUseCase: sl<GetUserProfileUseCase>(),
+      ),
     );
 }
 
@@ -178,7 +190,9 @@ void _registerHistoryFeature() {
       () => GetHistorySummaryUseCase(sl<HistoryRepository>()),
     )
     ..registerFactory<HistoryCubit>(
-      () => HistoryCubit(sl<GetHistorySummaryUseCase>()),
+      () => HistoryCubit(
+        getHistorySummaryUseCase: sl<GetHistorySummaryUseCase>(),
+      ),
     );
 }
 

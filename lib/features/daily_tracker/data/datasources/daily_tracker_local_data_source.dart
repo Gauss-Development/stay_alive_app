@@ -3,7 +3,6 @@ import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.da
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/tracker_category_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
-import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
 
 abstract class DailyTrackerLocalDataSource {
   Future<DailyLogModel?> getLogByDate(String dateKey);
