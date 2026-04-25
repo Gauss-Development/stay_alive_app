@@ -18,23 +18,22 @@ class CategoryProgressTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isCompleted = item.isCompleted;
 
+    final ColorScheme colors = Theme.of(context).colorScheme;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(
-            width: 4,
-            color: isCompleted
-                ? const Color(0xFF2E7D65)
-                : const Color(0xFFE0EBE3),
-          ),
+        border: Border.all(
+          color: isCompleted
+              ? colors.primary.withValues(alpha: 0.3)
+              : colors.outlineVariant.withValues(alpha: 0.4),
         ),
         boxShadow: <BoxShadow>[
           BoxShadow(
             color: isCompleted
-                ? const Color(0xFF2E7D65).withValues(alpha: 0.08)
+                ? colors.primary.withValues(alpha: 0.08)
                 : Colors.black.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
@@ -60,8 +59,8 @@ class CategoryProgressTile extends StatelessWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: isCompleted
-                          ? const Color(0xFF1A3D2E)
-                          : const Color(0xFF2C3E35),
+                          ? colors.onSurface
+                          : colors.onSurface.withValues(alpha: 0.8),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -112,22 +111,23 @@ class _CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       width: 42,
       height: 42,
       decoration: BoxDecoration(
         color: isCompleted
-            ? const Color(0xFF2E7D65).withValues(alpha: 0.1)
-            : const Color(0xFFF0F5F1),
+            ? colors.primary.withValues(alpha: 0.1)
+            : colors.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Icon(
         _icons[iconKey.toLowerCase()] ??
             Icons.check_circle_outline_rounded,
         color: isCompleted
-            ? const Color(0xFF2E7D65)
-            : const Color(0xFFAEC5B5),
+            ? colors.primary
+            : colors.onSurface.withValues(alpha: 0.35),
         size: 20,
       ),
     );
@@ -147,14 +147,16 @@ class _CategoryProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+
     if (total <= 1) {
       return Text(
         isCompleted ? 'Done' : 'Tap to complete',
         style: TextStyle(
-          fontSize: 11,
+          fontSize: 12,
           color: isCompleted
-              ? const Color(0xFF2E7D65)
-              : const Color(0xFFB5C9BC),
+              ? colors.primary
+              : colors.onSurface.withValues(alpha: 0.35),
         ),
       );
     }
@@ -171,8 +173,8 @@ class _CategoryProgress extends StatelessWidget {
               height: filled ? 10 : 8,
               decoration: BoxDecoration(
                 color: filled
-                    ? const Color(0xFF2E7D65)
-                    : const Color(0xFFDDE8E0),
+                    ? colors.primary
+                    : colors.outlineVariant.withValues(alpha: 0.4),
                 borderRadius: BorderRadius.circular(5),
               ),
             ),
@@ -187,8 +189,8 @@ class _CategoryProgress extends StatelessWidget {
         fontSize: 12,
         fontWeight: FontWeight.w600,
         color: isCompleted
-            ? const Color(0xFF2E7D65)
-            : const Color(0xFFB5C9BC),
+            ? colors.primary
+            : colors.onSurface.withValues(alpha: 0.35),
       ),
     );
   }
@@ -229,6 +231,7 @@ class _TileControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -247,13 +250,13 @@ class _TileControls extends StatelessWidget {
                     width: 30,
                     height: 30,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF0F5F1),
+                      color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.remove,
                       size: 15,
-                      color: Color(0xFF9BB5A3),
+                      color: colors.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                 ),
@@ -281,15 +284,14 @@ class _TileControls extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: isCompleted
-                        ? const Color(0xFF2E7D65)
-                        : const Color(0xFFEAF3EC),
+                        ? colors.primary
+                        : colors.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     isCompleted ? Icons.check_rounded : Icons.add,
                     size: 18,
-                    color:
-                        isCompleted ? Colors.white : const Color(0xFF2E7D65),
+                    color: isCompleted ? colors.onPrimary : colors.primary,
                   ),
                 ),
               ),
