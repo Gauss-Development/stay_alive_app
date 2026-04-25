@@ -29,9 +29,8 @@ class XpLevelBar extends StatelessWidget {
               'Lv ${level.level} · ${level.title}',
               style: TextStyle(
                 color: labelColor,
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w600,
-                letterSpacing: 0.4,
               ),
             ),
             Text(
@@ -40,7 +39,7 @@ class XpLevelBar extends StatelessWidget {
                   : '${profile.totalXp} / ${level.xpForNext} XP',
               style: TextStyle(
                 color: labelColor,
-                fontSize: 11,
+                fontSize: 12,
               ),
             ),
           ],

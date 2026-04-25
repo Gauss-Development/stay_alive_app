@@ -90,7 +90,7 @@ class _BadgeTile extends StatelessWidget {
           Text(
             dateStr,
             style: const TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               color: Color(0xFFAEC5B5),
             ),
           ),

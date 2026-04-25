@@ -51,8 +51,8 @@ class DailyProgressCard extends StatelessWidget {
                     'DAILY DOZEN',
                     style: TextStyle(
                       color: Colors.white38,
-                      fontSize: 10,
-                      letterSpacing: 1.8,
+                      fontSize: 12,
+                      letterSpacing: 1.4,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
