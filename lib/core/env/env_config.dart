@@ -34,6 +34,8 @@ class EnvConfig extends Equatable {
     required this.userUploadsBucketId,
     required this.contentAssetsBucketId,
     required this.allowSelfSigned,
+    required this.revenueCatApiKeyIos,
+    required this.revenueCatApiKeyAndroid,
   });
 
   final AppFlavor appFlavor;
@@ -59,6 +61,8 @@ class EnvConfig extends Equatable {
   final String userUploadsBucketId;
   final String contentAssetsBucketId;
   final bool allowSelfSigned;
+  final String revenueCatApiKeyIos;
+  final String revenueCatApiKeyAndroid;
 
   /// Call after [loadEnvForFlavor] has run in [bootstrap].
   factory EnvConfig.fromEnv(AppFlavor flavor) {
@@ -152,6 +156,14 @@ class EnvConfig extends Equatable {
         'APPWRITE_SELF_SIGNED',
         false,
       ),
+      revenueCatApiKeyIos: _str(
+        'REVENUECAT_API_KEY_IOS',
+        '',
+      ),
+      revenueCatApiKeyAndroid: _str(
+        'REVENUECAT_API_KEY_ANDROID',
+        '',
+      ),
     );
   }
 
@@ -208,5 +220,7 @@ class EnvConfig extends Equatable {
         userUploadsBucketId,
         contentAssetsBucketId,
         allowSelfSigned,
+        revenueCatApiKeyIos,
+        revenueCatApiKeyAndroid,
       ];
 }

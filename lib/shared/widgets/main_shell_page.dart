@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
 import 'package:stay_alive/features/user/presentation/pages/profile_page.dart';
 
@@ -16,8 +14,6 @@ class MainShellPage extends StatefulWidget {
 }
 
 class _MainShellPageState extends State<MainShellPage> {
-  static const int _logoutDestinationIndex = 2;
-
   late int _tabIndex;
   Widget? _homePage;
   Widget? _profilePage;
@@ -40,34 +36,6 @@ class _MainShellPageState extends State<MainShellPage> {
     }
   }
 
-  Future<void> _onLogoutPressed() async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Log out'),
-          content: const Text('Are you sure you want to log out?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Log out'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (!mounted || confirmed != true) {
-      return;
-    }
-
-    await context.read<AuthCubit>().logout();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,10 +49,6 @@ class _MainShellPageState extends State<MainShellPage> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
         onDestinationSelected: (int index) {
-          if (index == _logoutDestinationIndex) {
-            _onLogoutPressed();
-            return;
-          }
           _ensureTabInitialized(index);
           setState(() {
             _tabIndex = index;
@@ -99,9 +63,8 @@ class _MainShellPageState extends State<MainShellPage> {
           NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
-            label: 'My Profile',
+            label: 'Profile',
           ),
-          NavigationDestination(icon: Icon(Icons.logout), label: 'Log out'),
         ],
       ),
     );

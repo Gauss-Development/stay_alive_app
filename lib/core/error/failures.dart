@@ -36,3 +36,11 @@ class DatabaseFailure extends Failure {
 class UnknownFailure extends Failure {
   const UnknownFailure([super.message = 'Something went wrong. Please try again.']);
 }
+
+class SubscriptionFailure extends Failure {
+  const SubscriptionFailure([super.message = 'Subscription operation failed.']);
+}
+
+class PurchaseCancelledFailure extends Failure {
+  const PurchaseCancelledFailure([super.message = 'Purchase was cancelled.']);
+}
