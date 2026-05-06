@@ -19,33 +19,46 @@ class UserProfileModel extends UserProfile {
   });
 
   factory UserProfileModel.fromDocument(appwrite_models.Document document) {
-    final Map<String, dynamic> m = document.data;
-
-    return UserProfileModel(
+    return UserProfileModel.fromData(
       id: document.$id,
-      email: m['email']?.toString() ?? '',
+      data: document.data,
+      createdAt: document.$createdAt,
+      updatedAt: document.$updatedAt,
+    );
+  }
+
+  factory UserProfileModel.fromData({
+    required String id,
+    required Map<String, dynamic> data,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return UserProfileModel(
+      id: id,
+      email: data['email']?.toString() ?? '',
       displayName: _readString(
-        m['display_name'] ?? m['name'],
+        data['display_name'] ?? data['name'],
         fallback: '',
       ),
-      age: _readOptionalInt(m['age']),
-      gender: _readOptionalString(m['gender']),
+      age: _readOptionalInt(data['age']),
+      gender: _readOptionalString(data['gender']),
       preferredDiet: _readOptionalString(
-        m['preferred_diet'] ?? m['preferredDiet'],
+        data['preferred_diet'] ?? data['preferredDiet'],
       ),
-      heightCm: _readOptionalInt(m['height_cm'] ?? m['heightCm']),
-      weightKg: _readOptionalDouble(m['weight_kg'] ?? m['weightKg']),
+      heightCm: _readOptionalInt(data['height_cm'] ?? data['heightCm']),
+      weightKg: _readOptionalDouble(data['weight_kg'] ?? data['weightKg']),
       onboardingCompleted:
-          (m['onboarding_completed'] ?? m['onboardingCompleted']) == true,
+          (data['onboarding_completed'] ?? data['onboardingCompleted']) ==
+              true,
       unitsPreference: _readOptionalString(
-        m['units_preference'] ?? m['unitsPreference'],
+        data['units_preference'] ?? data['unitsPreference'],
       ),
-      locale: _readOptionalString(m['locale']),
+      locale: _readOptionalString(data['locale']),
       createdAt: DateTime.tryParse(
-        _readString(m['created_at'], fallback: document.$createdAt),
+        _readString(data['created_at'], fallback: createdAt ?? ''),
       ),
       updatedAt: DateTime.tryParse(
-        _readString(m['updated_at'], fallback: document.$updatedAt),
+        _readString(data['updated_at'], fallback: updatedAt ?? ''),
       ),
     );
   }
