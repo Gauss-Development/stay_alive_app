@@ -21,6 +21,8 @@ class EnvConfig extends Equatable {
     required this.subscriptionsCollectionId,
     required this.analyticsEventsCollectionId,
     required this.educationalContentCollectionId,
+    required this.gamificationProfilesCollectionId,
+    required this.gamificationEventsCollectionId,
     required this.avatarsBucketId,
     required this.userUploadsBucketId,
     required this.contentAssetsBucketId,
@@ -38,6 +40,8 @@ class EnvConfig extends Equatable {
   final String subscriptionsCollectionId;
   final String analyticsEventsCollectionId;
   final String educationalContentCollectionId;
+  final String gamificationProfilesCollectionId;
+  final String gamificationEventsCollectionId;
   final String avatarsBucketId;
   final String userUploadsBucketId;
   final String contentAssetsBucketId;
@@ -89,6 +93,14 @@ class EnvConfig extends Equatable {
       educationalContentCollectionId: _str(
         'APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID',
         'educational_content',
+      ),
+      gamificationProfilesCollectionId: _str(
+        'APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID',
+        'gamification_profiles',
+      ),
+      gamificationEventsCollectionId: _str(
+        'APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID',
+        'gamification_events',
       ),
       avatarsBucketId: _str(
         'APPWRITE_AVATARS_BUCKET_ID',
@@ -150,6 +162,8 @@ class EnvConfig extends Equatable {
         subscriptionsCollectionId,
         analyticsEventsCollectionId,
         educationalContentCollectionId,
+        gamificationProfilesCollectionId,
+        gamificationEventsCollectionId,
         avatarsBucketId,
         userUploadsBucketId,
         contentAssetsBucketId,

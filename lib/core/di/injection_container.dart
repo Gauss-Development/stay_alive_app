@@ -27,6 +27,11 @@ import 'package:stay_alive/features/daily_tracker/domain/usecases/increment_cate
 import 'package:stay_alive/features/daily_tracker/domain/usecases/initialize_today_log_usecase.dart';
 import 'package:stay_alive/features/daily_tracker/domain/usecases/reset_today_log_usecase.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
+import 'package:stay_alive/features/gamification/data/datasources/gamification_remote_data_source.dart';
+import 'package:stay_alive/features/gamification/data/repositories_impl/gamification_repository_impl.dart';
+import 'package:stay_alive/features/gamification/domain/repositories/gamification_repository.dart';
+import 'package:stay_alive/features/gamification/domain/usecases/get_gamification_progress_usecase.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/analytics/data/datasources/analytics_remote_data_source.dart';
 import 'package:stay_alive/features/analytics/data/repositories_impl/analytics_repository_impl.dart';
 import 'package:stay_alive/features/analytics/domain/repositories/analytics_repository.dart';
@@ -49,6 +54,7 @@ Future<void> configureDependencies() async {
   _registerCore();
   _registerAuthFeature();
   _registerDailyTrackerFeature();
+  _registerGamificationFeature();
   _registerUserFeature();
   _registerHistoryFeature();
   _registerAnalyticsFeature();
@@ -186,6 +192,28 @@ void _registerUserFeature() {
     ..registerFactory<UserProfileCubit>(
       () => UserProfileCubit(
         getUserProfileUseCase: sl<GetUserProfileUseCase>(),
+      ),
+    );
+}
+
+void _registerGamificationFeature() {
+  sl
+    ..registerLazySingleton<GamificationRemoteDataSource>(
+      () => AppwriteGamificationRemoteDataSource(
+        account: sl<Account>(),
+        databases: sl<Databases>(),
+        envConfig: sl<EnvConfig>(),
+      ),
+    )
+    ..registerLazySingleton<GamificationRepository>(
+      () => GamificationRepositoryImpl(sl<GamificationRemoteDataSource>()),
+    )
+    ..registerLazySingleton<GetGamificationProgressUseCase>(
+      () => GetGamificationProgressUseCase(sl<GamificationRepository>()),
+    )
+    ..registerFactory<GamificationCubit>(
+      () => GamificationCubit(
+        getGamificationProgressUseCase: sl<GetGamificationProgressUseCase>(),
       ),
     );
 }
