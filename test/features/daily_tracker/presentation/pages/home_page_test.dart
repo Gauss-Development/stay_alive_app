@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:stay_alive/core/env/env_config.dart';
+import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/completion_summary.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
@@ -10,16 +12,61 @@ import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_catego
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_progress.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 
 class _MockDailyTrackerCubit extends MockCubit<DailyTrackerState>
     implements DailyTrackerCubit {}
 
+class _MockGamificationCubit extends MockCubit<GamificationState>
+    implements GamificationCubit {}
+
+class _FakeHomeWidgetGateway extends Fake implements HomeWidgetGateway {}
+
+class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
+  _FakeDailyGoalWidgetService()
+      : super(
+          envConfig: const EnvConfig(
+            appwriteEndpoint: '',
+            appwriteProjectId: '',
+            appwriteProjectName: '',
+            appwriteDatabaseId: '',
+            usersCollectionId: '',
+            categoryDefinitionsCollectionId: '',
+            dailyLogsCollectionId: '',
+            dailyLogItemsCollectionId: '',
+            subscriptionsCollectionId: '',
+            analyticsEventsCollectionId: '',
+            educationalContentCollectionId: '',
+            gamificationProfilesCollectionId: '',
+            gamificationEventsCollectionId: '',
+            widgetAppGroupId: '',
+            avatarsBucketId: '',
+            userUploadsBucketId: '',
+            contentAssetsBucketId: '',
+            allowSelfSigned: false,
+          ),
+          gateway: _FakeHomeWidgetGateway(),
+        );
+
+  @override
+  Future<void> updateDailyGoal({
+    required DailyLog log,
+    GamificationProgress? progress,
+  }) async {}
+}
+
 void main() {
   late _MockDailyTrackerCubit cubit;
+  late _MockGamificationCubit gamificationCubit;
+  late _FakeDailyGoalWidgetService dailyGoalWidgetService;
   late DailyTrackerState loadedState;
 
   setUp(() {
     cubit = _MockDailyTrackerCubit();
+    gamificationCubit = _MockGamificationCubit();
+    dailyGoalWidgetService = _FakeDailyGoalWidgetService();
     final DateTime now = DateTime.parse('2026-04-09T00:00:00Z');
     const TrackerCategory category = TrackerCategory(
       id: 'beans',
@@ -68,13 +115,36 @@ void main() {
     when(() => cubit.increment(any())).thenAnswer((_) async {});
     when(() => cubit.decrement(any())).thenAnswer((_) async {});
     when(() => cubit.resetToday()).thenAnswer((_) async {});
+    when(() => gamificationCubit.state).thenReturn(
+      const GamificationLoaded(
+        GamificationProgress(
+          userId: 'user_1',
+          xp: 35,
+          level: 1,
+          currentLevelXp: 0,
+          nextLevelXp: 100,
+          currentStreak: 1,
+          bestStreak: 1,
+          completedDays: 0,
+          lastCompletedDate: null,
+          badges: <String>['first_log'],
+        ),
+      ),
+    );
+    when(() => gamificationCubit.stream).thenAnswer(
+      (_) => const Stream<GamificationState>.empty(),
+    );
+    when(() => gamificationCubit.refresh()).thenAnswer((_) async {});
   });
 
   Widget buildWidget() {
     return MaterialApp(
-      home: BlocProvider<DailyTrackerCubit>.value(
-        value: cubit,
-        child: const HomePage(),
+      home: MultiBlocProvider(
+        providers: <BlocProvider<dynamic>>[
+          BlocProvider<DailyTrackerCubit>.value(value: cubit),
+          BlocProvider<GamificationCubit>.value(value: gamificationCubit),
+        ],
+        child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
       ),
     );
   }

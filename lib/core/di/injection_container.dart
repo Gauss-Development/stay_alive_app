@@ -72,13 +72,12 @@ void _registerCore() {
     ..registerLazySingleton<Account>(() => Account(sl<Client>()))
     ..registerLazySingleton<Databases>(() => Databases(sl<Client>()))
     ..registerLazySingleton<HomeWidgetGateway>(
-      () => const HomeWidgetPackageGateway(),
+      () => const HomeWidgetPluginGateway(),
     )
     ..registerLazySingleton<DailyGoalWidgetService>(
       () => DailyGoalWidgetService(
         gateway: sl<HomeWidgetGateway>(),
         envConfig: sl<EnvConfig>(),
-        logger: sl<AppLogger>(),
       ),
     );
 }

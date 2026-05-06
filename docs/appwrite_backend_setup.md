@@ -1,6 +1,6 @@
 # Appwrite Backend Architecture & Setup
 
-This document defines the production backend architecture for the Daily Dozen app and provides reproducible command-style steps.
+This document defines the production backend architecture for the Stay Alive app and provides reproducible setup steps.
 
 ## 1) Environment Strategy
 
@@ -27,6 +27,8 @@ Flutter client uses:
 - `account.getSession(sessionId: 'current')` for session restore
 - `account.deleteSession(sessionId: 'current')` for logout
 - `account.createOAuth2Session(...)` for OAuth
+
+After every signup/login/OAuth restore, the app ensures a matching document exists in the `users` collection using the Appwrite Auth user id as the document id.
 
 ## 3) Database Plan
 
@@ -106,6 +108,27 @@ Collections:
    - `created_at` (datetime)
    - `updated_at` (datetime)
 
+8. `gamification_profiles`
+   - `user_id` (string, required, unique)
+   - `xp` (int)
+   - `level` (int)
+   - `current_streak` (int)
+   - `best_streak` (int)
+   - `completed_days` (int)
+   - `last_completed_date` (string, optional)
+   - `badges` (string array)
+   - `created_at` (datetime)
+   - `updated_at` (datetime)
+
+9. `gamification_events`
+   - `event_id` (string, required, unique)
+   - `user_id` (string, indexed)
+   - `event_type` (string, indexed)
+   - `xp_delta` (int)
+   - `log_date` (string, optional/indexed)
+   - `metadata_json` (string/text)
+   - `created_at` (datetime, indexed)
+
 ## 4) Permissions Plan
 
 - `users`, `daily_logs`, `daily_log_items`:
@@ -131,31 +154,33 @@ Collections:
 - `analytics_normalizer` for event normalization/enrichment
 - `daily_rollup` for streak/summary denormalization
 
-## 7) Reproducible CLI-style Setup Steps
+## 7) Reproducible Setup Script
 
-> Replace placeholders with real values:
-> - `<ENDPOINT>`
-> - `<PROJECT_ID>`
-> - `<API_KEY>`
+The repository includes an idempotent provisioning script that uses the Appwrite REST API directly. The Appwrite CLI is not required.
 
 ```bash
-# Authenticate CLI context
-appwrite client --endpoint "<ENDPOINT>" --project-id "<PROJECT_ID>" --key "<API_KEY>"
-
-# Create database
-appwrite databases create --database-id "daily_dozen_db" --name "Daily Dozen DB"
-
-# Create collections
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "users" --name "Users"
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "category_definitions" --name "Category Definitions"
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "daily_logs" --name "Daily Logs"
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "daily_log_items" --name "Daily Log Items"
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "subscriptions" --name "Subscriptions"
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "analytics_events" --name "Analytics Events"
-appwrite databases create-collection --database-id "daily_dozen_db" --collection-id "educational_content" --name "Educational Content"
+export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="<PROJECT_ID>"
+export APPWRITE_API_KEY="<API_KEY_WITH_DATABASE_AND_STORAGE_SCOPES>"
+python3 scripts/appwrite_provision.py
 ```
 
-Use the Appwrite console (or equivalent CLI commands for attributes/indexes) to apply the field schema and indexes exactly as specified above.
+Run the script a second time to verify idempotency:
+
+```bash
+python3 scripts/appwrite_provision.py
+```
+
+The script creates the database, collections, attributes, indexes, storage buckets, and seeded food categories. It treats existing resources as successful skips.
+
+Required API key scopes:
+
+- Databases read/write
+- Collections read/write
+- Attributes read/write
+- Indexes read/write
+- Documents read/write for category seeding
+- Buckets read/write
 
 ## 8) OAuth Platform Callback Notes
 
@@ -166,4 +191,19 @@ iOS:
 - Add URL scheme in `Info.plist`: `appwrite-callback-<PROJECT_ID>`
 
 Both are already prepared in this repository and should be updated with the actual project id per environment.
+
+## 9) Native Widgets
+
+Android includes `DailyGoalWidgetProvider`, XML layout resources, and a manifest receiver. iOS includes a WidgetKit extension target named `DailyGoalWidgetExtension`.
+
+The Flutter app writes widget data through `home_widget` using:
+
+- `daily_goal_completed`
+- `daily_goal_target`
+- `daily_goal_percentage`
+- `daily_goal_date`
+- `daily_goal_streak`
+- `daily_goal_level`
+
+iOS widgets require the App Group configured in `DAILY_GOAL_WIDGET_APP_GROUP_ID` (default `group.com.example.stayAlive`) to be created in Apple Developer and enabled for both Runner and the widget extension.
 

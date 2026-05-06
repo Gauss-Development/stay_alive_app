@@ -3,6 +3,7 @@ import 'package:stay_alive/core/error/appwrite_failure_mapper.dart';
 import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/core/result/result.dart';
 import 'package:stay_alive/features/history/data/datasources/history_remote_data_source.dart';
+import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
 import 'package:stay_alive/features/history/domain/entities/history_summary.dart';
 import 'package:stay_alive/features/history/domain/repositories/history_repository.dart';
 
@@ -23,8 +24,7 @@ class HistoryRepositoryImpl implements HistoryRepository {
     }
 
     try {
-      final List<HistoryDailyLogSnapshot> logs =
-          await _remoteDataSource.fetchLogs(
+      final List<DailyLogModel> logs = await _remoteDataSource.fetchLogs(
         startDate: startDate,
         endDate: endDate,
       );
@@ -39,24 +39,24 @@ class HistoryRepositoryImpl implements HistoryRepository {
   HistorySummary _buildSummary({
     required DateTime startDate,
     required DateTime endDate,
-    required List<HistoryDailyLogSnapshot> logs,
+    required List<DailyLogModel> logs,
   }) {
     final int totalDays = _daysInclusive(startDate, endDate);
     final int completedDays = logs
-        .where((HistoryDailyLogSnapshot log) => log.isFullyCompleted)
+        .where((DailyLogModel log) => log.isFullyCompleted)
         .length;
     final double averageCompletion = logs.isEmpty
         ? 0
         : logs.fold<double>(
               0,
-              (double sum, HistoryDailyLogSnapshot log) =>
+              (double sum, DailyLogModel log) =>
                   sum + log.completionPercentage,
             ) /
             logs.length;
 
     final Set<String> completedDateKeys = logs
-        .where((HistoryDailyLogSnapshot log) => log.isFullyCompleted)
-        .map((HistoryDailyLogSnapshot log) => log.dateKey)
+        .where((DailyLogModel log) => log.isFullyCompleted)
+        .map((DailyLogModel log) => log.dateKey)
         .toSet();
 
     final int bestStreak = _calculateBestStreak(completedDateKeys);
@@ -66,7 +66,7 @@ class HistoryRepositoryImpl implements HistoryRepository {
     );
 
     final DateTime weekStart = endDate.subtract(const Duration(days: 6));
-    final List<HistoryDailyLogSnapshot> weeklyLogs = logs.where((log) {
+    final List<DailyLogModel> weeklyLogs = logs.where((DailyLogModel log) {
       final DateTime date = DateTime.parse('${log.dateKey}T00:00:00Z');
       return !date.isBefore(_dateOnly(weekStart));
     }).toList(growable: false);
@@ -83,13 +83,13 @@ class HistoryRepositoryImpl implements HistoryRepository {
     );
   }
 
-  double _averageCompletion(List<HistoryDailyLogSnapshot> logs) {
+  double _averageCompletion(List<DailyLogModel> logs) {
     if (logs.isEmpty) {
       return 0;
     }
     return logs.fold<double>(
           0,
-          (double sum, HistoryDailyLogSnapshot log) =>
+          (double sum, DailyLogModel log) =>
               sum + log.completionPercentage,
         ) /
         logs.length;

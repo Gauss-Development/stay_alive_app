@@ -13,7 +13,12 @@ import 'package:stay_alive/features/gamification/presentation/cubit/gamification
 import 'package:stay_alive/features/gamification/presentation/widgets/gamification_progress_card.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({
+    this.dailyGoalWidgetService,
+    super.key,
+  });
+
+  final DailyGoalWidgetService? dailyGoalWidgetService;
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -52,7 +57,9 @@ class _HomePageState extends State<HomePage> {
                 state.log != null) {
               unawaited(context.read<GamificationCubit>().refresh());
               unawaited(
-                sl<DailyGoalWidgetService>().updateDailyGoal(log: state.log!),
+                (widget.dailyGoalWidgetService ??
+                        sl<DailyGoalWidgetService>())
+                    .updateDailyGoal(log: state.log!),
               );
             }
           },

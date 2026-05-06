@@ -41,6 +41,7 @@ lib/
     ├── history/
     ├── analytics/
     ├── categories/
+    ├── gamification/
     ├── subscription/
     └── education/
 ```
@@ -67,9 +68,12 @@ Required keys:
 - `APPWRITE_SUBSCRIPTIONS_COLLECTION_ID`
 - `APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID`
 - `APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID`
+- `APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID`
+- `APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID`
 - `APPWRITE_AVATARS_BUCKET_ID`
 - `APPWRITE_USER_UPLOADS_BUCKET_ID`
 - `APPWRITE_CONTENT_ASSETS_BUCKET_ID`
+- `DAILY_GOAL_WIDGET_APP_GROUP_ID`
 - `APPWRITE_SELF_SIGNED`
 
 Example:
@@ -84,7 +88,13 @@ flutter run \
 ## Deployment Notes
 
 - Use separate Appwrite projects for `dev` and `prod`.
+- Provision Appwrite resources with `python3 scripts/appwrite_provision.py`
+  and an API key that can manage databases and storage.
 - Keep OAuth callback scheme aligned with the active project ID:
   - Android: `appwrite-callback-<PROJECT_ID>` in `AndroidManifest.xml`
   - iOS: `appwrite-callback-<PROJECT_ID>` in `Info.plist`
 - Configure CI/CD to pass environment-specific `--dart-define` values.
+- The Android and iOS daily goal widgets read shared values written by
+  `DailyGoalWidgetService`. iOS requires the App Group in
+  `DAILY_GOAL_WIDGET_APP_GROUP_ID` to be enabled for both Runner and the
+  WidgetKit extension in the Apple Developer portal.
