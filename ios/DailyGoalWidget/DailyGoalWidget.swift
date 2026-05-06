@@ -79,7 +79,7 @@ struct DailyGoalWidgetView: View {
                 .fontWeight(.semibold)
 
             ProgressView(value: entry.percentage)
-                .tint(.green)
+                .accentColor(.green)
 
             HStack {
                 Text("\(Int(entry.percentage * 100))%")
@@ -87,10 +87,10 @@ struct DailyGoalWidgetView: View {
                 Text("🔥 \(entry.streak)d")
             }
             .font(.caption)
-            .foregroundStyle(.secondary)
+            .foregroundColor(.secondary)
         }
         .padding()
-        .containerBackground(.background, for: .widget)
+        .background(Color(.systemBackground))
     }
 }
 

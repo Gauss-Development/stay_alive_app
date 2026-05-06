@@ -35,7 +35,6 @@ class HomeWidgetPluginGateway implements HomeWidgetGateway {
   }
 
   @override
-  @override
   Future<void> updateWidget({
     required String androidName,
     required String iOSName,
