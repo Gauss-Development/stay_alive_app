@@ -183,7 +183,7 @@ class AppwriteDailyTrackerRemoteDataSource
 
     final DailyLogModel log = _recalculateLog(
       DailyLogModel(
-        id: '${user.$id}_$dateKey',
+        id: ID.unique(),
         userId: user.$id,
         logDate: DateTime.parse('${dateKey}T00:00:00Z'),
         items: items,
