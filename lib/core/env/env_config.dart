@@ -118,11 +118,11 @@ class EnvConfig extends Equatable {
       ),
       revenueCatAndroidApiKey: _str(
         'REVENUECAT_ANDROID_API_KEY',
-        '',
+        'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
       ),
       revenueCatIosApiKey: _str(
         'REVENUECAT_IOS_API_KEY',
-        '',
+        'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
       ),
       revenueCatEntitlementId: _str(
         'REVENUECAT_ENTITLEMENT_ID',
