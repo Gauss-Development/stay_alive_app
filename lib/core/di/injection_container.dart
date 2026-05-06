@@ -17,7 +17,7 @@ import 'package:stay_alive/features/auth/domain/usecases/logout_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/sign_up_with_email_usecase.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/app_startup_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:stay_alive/features/daily_tracker/data/datasources/daily_tracker_local_data_source.dart';
+import 'package:stay_alive/features/daily_tracker/data/datasources/daily_tracker_remote_data_source.dart';
 import 'package:stay_alive/features/daily_tracker/data/repositories_impl/daily_tracker_repository_impl.dart';
 import 'package:stay_alive/features/daily_tracker/domain/repositories/daily_tracker_repository.dart';
 import 'package:stay_alive/features/daily_tracker/domain/usecases/decrement_category_progress_usecase.dart';
@@ -27,14 +27,16 @@ import 'package:stay_alive/features/daily_tracker/domain/usecases/increment_cate
 import 'package:stay_alive/features/daily_tracker/domain/usecases/initialize_today_log_usecase.dart';
 import 'package:stay_alive/features/daily_tracker/domain/usecases/reset_today_log_usecase.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
-import 'package:stay_alive/features/analytics/data/repositories_impl/in_memory_analytics_repository.dart';
+import 'package:stay_alive/features/analytics/data/datasources/analytics_remote_data_source.dart';
+import 'package:stay_alive/features/analytics/data/repositories_impl/analytics_repository_impl.dart';
 import 'package:stay_alive/features/analytics/domain/repositories/analytics_repository.dart';
 import 'package:stay_alive/features/analytics/domain/usecases/track_event_usecase.dart';
 import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
+import 'package:stay_alive/features/history/data/datasources/history_remote_data_source.dart';
+import 'package:stay_alive/features/history/data/repositories_impl/history_repository_impl.dart';
 import 'package:stay_alive/features/history/domain/repositories/history_repository.dart';
 import 'package:stay_alive/features/history/domain/usecases/get_history_summary_usecase.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
-import 'package:stay_alive/features/history/data/repositories_impl/in_memory_history_repository.dart';
 import 'package:stay_alive/features/user/data/datasources/user_remote_data_source.dart';
 import 'package:stay_alive/features/user/data/repositories_impl/user_repository_impl.dart';
 import 'package:stay_alive/features/user/domain/repositories/user_repository.dart';
@@ -123,11 +125,16 @@ void _registerAuthFeature() {
 
 void _registerDailyTrackerFeature() {
   sl
-    ..registerLazySingleton<DailyTrackerLocalDataSource>(
-      () => InMemoryDailyTrackerLocalDataSource(sl<AppLogger>()),
+    ..registerLazySingleton<DailyTrackerRemoteDataSource>(
+      () => AppwriteDailyTrackerRemoteDataSource(
+        account: sl<Account>(),
+        databases: sl<Databases>(),
+        envConfig: sl<EnvConfig>(),
+        logger: sl<AppLogger>(),
+      ),
     )
     ..registerLazySingleton<DailyTrackerRepository>(
-      () => DailyTrackerRepositoryImpl(sl<DailyTrackerLocalDataSource>()),
+      () => DailyTrackerRepositoryImpl(sl<DailyTrackerRemoteDataSource>()),
     )
     ..registerLazySingleton<GetTodayLogUseCase>(
       () => GetTodayLogUseCase(sl<DailyTrackerRepository>()),
@@ -185,8 +192,15 @@ void _registerUserFeature() {
 
 void _registerHistoryFeature() {
   sl
+    ..registerLazySingleton<HistoryRemoteDataSource>(
+      () => AppwriteHistoryRemoteDataSource(
+        account: sl<Account>(),
+        databases: sl<Databases>(),
+        envConfig: sl<EnvConfig>(),
+      ),
+    )
     ..registerLazySingleton<HistoryRepository>(
-      InMemoryHistoryRepository.new,
+      () => HistoryRepositoryImpl(sl<HistoryRemoteDataSource>()),
     )
     ..registerLazySingleton<GetHistorySummaryUseCase>(
       () => GetHistorySummaryUseCase(sl<HistoryRepository>()),
@@ -200,8 +214,15 @@ void _registerHistoryFeature() {
 
 void _registerAnalyticsFeature() {
   sl
+    ..registerLazySingleton<AnalyticsRemoteDataSource>(
+      () => AppwriteAnalyticsRemoteDataSource(
+        account: sl<Account>(),
+        databases: sl<Databases>(),
+        envConfig: sl<EnvConfig>(),
+      ),
+    )
     ..registerLazySingleton<AnalyticsRepository>(
-      InMemoryAnalyticsRepository.new,
+      () => AnalyticsRepositoryImpl(sl<AnalyticsRemoteDataSource>()),
     )
     ..registerLazySingleton<TrackEventUseCase>(
       () => TrackEventUseCase(sl<AnalyticsRepository>()),
