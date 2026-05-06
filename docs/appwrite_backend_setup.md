@@ -30,6 +30,26 @@ Flutter client uses:
 
 After every signup/login/OAuth restore, the app ensures a matching document exists in the `users` collection using the Appwrite Auth user id as the document id.
 
+## 2.1) RevenueCat Subscription Setup
+
+Stay Alive uses RevenueCat for mobile subscription purchase state. Configure
+RevenueCat dashboard products with these intended prices:
+
+- Weekly plan: `$3`
+- Monthly plan: `$15`
+- Annual plan: `$100`
+
+Create an entitlement named `premium` (or override with
+`REVENUECAT_ENTITLEMENT_ID`) and attach the weekly, monthly, and annual
+subscription products to the app offering (`REVENUECAT_OFFERING_ID`, default
+`default`). The app reads platform API keys from:
+
+- `REVENUECAT_ANDROID_API_KEY`
+- `REVENUECAT_IOS_API_KEY`
+
+Daily checklist tracking remains free. Full historical statistics are gated in
+the app and require an active RevenueCat `premium` entitlement.
+
 ## 3) Database Plan
 
 Database ID: `daily_dozen_db`

@@ -14,6 +14,7 @@ The app follows feature-first Clean Architecture:
 - `lib/features/gamification` — XP, levels, streaks, and badges
 - `lib/features/history` — Appwrite-backed progress summaries
 - `lib/features/analytics` — Appwrite analytics event persistence
+- `lib/features/subscription` — RevenueCat premium subscriptions and paywall
 
 ## Appwrite setup
 
@@ -36,6 +37,22 @@ Android and iOS native widgets display today's completed servings, target,
 percentage, streak, and level. iOS requires the App Group configured by
 `DAILY_GOAL_WIDGET_APP_GROUP_ID` (default `group.com.example.stayAlive`) to be
 created in the Apple Developer portal for signed device builds.
+
+## Premium subscriptions
+
+RevenueCat powers Premium access. Users can track daily fruit and vegetable
+intake for free; full historical statistics require an active `premium`
+entitlement. Configure these values per environment:
+
+- `REVENUECAT_ANDROID_API_KEY`
+- `REVENUECAT_IOS_API_KEY`
+- `REVENUECAT_ENTITLEMENT_ID=premium`
+- `REVENUECAT_OFFERING_ID=default`
+
+In the RevenueCat dashboard, create weekly, monthly, and annual packages with
+store prices of `$3`, `$15`, and `$100` respectively. The app displays the
+RevenueCat store price when available and falls back to those labels while the
+dashboard is not configured.
 
 ## Development
 

@@ -70,6 +70,10 @@ Required keys:
 - `APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID`
 - `APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID`
 - `APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID`
+- `REVENUECAT_ANDROID_API_KEY`
+- `REVENUECAT_IOS_API_KEY`
+- `REVENUECAT_ENTITLEMENT_ID`
+- `REVENUECAT_OFFERING_ID`
 - `APPWRITE_AVATARS_BUCKET_ID`
 - `APPWRITE_USER_UPLOADS_BUCKET_ID`
 - `APPWRITE_CONTENT_ASSETS_BUCKET_ID`
@@ -98,3 +102,7 @@ flutter run \
   `DailyGoalWidgetService`. iOS requires the App Group in
   `DAILY_GOAL_WIDGET_APP_GROUP_ID` to be enabled for both Runner and the
   WidgetKit extension in the Apple Developer portal.
+- RevenueCat powers premium subscriptions. Configure weekly (`$3`), monthly
+  (`$15`), and annual (`$100`) products in the App Store / Play Console and
+  map them to the entitlement in `REVENUECAT_ENTITLEMENT_ID` (default:
+  `premium`) and offering in `REVENUECAT_OFFERING_ID` (default: `default`).
