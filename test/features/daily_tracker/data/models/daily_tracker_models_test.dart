@@ -57,7 +57,7 @@ void main() {
       expect(createData['category_id'], 'beans');
       expect(createData['completed_count'], 2);
       expect(updateData, containsPair('completed_count', 2));
-      expect(updateData, contains('updated_at'));
+      expect(updateData, containsPair('updated_at', isA<String>()));
     });
   });
 
@@ -83,7 +83,7 @@ void main() {
       expect(createData['completion_percentage'], 25);
       expect(updateData['total_completed'], 6);
       expect(updateData['total_target'], 24);
-      expect(updateData, contains('updated_at'));
+      expect(updateData, containsPair('updated_at', isA<String>()));
     });
   });
 }
