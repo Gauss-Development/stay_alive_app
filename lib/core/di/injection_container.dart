@@ -69,6 +69,8 @@ void _registerAuthFeature() {
     ..registerLazySingleton<AuthRemoteDataSource>(
       () => AppwriteAuthRemoteDataSource(
         account: sl<Account>(),
+        databases: sl<Databases>(),
+        envConfig: sl<EnvConfig>(),
         logger: sl<AppLogger>(),
       ),
     )
