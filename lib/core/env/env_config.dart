@@ -24,6 +24,10 @@ class EnvConfig extends Equatable {
     required this.gamificationProfilesCollectionId,
     required this.gamificationEventsCollectionId,
     required this.widgetAppGroupId,
+    required this.revenueCatAndroidApiKey,
+    required this.revenueCatIosApiKey,
+    required this.revenueCatEntitlementId,
+    required this.revenueCatOfferingId,
     required this.avatarsBucketId,
     required this.userUploadsBucketId,
     required this.contentAssetsBucketId,
@@ -44,6 +48,10 @@ class EnvConfig extends Equatable {
   final String gamificationProfilesCollectionId;
   final String gamificationEventsCollectionId;
   final String widgetAppGroupId;
+  final String revenueCatAndroidApiKey;
+  final String revenueCatIosApiKey;
+  final String revenueCatEntitlementId;
+  final String revenueCatOfferingId;
   final String avatarsBucketId;
   final String userUploadsBucketId;
   final String contentAssetsBucketId;
@@ -108,6 +116,22 @@ class EnvConfig extends Equatable {
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.example.stayAlive',
       ),
+      revenueCatAndroidApiKey: _str(
+        'REVENUECAT_ANDROID_API_KEY',
+        '',
+      ),
+      revenueCatIosApiKey: _str(
+        'REVENUECAT_IOS_API_KEY',
+        '',
+      ),
+      revenueCatEntitlementId: _str(
+        'REVENUECAT_ENTITLEMENT_ID',
+        'premium',
+      ),
+      revenueCatOfferingId: _str(
+        'REVENUECAT_OFFERING_ID',
+        'default',
+      ),
       avatarsBucketId: _str(
         'APPWRITE_AVATARS_BUCKET_ID',
         'avatars',
@@ -171,6 +195,10 @@ class EnvConfig extends Equatable {
         gamificationProfilesCollectionId,
         gamificationEventsCollectionId,
         widgetAppGroupId,
+        revenueCatAndroidApiKey,
+        revenueCatIosApiKey,
+        revenueCatEntitlementId,
+        revenueCatOfferingId,
         avatarsBucketId,
         userUploadsBucketId,
         contentAssetsBucketId,

@@ -8,6 +8,7 @@ import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
+import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/router.dart';
 import 'package:stay_alive/shared/theme/app_theme.dart';
@@ -58,6 +59,9 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
         ),
         BlocProvider<AnalyticsCubit>(
           create: (_) => sl<AnalyticsCubit>(),
+        ),
+        BlocProvider<SubscriptionCubit>(
+          create: (_) => sl<SubscriptionCubit>(),
         ),
       ],
       child: MaterialApp.router(

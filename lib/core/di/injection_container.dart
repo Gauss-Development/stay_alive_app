@@ -43,6 +43,14 @@ import 'package:stay_alive/features/history/data/repositories_impl/history_repos
 import 'package:stay_alive/features/history/domain/repositories/history_repository.dart';
 import 'package:stay_alive/features/history/domain/usecases/get_history_summary_usecase.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
+import 'package:stay_alive/features/subscription/data/datasources/revenue_cat_subscription_data_source.dart';
+import 'package:stay_alive/features/subscription/data/repositories_impl/subscription_repository_impl.dart';
+import 'package:stay_alive/features/subscription/domain/repositories/subscription_repository.dart';
+import 'package:stay_alive/features/subscription/domain/usecases/get_subscription_offering_usecase.dart';
+import 'package:stay_alive/features/subscription/domain/usecases/get_subscription_status_usecase.dart';
+import 'package:stay_alive/features/subscription/domain/usecases/purchase_subscription_usecase.dart';
+import 'package:stay_alive/features/subscription/domain/usecases/restore_purchases_usecase.dart';
+import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/data/datasources/user_remote_data_source.dart';
 import 'package:stay_alive/features/user/data/repositories_impl/user_repository_impl.dart';
 import 'package:stay_alive/features/user/domain/repositories/user_repository.dart';
@@ -59,6 +67,7 @@ Future<void> configureDependencies() async {
   _registerUserFeature();
   _registerHistoryFeature();
   _registerAnalyticsFeature();
+  _registerSubscriptionFeature();
 }
 
 void _registerCore() {
@@ -267,5 +276,81 @@ void _registerAnalyticsFeature() {
     )
     ..registerFactory<AnalyticsCubit>(
       () => AnalyticsCubit(sl<TrackEventUseCase>()),
+    );
+}
+
+void _registerSubscriptionFeature() {
+  sl
+    ..registerLazySingleton<RevenueCatGateway>(
+      () => const PurchasesRevenueCatGateway(),
+    )
+    ..registerLazySingleton<SubscriptionRemoteDataSource>(
+      () => RevenueCatSubscriptionRemoteDataSource(
+        revenueCatGateway: sl<RevenueCatGateway>(),
+        account: sl<Account>(),
+        envConfig: sl<EnvConfig>(),
+        logger: sl<AppLogger>(),
+      ),
+    )
+    ..registerLazySingleton<SubscriptionRepository>(
+      () => SubscriptionRepositoryImpl(sl<SubscriptionRemoteDataSource>()),
+    )
+    ..registerLazySingleton<GetSubscriptionStatusUseCase>(
+      () => GetSubscriptionStatusUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton<GetSubscriptionOfferingUseCase>(
+      () => GetSubscriptionOfferingUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton<PurchaseSubscriptionUseCase>(
+      () => PurchaseSubscriptionUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton<RestorePurchasesUseCase>(
+      () => RestorePurchasesUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerFactory<SubscriptionCubit>(
+      () => SubscriptionCubit(
+        getSubscriptionStatusUseCase: sl<GetSubscriptionStatusUseCase>(),
+        getSubscriptionOfferingUseCase: sl<GetSubscriptionOfferingUseCase>(),
+        purchaseSubscriptionUseCase: sl<PurchaseSubscriptionUseCase>(),
+        restorePurchasesUseCase: sl<RestorePurchasesUseCase>(),
+      ),
+    );
+}
+
+void _registerSubscriptionFeature() {
+  sl
+    ..registerLazySingleton<RevenueCatGateway>(
+      () => const PurchasesRevenueCatGateway(),
+    )
+    ..registerLazySingleton<SubscriptionRemoteDataSource>(
+      () => RevenueCatSubscriptionRemoteDataSource(
+        revenueCatGateway: sl<RevenueCatGateway>(),
+        account: sl<Account>(),
+        envConfig: sl<EnvConfig>(),
+        logger: sl<AppLogger>(),
+      ),
+    )
+    ..registerLazySingleton<SubscriptionRepository>(
+      () => SubscriptionRepositoryImpl(sl<SubscriptionRemoteDataSource>()),
+    )
+    ..registerLazySingleton<GetSubscriptionStatusUseCase>(
+      () => GetSubscriptionStatusUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton<GetSubscriptionOfferingUseCase>(
+      () => GetSubscriptionOfferingUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton<PurchaseSubscriptionUseCase>(
+      () => PurchaseSubscriptionUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerLazySingleton<RestorePurchasesUseCase>(
+      () => RestorePurchasesUseCase(sl<SubscriptionRepository>()),
+    )
+    ..registerFactory<SubscriptionCubit>(
+      () => SubscriptionCubit(
+        getSubscriptionStatusUseCase: sl<GetSubscriptionStatusUseCase>(),
+        getSubscriptionOfferingUseCase: sl<GetSubscriptionOfferingUseCase>(),
+        purchaseSubscriptionUseCase: sl<PurchaseSubscriptionUseCase>(),
+        restorePurchasesUseCase: sl<RestorePurchasesUseCase>(),
+      ),
     );
 }
