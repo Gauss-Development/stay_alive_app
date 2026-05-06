@@ -5,12 +5,12 @@ class UserProfile extends Equatable {
   const UserProfile({
     required this.id,
     required this.email,
-    required this.name,
-    required this.age,
+    required this.displayName,
+    this.age,
     this.gender,
     this.preferredDiet,
     this.heightCm,
-    required this.weightKg,
+    this.weightKg,
     this.onboardingCompleted = false,
     this.unitsPreference,
     this.locale,
@@ -21,12 +21,12 @@ class UserProfile extends Equatable {
   /// Document `$id` (typically the same as the Auth user id).
   final String id;
   final String email;
-  final String name;
-  final int age;
+  final String displayName;
+  final int? age;
   final String? gender;
   final String? preferredDiet;
   final int? heightCm;
-  final double weightKg;
+  final double? weightKg;
   final bool onboardingCompleted;
   final String? unitsPreference;
   final String? locale;
@@ -37,7 +37,7 @@ class UserProfile extends Equatable {
   List<Object?> get props => <Object?>[
         id,
         email,
-        name,
+        displayName,
         age,
         gender,
         preferredDiet,

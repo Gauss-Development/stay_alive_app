@@ -21,6 +21,13 @@ class EnvConfig extends Equatable {
     required this.subscriptionsCollectionId,
     required this.analyticsEventsCollectionId,
     required this.educationalContentCollectionId,
+    required this.gamificationProfilesCollectionId,
+    required this.gamificationEventsCollectionId,
+    required this.widgetAppGroupId,
+    required this.revenueCatAndroidApiKey,
+    required this.revenueCatIosApiKey,
+    required this.revenueCatEntitlementId,
+    required this.revenueCatOfferingId,
     required this.avatarsBucketId,
     required this.userUploadsBucketId,
     required this.contentAssetsBucketId,
@@ -38,6 +45,13 @@ class EnvConfig extends Equatable {
   final String subscriptionsCollectionId;
   final String analyticsEventsCollectionId;
   final String educationalContentCollectionId;
+  final String gamificationProfilesCollectionId;
+  final String gamificationEventsCollectionId;
+  final String widgetAppGroupId;
+  final String revenueCatAndroidApiKey;
+  final String revenueCatIosApiKey;
+  final String revenueCatEntitlementId;
+  final String revenueCatOfferingId;
   final String avatarsBucketId;
   final String userUploadsBucketId;
   final String contentAssetsBucketId;
@@ -89,6 +103,34 @@ class EnvConfig extends Equatable {
       educationalContentCollectionId: _str(
         'APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID',
         'educational_content',
+      ),
+      gamificationProfilesCollectionId: _str(
+        'APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID',
+        'gamification_profiles',
+      ),
+      gamificationEventsCollectionId: _str(
+        'APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID',
+        'gamification_events',
+      ),
+      widgetAppGroupId: _str(
+        'DAILY_GOAL_WIDGET_APP_GROUP_ID',
+        'group.com.example.stayAlive',
+      ),
+      revenueCatAndroidApiKey: _str(
+        'REVENUECAT_ANDROID_API_KEY',
+        'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
+      ),
+      revenueCatIosApiKey: _str(
+        'REVENUECAT_IOS_API_KEY',
+        'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
+      ),
+      revenueCatEntitlementId: _str(
+        'REVENUECAT_ENTITLEMENT_ID',
+        'premium',
+      ),
+      revenueCatOfferingId: _str(
+        'REVENUECAT_OFFERING_ID',
+        'default',
       ),
       avatarsBucketId: _str(
         'APPWRITE_AVATARS_BUCKET_ID',
@@ -150,6 +192,13 @@ class EnvConfig extends Equatable {
         subscriptionsCollectionId,
         analyticsEventsCollectionId,
         educationalContentCollectionId,
+        gamificationProfilesCollectionId,
+        gamificationEventsCollectionId,
+        widgetAppGroupId,
+        revenueCatAndroidApiKey,
+        revenueCatIosApiKey,
+        revenueCatEntitlementId,
+        revenueCatOfferingId,
         avatarsBucketId,
         userUploadsBucketId,
         contentAssetsBucketId,

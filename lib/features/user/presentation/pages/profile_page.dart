@@ -38,21 +38,32 @@ class _ProfilePageState extends State<ProfilePage> {
           }
 
           final profile = state.profile;
+          final String weightText = profile.weightKg == null
+              ? '—'
+              : '${profile.weightKg!.toStringAsFixed(1)} kg';
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
-              Text(profile.name, style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                profile.displayName,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: 8),
               Text(profile.email),
               const SizedBox(height: 16),
-              Text('Age: ${profile.age}'),
-              Text('Weight: ${profile.weightKg} kg'),
-              if (profile.heightCm != null) Text('Height: ${profile.heightCm} cm'),
+              Text('Age: ${profile.age?.toString() ?? '—'}'),
+              Text('Weight: $weightText'),
+              if (profile.heightCm != null)
+                Text('Height: ${profile.heightCm} cm'),
               if (profile.gender != null) Text('Gender: ${profile.gender}'),
-              if (profile.preferredDiet != null) Text('Diet: ${profile.preferredDiet}'),
-              Text('Locale: ${profile.locale ?? '—'}'),
-              Text('Units: ${profile.unitsPreference ?? '—'}'),
-              Text('Onboarding completed: ${profile.onboardingCompleted ? 'Yes' : 'No'}'),
+              if (profile.preferredDiet != null)
+                Text('Diet: ${profile.preferredDiet}'),
+              Text('Locale: ${profile.locale}'),
+              Text('Units: ${profile.unitsPreference}'),
+              Text(
+                'Onboarding completed: '
+                '${profile.onboardingCompleted ? 'Yes' : 'No'}',
+              ),
             ],
           );
         },

@@ -5,12 +5,12 @@ class UserProfileModel extends UserProfile {
   const UserProfileModel({
     required super.id,
     required super.email,
-    required super.name,
-    required super.age,
+    required super.displayName,
+    super.age,
     super.gender,
     super.preferredDiet,
     super.heightCm,
-    required super.weightKg,
+    super.weightKg,
     super.onboardingCompleted,
     super.unitsPreference,
     super.locale,
@@ -19,23 +19,56 @@ class UserProfileModel extends UserProfile {
   });
 
   factory UserProfileModel.fromDocument(appwrite_models.Document document) {
-    final Map<String, dynamic> m = document.data;
-
-    return UserProfileModel(
+    return UserProfileModel.fromData(
       id: document.$id,
-      email: m['email']?.toString() ?? '',
-      name: m['name']?.toString() ?? '',
-      age: _readInt(m['age'], field: 'age'),
-      gender: _readOptionalString(m['gender']),
-      preferredDiet: _readOptionalString(m['preferredDiet']),
-      heightCm: _readOptionalInt(m['heightCm']),
-      weightKg: _readDouble(m['weightKg'], field: 'weightKg'),
-      onboardingCompleted: m['onboardingCompleted'] == true,
-      unitsPreference: _readOptionalString(m['unitsPreference']),
-      locale: _readOptionalString(m['locale']),
-      createdAt: DateTime.tryParse(document.$createdAt),
-      updatedAt: DateTime.tryParse(document.$updatedAt),
+      data: document.data,
+      createdAt: document.$createdAt,
+      updatedAt: document.$updatedAt,
     );
+  }
+
+  factory UserProfileModel.fromData({
+    required String id,
+    required Map<String, dynamic> data,
+    String? createdAt,
+    String? updatedAt,
+  }) {
+    return UserProfileModel(
+      id: id,
+      email: data['email']?.toString() ?? '',
+      displayName: _readString(
+        data['display_name'] ?? data['name'],
+        fallback: '',
+      ),
+      age: _readOptionalInt(data['age']),
+      gender: _readOptionalString(data['gender']),
+      preferredDiet: _readOptionalString(
+        data['preferred_diet'] ?? data['preferredDiet'],
+      ),
+      heightCm: _readOptionalInt(data['height_cm'] ?? data['heightCm']),
+      weightKg: _readOptionalDouble(data['weight_kg'] ?? data['weightKg']),
+      onboardingCompleted:
+          (data['onboarding_completed'] ?? data['onboardingCompleted']) ==
+              true,
+      unitsPreference: _readOptionalString(
+        data['units_preference'] ?? data['unitsPreference'],
+      ),
+      locale: _readOptionalString(data['locale']),
+      createdAt: DateTime.tryParse(
+        _readString(data['created_at'], fallback: createdAt ?? ''),
+      ),
+      updatedAt: DateTime.tryParse(
+        _readString(data['updated_at'], fallback: updatedAt ?? ''),
+      ),
+    );
+  }
+
+  static String _readString(dynamic value, {required String fallback}) {
+    if (value == null) {
+      return fallback;
+    }
+    final String text = value.toString().trim();
+    return text.isEmpty ? fallback : text;
   }
 
   static String? _readOptionalString(dynamic value) {
@@ -44,16 +77,6 @@ class UserProfileModel extends UserProfile {
     }
     final String s = value.toString();
     return s.isEmpty ? null : s;
-  }
-
-  static int _readInt(dynamic value, {required String field}) {
-    if (value is int) {
-      return value;
-    }
-    if (value is num) {
-      return value.toInt();
-    }
-    throw FormatException('Invalid int for $field: $value');
   }
 
   static int? _readOptionalInt(dynamic value) {
@@ -69,7 +92,10 @@ class UserProfileModel extends UserProfile {
     return null;
   }
 
-  static double _readDouble(dynamic value, {required String field}) {
+  static double? _readOptionalDouble(dynamic value) {
+    if (value == null) {
+      return null;
+    }
     if (value is double) {
       return value;
     }
@@ -79,6 +105,6 @@ class UserProfileModel extends UserProfile {
     if (value is num) {
       return value.toDouble();
     }
-    throw FormatException('Invalid double for $field: $value');
+    return null;
   }
 }

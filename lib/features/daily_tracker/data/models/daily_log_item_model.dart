@@ -1,3 +1,5 @@
+import 'package:appwrite/models.dart' as appwrite_models;
+import 'package:stay_alive/features/daily_tracker/data/models/tracker_category_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
 
@@ -26,6 +28,45 @@ class DailyLogItemModel extends DailyLogItem {
       completedCount: json['completedCount'] as int,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? '') ?? now,
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? '') ?? now,
+    );
+  }
+
+  factory DailyLogItemModel.fromDocument({
+    required appwrite_models.Document document,
+    required TrackerCategory category,
+  }) {
+    final Map<String, dynamic> data = document.data;
+    final DateTime now = DateTime.now().toUtc();
+    return DailyLogItemModel(
+      id: document.$id,
+      category: category,
+      completedCount: (data['completed_count'] as num?)?.toInt() ?? 0,
+      createdAt: DateTime.tryParse(data['created_at']?.toString() ?? '') ??
+          DateTime.tryParse(document.$createdAt) ??
+          now,
+      updatedAt: DateTime.tryParse(data['updated_at']?.toString() ?? '') ??
+          DateTime.tryParse(document.$updatedAt) ??
+          now,
+    );
+  }
+
+  factory DailyLogItemModel.fromDocumentWithoutCategory(
+    appwrite_models.Document document,
+  ) {
+    final Map<String, dynamic> data = document.data;
+    return DailyLogItemModel.fromDocument(
+      document: document,
+      category: TrackerCategoryModel(
+        id: data['category_id']?.toString() ?? '',
+        title: data['category_title']?.toString() ??
+            data['category_id']?.toString() ??
+            'Category',
+        description: data['description']?.toString() ?? '',
+        targetCount: (data['target_count'] as num?)?.toInt() ?? 0,
+        displayOrder: (data['display_order'] as num?)?.toInt() ?? 0,
+        iconKey: data['icon_key']?.toString() ?? 'default',
+        isActive: data['is_active'] as bool? ?? true,
+      ),
     );
   }
 
@@ -68,6 +109,34 @@ class DailyLogItemModel extends DailyLogItem {
       'iconKey': category.iconKey,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toCreateData({
+    required String logId,
+    required String userId,
+  }) {
+    return <String, dynamic>{
+      'item_id': id,
+      'log_id': logId,
+      'user_id': userId,
+      'category_id': category.id,
+      'category_title': category.title,
+      'description': category.description,
+      'target_count': targetCount,
+      'display_order': category.displayOrder,
+      'icon_key': category.iconKey,
+      'is_active': category.isActive,
+      'completed_count': completedCount,
+      'created_at': createdAt.toUtc().toIso8601String(),
+      'updated_at': updatedAt.toUtc().toIso8601String(),
+    };
+  }
+
+  Map<String, dynamic> toUpdateData() {
+    return <String, dynamic>{
+      'completed_count': completedCount,
+      'updated_at': updatedAt.toUtc().toIso8601String(),
     };
   }
 }
