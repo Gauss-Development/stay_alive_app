@@ -23,6 +23,7 @@ class EnvConfig extends Equatable {
     required this.educationalContentCollectionId,
     required this.gamificationProfilesCollectionId,
     required this.gamificationEventsCollectionId,
+    required this.widgetAppGroupId,
     required this.avatarsBucketId,
     required this.userUploadsBucketId,
     required this.contentAssetsBucketId,
@@ -42,6 +43,7 @@ class EnvConfig extends Equatable {
   final String educationalContentCollectionId;
   final String gamificationProfilesCollectionId;
   final String gamificationEventsCollectionId;
+  final String widgetAppGroupId;
   final String avatarsBucketId;
   final String userUploadsBucketId;
   final String contentAssetsBucketId;
@@ -101,6 +103,10 @@ class EnvConfig extends Equatable {
       gamificationEventsCollectionId: _str(
         'APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID',
         'gamification_events',
+      ),
+      widgetAppGroupId: _str(
+        'DAILY_GOAL_WIDGET_APP_GROUP_ID',
+        'group.com.example.stayAlive',
       ),
       avatarsBucketId: _str(
         'APPWRITE_AVATARS_BUCKET_ID',
@@ -164,6 +170,7 @@ class EnvConfig extends Equatable {
         educationalContentCollectionId,
         gamificationProfilesCollectionId,
         gamificationEventsCollectionId,
+        widgetAppGroupId,
         avatarsBucketId,
         userUploadsBucketId,
         contentAssetsBucketId,

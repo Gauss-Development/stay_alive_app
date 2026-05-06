@@ -5,6 +5,7 @@ import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/logger/logger_service.dart';
 import 'package:stay_alive/core/network/network_service.dart';
 import 'package:stay_alive/core/services/appwrite_client_provider.dart';
+import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:stay_alive/features/auth/data/repositories_impl/auth_repository_impl.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
@@ -69,7 +70,17 @@ void _registerCore() {
       () => AppwriteClientProvider(sl<EnvConfig>()).build(),
     )
     ..registerLazySingleton<Account>(() => Account(sl<Client>()))
-    ..registerLazySingleton<Databases>(() => Databases(sl<Client>()));
+    ..registerLazySingleton<Databases>(() => Databases(sl<Client>()))
+    ..registerLazySingleton<HomeWidgetGateway>(
+      () => const HomeWidgetPackageGateway(),
+    )
+    ..registerLazySingleton<DailyGoalWidgetService>(
+      () => DailyGoalWidgetService(
+        gateway: sl<HomeWidgetGateway>(),
+        envConfig: sl<EnvConfig>(),
+        logger: sl<AppLogger>(),
+      ),
+    );
 }
 
 void _registerAuthFeature() {

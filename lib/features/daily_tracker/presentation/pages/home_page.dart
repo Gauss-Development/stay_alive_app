@@ -1,5 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stay_alive/core/di/injection_container.dart';
+import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/widgets/category_progress_tile.dart';
@@ -46,7 +50,10 @@ class _HomePageState extends State<HomePage> {
 
             if (state.status == DailyTrackerStatus.loaded &&
                 state.log != null) {
-              context.read<GamificationCubit>().refresh();
+              unawaited(context.read<GamificationCubit>().refresh());
+              unawaited(
+                sl<DailyGoalWidgetService>().updateDailyGoal(log: state.log!),
+              );
             }
           },
           builder: (BuildContext context, DailyTrackerState state) {
