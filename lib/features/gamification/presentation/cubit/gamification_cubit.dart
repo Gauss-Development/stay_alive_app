@@ -19,4 +19,12 @@ class GamificationCubit extends Cubit<GamificationState> {
       (progress) => emit(GamificationLoaded(progress)),
     );
   }
+
+  Future<void> refresh() async {
+    final result = await _getGamificationProgressUseCase(const NoParams());
+    result.fold(
+      (failure) => emit(GamificationError(failure.message)),
+      (progress) => emit(GamificationLoaded(progress)),
+    );
+  }
 }
