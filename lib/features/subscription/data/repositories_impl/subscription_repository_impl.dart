@@ -10,7 +10,7 @@ import 'package:stay_alive/features/subscription/domain/repositories/subscriptio
 class SubscriptionRepositoryImpl implements SubscriptionRepository {
   const SubscriptionRepositoryImpl(this._dataSource);
 
-  final SubscriptionDataSource _dataSource;
+  final SubscriptionRemoteDataSource _dataSource;
 
   @override
   Future<Result<SubscriptionInfo>> getSubscriptionInfo() async {

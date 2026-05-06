@@ -223,7 +223,7 @@ class RevenueCatSubscriptionRemoteDataSource
 
   SubscriptionPackage _mapPackage(Package package) {
     final SubscriptionPlan plan = SubscriptionPlan.fromRevenueCatIdentifier(
-      '${package.identifier} ${package.packageType.name} '
+      '${package.identifier} ${package.packageType} '
       '${package.storeProduct.identifier}',
     );
     return SubscriptionPackage(
