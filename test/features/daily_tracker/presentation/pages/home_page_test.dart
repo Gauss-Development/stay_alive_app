@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/completion_summary.dart';
@@ -28,6 +29,7 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
   _FakeDailyGoalWidgetService()
       : super(
           envConfig: const EnvConfig(
+            appFlavor: AppFlavor.development,
             appwriteEndpoint: '',
             appwriteProjectId: '',
             appwriteProjectName: '',

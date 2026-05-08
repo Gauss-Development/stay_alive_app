@@ -63,6 +63,8 @@ flutter:
 
   assets:
     - assets/env/app.env.example
+    - assets/env/app.dev.env
+    - assets/env/app.prod.env
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

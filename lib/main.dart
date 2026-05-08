@@ -1,13 +1,9 @@
-import 'package:flutter/material.dart';
-import 'package:stay_alive/app.dart';
-import 'package:stay_alive/core/di/injection_container.dart';
-import 'package:stay_alive/core/env/load_env.dart';
-import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
+import 'package:stay_alive/bootstrap.dart';
+import 'package:stay_alive/core/config/app_flavor.dart';
 
-Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await loadEnvFiles();
-  await configureDependencies();
-  await sl<DailyGoalWidgetService>().initialize();
-  runApp(const DailyDozenApp());
-}
+/// Default entrypoint for backwards compatibility (development).
+///
+/// Prefer explicit targets:
+/// - `lib/main_dev.dart` with `--flavor dev`
+/// - `lib/main_prod.dart` with `--flavor prod`
+Future<void> main() => bootstrap(AppFlavor.development);

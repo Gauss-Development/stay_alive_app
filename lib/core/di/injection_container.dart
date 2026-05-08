@@ -1,5 +1,6 @@
 import 'package:appwrite/appwrite.dart';
 import 'package:get_it/get_it.dart';
+import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/logger/logger_service.dart';
@@ -59,7 +60,9 @@ import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.d
 
 final GetIt sl = GetIt.instance;
 
-Future<void> configureDependencies() async {
+Future<void> configureDependencies(AppFlavor flavor) async {
+  await sl.reset();
+  sl.registerSingleton<AppFlavor>(flavor);
   _registerCore();
   _registerAuthFeature();
   _registerDailyTrackerFeature();
@@ -72,7 +75,7 @@ Future<void> configureDependencies() async {
 
 void _registerCore() {
   sl
-    ..registerLazySingleton<EnvConfig>(EnvConfig.fromEnv)
+    ..registerLazySingleton<EnvConfig>(() => EnvConfig.fromEnv(sl<AppFlavor>()))
     ..registerLazySingleton<AppLogger>(() => const LoggerService())
     ..registerLazySingleton<NetworkService>(() => const DefaultNetworkService())
     ..registerLazySingleton<Client>(

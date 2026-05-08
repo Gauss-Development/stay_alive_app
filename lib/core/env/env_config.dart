@@ -1,15 +1,17 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:stay_alive/core/config/app_flavor.dart';
 
 /// Unified Appwrite / app configuration.
 ///
 /// Values are resolved in order:
 /// 1. `--dart-define=KEY=value` (CI / flavors)
-/// 2. `assets/env/app.env` (optional; gitignored — use for secrets / local overrides)
-/// 3. `assets/env/app.env.example` (committed defaults) if .env was missing or empty
-/// 4. Hardcoded fallbacks in this file
+/// 2. `assets/env/app.env` (optional; gitignored — load via [loadEnvForFlavor])
+/// 3. `assets/env/app.dev.env` or `assets/env/app.prod.env` (per [AppFlavor])
+/// 4. `assets/env/app.env.example` (committed defaults)
 class EnvConfig extends Equatable {
   const EnvConfig({
+    required this.appFlavor,
     required this.appwriteEndpoint,
     required this.appwriteProjectId,
     required this.appwriteProjectName,
@@ -34,6 +36,7 @@ class EnvConfig extends Equatable {
     required this.allowSelfSigned,
   });
 
+  final AppFlavor appFlavor;
   final String appwriteEndpoint;
   final String appwriteProjectId;
   final String appwriteProjectName;
@@ -57,9 +60,10 @@ class EnvConfig extends Equatable {
   final String contentAssetsBucketId;
   final bool allowSelfSigned;
 
-  /// Call after [loadEnvFiles] has run in [main].
-  factory EnvConfig.fromEnv() {
+  /// Call after [loadEnvForFlavor] has run in [bootstrap].
+  factory EnvConfig.fromEnv(AppFlavor flavor) {
     return EnvConfig(
+      appFlavor: flavor,
       appwriteEndpoint: _str(
         'APPWRITE_ENDPOINT',
         'https://sfo.cloud.appwrite.io/v1',
@@ -181,6 +185,7 @@ class EnvConfig extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+        appFlavor,
         appwriteEndpoint,
         appwriteProjectId,
         appwriteProjectName,

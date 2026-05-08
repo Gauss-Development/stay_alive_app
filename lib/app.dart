@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/di/injection_container.dart';
 import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/app_startup_cubit.dart';
@@ -14,7 +15,9 @@ import 'package:stay_alive/router.dart';
 import 'package:stay_alive/shared/theme/app_theme.dart';
 
 class DailyDozenApp extends StatefulWidget {
-  const DailyDozenApp({super.key});
+  DailyDozenApp({required this.flavor, super.key});
+
+  final AppFlavor flavor;
 
   @override
   State<DailyDozenApp> createState() => _DailyDozenAppState();
@@ -66,7 +69,7 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
       ],
       child: MaterialApp.router(
         title: 'Daily Dozen',
-        debugShowCheckedModeBanner: false,
+        debugShowCheckedModeBanner: widget.flavor.isDevelopment,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
         routerConfig: _router,
