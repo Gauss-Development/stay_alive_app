@@ -15,7 +15,7 @@ import 'package:stay_alive/router.dart';
 import 'package:stay_alive/shared/theme/app_theme.dart';
 
 class DailyDozenApp extends StatefulWidget {
-  DailyDozenApp({required this.flavor, super.key});
+  const DailyDozenApp({required this.flavor, super.key});
 
   final AppFlavor flavor;
 

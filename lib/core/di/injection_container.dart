@@ -12,6 +12,7 @@ import 'package:stay_alive/features/auth/data/repositories_impl/auth_repository_
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
 import 'package:stay_alive/features/auth/domain/usecases/check_session_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/complete_onboarding_usecase.dart';
+import 'package:stay_alive/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_email_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_oauth_usecase.dart';
@@ -131,6 +132,9 @@ void _registerAuthFeature() {
     ..registerLazySingleton<CompleteOnboardingUseCase>(
       () => CompleteOnboardingUseCase(sl<AuthRepository>()),
     )
+    ..registerLazySingleton<DeleteAccountUseCase>(
+      () => DeleteAccountUseCase(sl<AuthRepository>()),
+    )
     ..registerFactory<AuthCubit>(
       () => AuthCubit(
         loginWithEmailUseCase: sl<LoginWithEmailUseCase>(),
@@ -139,6 +143,7 @@ void _registerAuthFeature() {
         logoutUseCase: sl<LogoutUseCase>(),
         loginWithOAuthUseCase: sl<LoginWithOAuthUseCase>(),
         completeOnboardingUseCase: sl<CompleteOnboardingUseCase>(),
+        deleteAccountUseCase: sl<DeleteAccountUseCase>(),
         logger: sl<AppLogger>(),
       ),
     )

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
+import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 
@@ -101,4 +102,8 @@ const EnvConfig _envConfig = EnvConfig(
   userUploadsBucketId: '',
   contentAssetsBucketId: '',
   allowSelfSigned: false,
+  revenueCatApiKeyIos: '',
+  revenueCatApiKeyAndroid: '',
+  sentryDsn: '',
+  sentryEnvironment: 'test',
 );

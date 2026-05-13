@@ -1,8 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:stay_alive/features/subscription/domain/entities/subscription_info.dart';
 import 'package:stay_alive/features/subscription/domain/entities/subscription_offering.dart';
+import 'package:stay_alive/features/subscription/domain/entities/subscription_package.dart';
 
-enum SubscriptionStatus {
+enum SubscriptionViewStatus {
   initial,
   loading,
   loaded,
@@ -21,13 +22,13 @@ class SubscriptionState extends Equatable {
   });
 
   const SubscriptionState.initial()
-      : status = SubscriptionStatus.initial,
+      : status = SubscriptionViewStatus.initial,
         info = const SubscriptionInfo.free(),
         offering = const SubscriptionOffering.empty(),
         errorMessage = null,
         selectedPackageId = null;
 
-  final SubscriptionStatus status;
+  final SubscriptionViewStatus status;
   final SubscriptionInfo info;
   final SubscriptionOffering offering;
   final String? errorMessage;
@@ -35,8 +36,12 @@ class SubscriptionState extends Equatable {
 
   bool get isPremiumActive => info.isPremiumActive;
 
+  SubscriptionPackage? get selectedPackage => selectedPackageId == null
+      ? null
+      : offering.packageForId(selectedPackageId!);
+
   SubscriptionState copyWith({
-    SubscriptionStatus? status,
+    SubscriptionViewStatus? status,
     SubscriptionInfo? info,
     SubscriptionOffering? offering,
     String? errorMessage,

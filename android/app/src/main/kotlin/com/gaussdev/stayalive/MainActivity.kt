@@ -1,4 +1,4 @@
-package com.example.stay_alive
+package com.gaussdev.stayalive
 
 import io.flutter.embedding.android.FlutterActivity
 

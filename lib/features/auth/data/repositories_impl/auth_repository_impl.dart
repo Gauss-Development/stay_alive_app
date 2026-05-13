@@ -135,6 +135,21 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<void>> deleteAccount() async {
+    try {
+      await _remoteDataSource.deleteAccount();
+      return const Right<Failure, void>(null);
+    } catch (exception, stackTrace) {
+      _logger.error(
+        'Failed to delete account.',
+        error: exception,
+        stackTrace: stackTrace,
+      );
+      return Left<Failure, void>(mapExceptionToFailure(exception));
+    }
+  }
+
+  @override
   Future<Result<AuthUser>> markOnboardingCompleted() async {
     try {
       final AuthUser user = await _remoteDataSource.updatePreferences(

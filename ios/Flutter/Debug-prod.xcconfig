@@ -1,3 +1,3 @@
 #include "Debug.xcconfig"
-PRODUCT_BUNDLE_IDENTIFIER=com.example.stayAlive
+PRODUCT_BUNDLE_IDENTIFIER=com.gaussdev.stayalive
 APP_DISPLAY_NAME=Stay Alive

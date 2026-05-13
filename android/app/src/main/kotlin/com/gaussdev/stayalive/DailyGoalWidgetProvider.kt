@@ -1,4 +1,4 @@
-package com.example.stay_alive
+package com.gaussdev.stayalive
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

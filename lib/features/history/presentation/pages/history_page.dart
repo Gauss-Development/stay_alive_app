@@ -36,8 +36,8 @@ class _HistoryPageState extends State<HistoryPage> {
           context.read<HistoryCubit>().load();
         },
         builder: (BuildContext context, SubscriptionState subscriptionState) {
-          if (subscriptionState.status == SubscriptionStatus.initial ||
-              subscriptionState.status == SubscriptionStatus.loading) {
+          if (subscriptionState.status == SubscriptionViewStatus.initial ||
+              subscriptionState.status == SubscriptionViewStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           }
 

@@ -36,11 +36,9 @@ class AppStartupState extends Equatable {
         message = null;
 
   const AppStartupState.ready({
-    required StartupDestination destination,
-    AuthUser? user,
+    required this.destination,
+    this.user,
   })  : status = StartupStatus.ready,
-        destination = destination,
-        user = user,
         message = null;
 
   const AppStartupState.unauthenticated()

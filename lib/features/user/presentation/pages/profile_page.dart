@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
+import 'package:stay_alive/features/auth/presentation/cubit/auth_state.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_state.dart';
 
@@ -64,10 +66,77 @@ class _ProfilePageState extends State<ProfilePage> {
                 'Onboarding completed: '
                 '${profile.onboardingCompleted ? 'Yes' : 'No'}',
               ),
+              const SizedBox(height: 32),
+              const Divider(),
+              const SizedBox(height: 16),
+              const _DeleteAccountButton(),
             ],
           );
         },
       ),
     );
+  }
+}
+
+class _DeleteAccountButton extends StatelessWidget {
+  const _DeleteAccountButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (AuthState previous, AuthState current) =>
+          previous != current &&
+          (current is AuthError || current is AuthUnauthenticated),
+      listener: (BuildContext context, AuthState state) {
+        if (state is AuthError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Could not delete account: ${state.message}')),
+          );
+        }
+      },
+      child: OutlinedButton.icon(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colors.error,
+          side: BorderSide(color: colors.error),
+          minimumSize: const Size.fromHeight(48),
+        ),
+        icon: const Icon(Icons.delete_forever_outlined),
+        label: const Text('Delete account'),
+        onPressed: () => _confirm(context),
+      ),
+    );
+  }
+
+  Future<void> _confirm(BuildContext context) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        final ColorScheme colors = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          title: const Text('Delete your account?'),
+          content: const Text(
+            'This permanently deletes your profile, daily logs, history, '
+            'gamification progress, and subscription record. This cannot be '
+            'undone.\n\nActive App Store / Play Store subscriptions are not '
+            'cancelled by deleting the account — manage them in your store '
+            'subscription settings.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: colors.error),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !context.mounted) return;
+    await context.read<AuthCubit>().deleteAccount();
   }
 }

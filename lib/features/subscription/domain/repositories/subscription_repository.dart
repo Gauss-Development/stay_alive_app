@@ -3,7 +3,7 @@ import 'package:stay_alive/features/subscription/domain/entities/subscription_in
 import 'package:stay_alive/features/subscription/domain/entities/subscription_offering.dart';
 
 abstract class SubscriptionRepository {
-  Future<Result<SubscriptionInfo>> getSubscriptionInfo();
+  Future<Result<SubscriptionInfo>> getSubscriptionStatus();
 
   Future<Result<SubscriptionOffering>> getOffering();
 

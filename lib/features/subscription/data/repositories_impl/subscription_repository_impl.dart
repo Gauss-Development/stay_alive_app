@@ -13,9 +13,9 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
   final SubscriptionRemoteDataSource _dataSource;
 
   @override
-  Future<Result<SubscriptionInfo>> getSubscriptionInfo() async {
+  Future<Result<SubscriptionInfo>> getSubscriptionStatus() async {
     try {
-      final SubscriptionInfo info = await _dataSource.getSubscriptionInfo();
+      final SubscriptionInfo info = await _dataSource.getSubscriptionStatus();
       return Right<Failure, SubscriptionInfo>(info);
     } catch (exception) {
       return Left<Failure, SubscriptionInfo>(mapExceptionToFailure(exception));

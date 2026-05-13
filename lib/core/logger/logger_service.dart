@@ -1,5 +1,6 @@
 import 'dart:developer' as developer;
 
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 
 class LoggerService implements AppLogger {
@@ -37,6 +38,15 @@ class LoggerService implements AppLogger {
       error: error,
       stackTrace: stackTrace,
     );
+    Sentry.addBreadcrumb(
+      Breadcrumb(
+        level: SentryLevel.warning,
+        message: message,
+        data: data?.map<String, Object?>(
+          (String key, Object? value) => MapEntry<String, Object?>(key, value),
+        ),
+      ),
+    );
   }
 
   @override
@@ -53,6 +63,28 @@ class LoggerService implements AppLogger {
       error: error,
       stackTrace: stackTrace,
     );
+    if (error != null) {
+      Sentry.captureException(
+        error,
+        stackTrace: stackTrace,
+        withScope: (Scope scope) {
+          scope.setContexts('message', message);
+          if (data != null) {
+            scope.setContexts('data', data);
+          }
+        },
+      );
+    } else {
+      Sentry.captureMessage(
+        message,
+        level: SentryLevel.error,
+        withScope: (Scope scope) {
+          if (data != null) {
+            scope.setContexts('data', data);
+          }
+        },
+      );
+    }
   }
 
   String _composeMessage(String message, Map<String, Object?>? data) {

@@ -32,10 +32,10 @@ void main() {
       );
 
       expect(progress.userId, 'user_1');
-      expect(progress.xp, 445);
-      expect(progress.level, 5);
-      expect(progress.currentLevelXp, 400);
-      expect(progress.nextLevelXp, 500);
+      expect(progress.xp, 505);
+      expect(progress.level, 6);
+      expect(progress.currentLevelXp, 500);
+      expect(progress.nextLevelXp, 600);
       expect(progress.bestStreak, 2);
       expect(progress.completedDays, 3);
       expect(progress.badges, containsAll(<String>['first_log', 'perfect_day']));

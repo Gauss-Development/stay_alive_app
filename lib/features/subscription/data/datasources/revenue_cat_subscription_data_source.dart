@@ -58,8 +58,10 @@ class PurchasesRevenueCatGateway implements RevenueCatGateway {
   }
 
   @override
-  Future<CustomerInfo> purchasePackage(Package package) {
-    return Purchases.purchasePackage(package);
+  Future<CustomerInfo> purchasePackage(Package package) async {
+    final PurchaseResult result =
+        await Purchases.purchase(PurchaseParams.package(package));
+    return result.customerInfo;
   }
 
   @override
@@ -290,8 +292,6 @@ class RevenueCatSubscriptionRemoteDataSource
     switch (plan) {
       case SubscriptionPlan.free:
         return 'Free';
-      case SubscriptionPlan.weekly:
-        return 'Weekly';
       case SubscriptionPlan.monthly:
         return 'Monthly';
       case SubscriptionPlan.annual:
@@ -303,8 +303,6 @@ class RevenueCatSubscriptionRemoteDataSource
     switch (plan) {
       case SubscriptionPlan.free:
         return 'Track daily fruit and vegetable intake for free.';
-      case SubscriptionPlan.weekly:
-        return 'Try complete healthy-eating insights week by week.';
       case SubscriptionPlan.monthly:
         return 'Unlock full statistics and habit trends every month.';
       case SubscriptionPlan.annual:

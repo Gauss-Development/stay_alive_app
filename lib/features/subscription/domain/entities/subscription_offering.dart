@@ -7,6 +7,10 @@ class SubscriptionOffering extends Equatable {
     this.isConfigured = true,
   });
 
+  const SubscriptionOffering.empty()
+      : packages = const <SubscriptionPackage>[],
+        isConfigured = false;
+
   final List<SubscriptionPackage> packages;
   final bool isConfigured;
 

@@ -9,7 +9,7 @@
     android:padding="16dp">
 
     <TextView
-        android:id="@+id/daily_goal_widget_title"
+        android:id="@+id/daily_goal_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Daily Goal"
@@ -18,16 +18,22 @@
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/daily_goal_widget_progress_text"
+        android:id="@+id/daily_goal_date"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="#607D8B"
+        android:textSize="11sp" />
+
+    <TextView
+        android:id="@+id/daily_goal_counts"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="0 / 24 completed"
         android:textColor="#263238"
         android:textSize="14sp" />
 
     <ProgressBar
-        android:id="@+id/daily_goal_widget_progress_bar"
+        android:id="@+id/daily_goal_progress"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="10dp"
@@ -36,20 +42,18 @@
         android:progress="0" />
 
     <TextView
-        android:id="@+id/daily_goal_widget_percent_text"
+        android:id="@+id/daily_goal_percent"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="0%"
         android:textColor="#455A64"
         android:textSize="12sp" />
 
     <TextView
-        android:id="@+id/daily_goal_widget_subtitle"
+        android:id="@+id/daily_goal_meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Stay alive with healthy choices"
         android:textColor="#607D8B"
         android:textSize="11sp" />
 </LinearLayout>

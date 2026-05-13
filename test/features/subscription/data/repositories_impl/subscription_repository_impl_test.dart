@@ -19,11 +19,11 @@ void main() {
   });
 
   test('returns subscription info when datasource succeeds', () async {
-    when(dataSource.getSubscriptionInfo).thenAnswer(
+    when(dataSource.getSubscriptionStatus).thenAnswer(
       (_) async => const SubscriptionInfo.free(),
     );
 
-    final result = await repository.getSubscriptionInfo();
+    final result = await repository.getSubscriptionStatus();
 
     expect(result.isRight(), isTrue);
     result.fold(

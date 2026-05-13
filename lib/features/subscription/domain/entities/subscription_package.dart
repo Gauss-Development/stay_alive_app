@@ -18,6 +18,9 @@ class SubscriptionPackage extends Equatable {
   final String priceLabel;
   final String productIdentifier;
 
+  String get periodLabel => plan.periodLabel;
+  String get savingsLabel => plan.savingsLabel;
+
   @override
   List<Object?> get props => <Object?>[
         id,

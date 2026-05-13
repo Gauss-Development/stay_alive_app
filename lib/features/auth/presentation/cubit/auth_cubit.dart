@@ -1,9 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
 import 'package:stay_alive/features/auth/domain/usecases/complete_onboarding_usecase.dart';
+import 'package:stay_alive/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_email_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_oauth_usecase.dart';
@@ -19,6 +22,7 @@ class AuthCubit extends Cubit<AuthState> {
     required LogoutUseCase logoutUseCase,
     required LoginWithOAuthUseCase loginWithOAuthUseCase,
     required CompleteOnboardingUseCase completeOnboardingUseCase,
+    required DeleteAccountUseCase deleteAccountUseCase,
     required AppLogger logger,
   })  : _loginWithEmailUseCase = loginWithEmailUseCase,
         _signUpWithEmailUseCase = signUpWithEmailUseCase,
@@ -26,6 +30,7 @@ class AuthCubit extends Cubit<AuthState> {
         _logoutUseCase = logoutUseCase,
         _loginWithOAuthUseCase = loginWithOAuthUseCase,
         _completeOnboardingUseCase = completeOnboardingUseCase,
+        _deleteAccountUseCase = deleteAccountUseCase,
         _logger = logger,
         super(const AuthInitial());
 
@@ -35,6 +40,7 @@ class AuthCubit extends Cubit<AuthState> {
   final LogoutUseCase _logoutUseCase;
   final LoginWithOAuthUseCase _loginWithOAuthUseCase;
   final CompleteOnboardingUseCase _completeOnboardingUseCase;
+  final DeleteAccountUseCase _deleteAccountUseCase;
   final AppLogger _logger;
 
   Future<void> signInWithEmail({
@@ -114,6 +120,26 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
+  Future<void> deleteAccount() async {
+    emit(const AuthLoading());
+    final result = await _deleteAccountUseCase(const NoParams());
+    result.fold(
+      (failure) => emit(AuthError(failure.message)),
+      (_) {
+        try {
+          Purchases.logOut();
+        } catch (exception, stackTrace) {
+          _logger.warning(
+            'Failed to clear RevenueCat alias after account deletion.',
+            error: exception,
+            stackTrace: stackTrace,
+          );
+        }
+        emit(const AuthUnauthenticated());
+      },
+    );
+  }
+
   Future<void> _loadCurrentUserAndEmit() async {
     final userResult = await _getCurrentUserUseCase(const NoParams());
     userResult.fold(
@@ -132,5 +158,13 @@ class AuthCubit extends Cubit<AuthState> {
         'next': change.nextState.runtimeType.toString(),
       },
     );
+    final AuthState next = change.nextState;
+    if (next is AuthAuthenticated) {
+      Sentry.configureScope(
+        (Scope scope) => scope.setUser(SentryUser(id: next.user.id)),
+      );
+    } else if (next is AuthUnauthenticated) {
+      Sentry.configureScope((Scope scope) => scope.setUser(null));
+    }
   }
 }

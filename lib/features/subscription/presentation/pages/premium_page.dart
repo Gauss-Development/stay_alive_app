@@ -203,22 +203,33 @@ class _SubscriptionPanel extends StatelessWidget {
           if (state.isPremiumActive)
             const _PremiumActiveBanner()
           else ...<Widget>[
-            if (state.status == SubscriptionStatus.loading &&
+            if (state.status == SubscriptionViewStatus.loading &&
                 packages.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(24),
                 child: CircularProgressIndicator(),
               )
             else
-              ...packages.map(
-                (SubscriptionPackage package) => _PlanTile(
-                  package: package,
-                  isSelected: state.selectedPackageId == package.id,
-                  isBusy: state.status == SubscriptionStatus.purchasing &&
-                      state.selectedPackageId == package.id,
-                  onTap: () => context
-                      .read<SubscriptionCubit>()
-                      .selectPackage(package.id),
+              RadioGroup<String>(
+                groupValue: state.selectedPackageId,
+                onChanged: (String? value) {
+                  if (value != null) {
+                    context.read<SubscriptionCubit>().selectPackage(value);
+                  }
+                },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: packages
+                      .map(
+                        (SubscriptionPackage package) => _PlanTile(
+                          package: package,
+                          isSelected: state.selectedPackageId == package.id,
+                          isBusy: state.status ==
+                                  SubscriptionViewStatus.purchasing &&
+                              state.selectedPackageId == package.id,
+                        ),
+                      )
+                      .toList(growable: false),
                 ),
               ),
             const SizedBox(height: 12),
@@ -226,12 +237,12 @@ class _SubscriptionPanel extends StatelessWidget {
               width: double.infinity,
               child: FilledButton(
                 onPressed: state.selectedPackage == null ||
-                        state.status == SubscriptionStatus.purchasing
+                        state.status == SubscriptionViewStatus.purchasing
                     ? null
                     : () => context
                         .read<SubscriptionCubit>()
                         .purchaseSelectedPackage(),
-                child: state.status == SubscriptionStatus.purchasing
+                child: state.status == SubscriptionViewStatus.purchasing
                     ? const SizedBox(
                         width: 18,
                         height: 18,
@@ -245,7 +256,7 @@ class _SubscriptionPanel extends StatelessWidget {
               ),
             ),
             TextButton(
-              onPressed: state.status == SubscriptionStatus.restoring
+              onPressed: state.status == SubscriptionViewStatus.restoring
                   ? null
                   : () => context.read<SubscriptionCubit>().restore(),
               child: const Text('Restore purchases'),
@@ -270,13 +281,11 @@ class _PlanTile extends StatelessWidget {
     required this.package,
     required this.isSelected,
     required this.isBusy,
-    required this.onTap,
   });
 
   final SubscriptionPackage package;
   final bool isSelected;
   final bool isBusy;
-  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -294,8 +303,6 @@ class _PlanTile extends StatelessWidget {
       ),
       child: RadioListTile<String>(
         value: package.id,
-        groupValue: isSelected ? package.id : null,
-        onChanged: (_) => onTap(),
         title: Row(
           children: <Widget>[
             Expanded(child: Text(package.title)),

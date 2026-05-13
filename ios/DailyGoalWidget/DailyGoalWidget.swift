@@ -1,7 +1,7 @@
 import WidgetKit
 import SwiftUI
 
-private let appGroupId = "group.com.example.stayAlive"
+private let appGroupId = "group.com.gaussdev.stayalive"
 private let widgetKind = "DailyGoalWidget"
 
 struct DailyGoalEntry: TimelineEntry {

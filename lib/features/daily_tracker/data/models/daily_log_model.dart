@@ -50,6 +50,7 @@ class DailyLogModel extends DailyLog {
     );
   }
 
+  @override
   DailyLogModel copyWith({
     String? id,
     String? userId,

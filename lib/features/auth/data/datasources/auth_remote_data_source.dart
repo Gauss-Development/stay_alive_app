@@ -34,6 +34,8 @@ abstract class AuthRemoteDataSource {
   });
 
   Future<void> logout();
+
+  Future<void> deleteAccount();
 }
 
 class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
@@ -186,6 +188,84 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<void> logout() {
     _logger.info('Logging out active session');
     return _account.deleteSession(sessionId: 'current');
+  }
+
+  @override
+  Future<void> deleteAccount() async {
+    final appwrite_models.User user = await _account.get();
+    final String userId = user.$id;
+    _logger.info(
+      'Deleting account and user data',
+      data: <String, Object?>{'userId': userId},
+    );
+
+    final List<String> collectionsByUserId = <String>[
+      _envConfig.dailyLogsCollectionId,
+      _envConfig.dailyLogItemsCollectionId,
+      _envConfig.subscriptionsCollectionId,
+      _envConfig.analyticsEventsCollectionId,
+      _envConfig.gamificationProfilesCollectionId,
+      _envConfig.gamificationEventsCollectionId,
+    ];
+    for (final String collectionId in collectionsByUserId) {
+      await _deleteDocumentsByUserId(collectionId: collectionId, userId: userId);
+    }
+
+    await _deleteDocumentIfExists(
+      collectionId: _envConfig.usersCollectionId,
+      documentId: userId,
+    );
+
+    await _account.deleteSessions();
+  }
+
+  Future<void> _deleteDocumentsByUserId({
+    required String collectionId,
+    required String userId,
+  }) async {
+    while (true) {
+      final appwrite_models.DocumentList page = await _databases.listDocuments(
+        databaseId: _envConfig.appwriteDatabaseId,
+        collectionId: collectionId,
+        queries: <String>[
+          Query.equal('user_id', userId),
+          Query.limit(100),
+        ],
+      );
+      if (page.documents.isEmpty) {
+        return;
+      }
+      for (final appwrite_models.Document document in page.documents) {
+        try {
+          await _databases.deleteDocument(
+            databaseId: _envConfig.appwriteDatabaseId,
+            collectionId: collectionId,
+            documentId: document.$id,
+          );
+        } on AppwriteException catch (exception) {
+          if (exception.code != 404) {
+            rethrow;
+          }
+        }
+      }
+    }
+  }
+
+  Future<void> _deleteDocumentIfExists({
+    required String collectionId,
+    required String documentId,
+  }) async {
+    try {
+      await _databases.deleteDocument(
+        databaseId: _envConfig.appwriteDatabaseId,
+        collectionId: collectionId,
+        documentId: documentId,
+      );
+    } on AppwriteException catch (exception) {
+      if (exception.code != 404) {
+        rethrow;
+      }
+    }
   }
 
   Future<void> _ensureUserDocument(AuthUserModel user) async {

@@ -1,6 +1,5 @@
 enum SubscriptionPlan {
   free,
-  weekly,
   monthly,
   annual;
 
@@ -10,12 +9,10 @@ enum SubscriptionPlan {
     switch (this) {
       case SubscriptionPlan.free:
         return 0;
-      case SubscriptionPlan.weekly:
-        return 1;
       case SubscriptionPlan.monthly:
-        return 2;
+        return 1;
       case SubscriptionPlan.annual:
-        return 3;
+        return 2;
     }
   }
 
@@ -23,8 +20,6 @@ enum SubscriptionPlan {
     switch (this) {
       case SubscriptionPlan.free:
         return 'free';
-      case SubscriptionPlan.weekly:
-        return r'$rc_weekly';
       case SubscriptionPlan.monthly:
         return r'$rc_monthly';
       case SubscriptionPlan.annual:
@@ -36,12 +31,10 @@ enum SubscriptionPlan {
     switch (this) {
       case SubscriptionPlan.free:
         return r'$0';
-      case SubscriptionPlan.weekly:
-        return r'$3';
       case SubscriptionPlan.monthly:
-        return r'$15';
+        return r'$9.99';
       case SubscriptionPlan.annual:
-        return r'$100';
+        return r'$59.99';
     }
   }
 
@@ -49,8 +42,6 @@ enum SubscriptionPlan {
     switch (this) {
       case SubscriptionPlan.free:
         return 'Free';
-      case SubscriptionPlan.weekly:
-        return 'per week';
       case SubscriptionPlan.monthly:
         return 'per month';
       case SubscriptionPlan.annual:
@@ -62,12 +53,10 @@ enum SubscriptionPlan {
     switch (this) {
       case SubscriptionPlan.free:
         return 'Daily tracking included';
-      case SubscriptionPlan.weekly:
-        return 'Flexible starter plan';
       case SubscriptionPlan.monthly:
-        return 'Most popular';
+        return 'Flexible monthly plan';
       case SubscriptionPlan.annual:
-        return 'Best value';
+        return 'Best value · save vs. monthly';
     }
   }
 
@@ -80,9 +69,6 @@ enum SubscriptionPlan {
     }
     if (normalized.contains('month') || normalized.contains(r'$rc_monthly')) {
       return SubscriptionPlan.monthly;
-    }
-    if (normalized.contains('week') || normalized.contains(r'$rc_weekly')) {
-      return SubscriptionPlan.weekly;
     }
     return SubscriptionPlan.monthly;
   }

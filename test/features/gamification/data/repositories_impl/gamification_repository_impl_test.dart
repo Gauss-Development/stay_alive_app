@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/features/gamification/data/datasources/gamification_remote_data_source.dart';
+import 'package:stay_alive/features/gamification/data/models/gamification_progress_model.dart';
 import 'package:stay_alive/features/gamification/data/repositories_impl/gamification_repository_impl.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_progress.dart';
 
@@ -12,7 +13,7 @@ void main() {
   late _MockGamificationRemoteDataSource dataSource;
   late GamificationRepositoryImpl repository;
 
-  const GamificationProgress progress = GamificationProgress(
+  const GamificationProgressModel progress = GamificationProgressModel(
     userId: 'user_1',
     xp: 125,
     level: 2,

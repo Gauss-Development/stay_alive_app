@@ -94,13 +94,13 @@ void main() {
       isA<SubscriptionState>().having(
         (SubscriptionState state) => state.status,
         'status',
-        SubscriptionStatus.loading,
+        SubscriptionViewStatus.loading,
       ),
       isA<SubscriptionState>()
           .having(
             (SubscriptionState state) => state.status,
             'status',
-            SubscriptionStatus.loaded,
+            SubscriptionViewStatus.loaded,
           )
           .having(
             (SubscriptionState state) => state.offering,
@@ -119,7 +119,7 @@ void main() {
       return buildCubit();
     },
     seed: () => const SubscriptionState(
-      status: SubscriptionStatus.loaded,
+      status: SubscriptionViewStatus.loaded,
       offering: offering,
     ),
     act: (SubscriptionCubit cubit) => cubit.purchase(monthlyPackage),
@@ -127,13 +127,13 @@ void main() {
       isA<SubscriptionState>().having(
         (SubscriptionState state) => state.status,
         'status',
-        SubscriptionStatus.purchasing,
+        SubscriptionViewStatus.purchasing,
       ),
       isA<SubscriptionState>()
           .having(
             (SubscriptionState state) => state.status,
             'status',
-            SubscriptionStatus.loaded,
+            SubscriptionViewStatus.loaded,
           )
           .having(
             (SubscriptionState state) => state.info,
@@ -158,13 +158,13 @@ void main() {
       isA<SubscriptionState>().having(
         (SubscriptionState state) => state.status,
         'status',
-        SubscriptionStatus.loading,
+        SubscriptionViewStatus.loading,
       ),
       isA<SubscriptionState>()
           .having(
             (SubscriptionState state) => state.status,
             'status',
-            SubscriptionStatus.error,
+            SubscriptionViewStatus.error,
           )
           .having(
             (SubscriptionState state) => state.errorMessage,

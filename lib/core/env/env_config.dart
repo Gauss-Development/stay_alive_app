@@ -36,6 +36,8 @@ class EnvConfig extends Equatable {
     required this.allowSelfSigned,
     required this.revenueCatApiKeyIos,
     required this.revenueCatApiKeyAndroid,
+    required this.sentryDsn,
+    required this.sentryEnvironment,
   });
 
   final AppFlavor appFlavor;
@@ -63,6 +65,8 @@ class EnvConfig extends Equatable {
   final bool allowSelfSigned;
   final String revenueCatApiKeyIos;
   final String revenueCatApiKeyAndroid;
+  final String sentryDsn;
+  final String sentryEnvironment;
 
   /// Call after [loadEnvForFlavor] has run in [bootstrap].
   factory EnvConfig.fromEnv(AppFlavor flavor) {
@@ -122,7 +126,7 @@ class EnvConfig extends Equatable {
       ),
       widgetAppGroupId: _str(
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
-        'group.com.example.stayAlive',
+        'group.com.gaussdev.stayalive',
       ),
       revenueCatAndroidApiKey: _str(
         'REVENUECAT_ANDROID_API_KEY',
@@ -164,6 +168,8 @@ class EnvConfig extends Equatable {
         'REVENUECAT_API_KEY_ANDROID',
         '',
       ),
+      sentryDsn: _str('SENTRY_DSN', ''),
+      sentryEnvironment: _str('SENTRY_ENVIRONMENT', flavor.name),
     );
   }
 
@@ -222,5 +228,7 @@ class EnvConfig extends Equatable {
         allowSelfSigned,
         revenueCatApiKeyIos,
         revenueCatApiKeyAndroid,
+        sentryDsn,
+        sentryEnvironment,
       ];
 }

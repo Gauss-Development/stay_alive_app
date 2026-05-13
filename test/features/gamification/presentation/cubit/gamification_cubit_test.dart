@@ -67,7 +67,7 @@ void main() {
       );
       return buildCubit();
     },
-    act: (GamificationCubit cubit) => cubit.refresh(),
+    act: (GamificationCubit cubit) => cubit.load(),
     expect: () => <GamificationState>[
       const GamificationLoading(),
       const GamificationError('Could not load rewards'),

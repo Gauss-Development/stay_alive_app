@@ -8,6 +8,7 @@ import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_session.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
 import 'package:stay_alive/features/auth/domain/usecases/complete_onboarding_usecase.dart';
+import 'package:stay_alive/features/auth/domain/usecases/delete_account_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/get_current_user_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_email_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_oauth_usecase.dart';
@@ -30,6 +31,8 @@ class _MockLoginWithOAuthUseCase extends Mock implements LoginWithOAuthUseCase {
 
 class _MockCompleteOnboardingUseCase extends Mock
     implements CompleteOnboardingUseCase {}
+
+class _MockDeleteAccountUseCase extends Mock implements DeleteAccountUseCase {}
 
 class _MockAppLogger extends Mock implements AppLogger {}
 
@@ -55,6 +58,7 @@ void main() {
   late _MockLogoutUseCase logoutUseCase;
   late _MockLoginWithOAuthUseCase loginWithOAuthUseCase;
   late _MockCompleteOnboardingUseCase completeOnboardingUseCase;
+  late _MockDeleteAccountUseCase deleteAccountUseCase;
   late _MockAppLogger logger;
 
   late AuthUser user;
@@ -67,6 +71,7 @@ void main() {
     logoutUseCase = _MockLogoutUseCase();
     loginWithOAuthUseCase = _MockLoginWithOAuthUseCase();
     completeOnboardingUseCase = _MockCompleteOnboardingUseCase();
+    deleteAccountUseCase = _MockDeleteAccountUseCase();
     logger = _MockAppLogger();
 
     when(() => logger.debug(any(), data: any(named: 'data'))).thenReturn(null);
@@ -95,6 +100,7 @@ void main() {
       logoutUseCase: logoutUseCase,
       loginWithOAuthUseCase: loginWithOAuthUseCase,
       completeOnboardingUseCase: completeOnboardingUseCase,
+      deleteAccountUseCase: deleteAccountUseCase,
       logger: logger,
     );
   }

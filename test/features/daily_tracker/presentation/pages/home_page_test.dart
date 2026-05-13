@@ -52,6 +52,10 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
             userUploadsBucketId: '',
             contentAssetsBucketId: '',
             allowSelfSigned: false,
+            revenueCatApiKeyIos: '',
+            revenueCatApiKeyAndroid: '',
+            sentryDsn: '',
+            sentryEnvironment: 'test',
           ),
           gateway: _FakeHomeWidgetGateway(),
         );
@@ -163,7 +167,10 @@ void main() {
 
     expect(find.text('Today\'s Checklist'), findsOneWidget);
     expect(find.text('Beans / Legumes'), findsOneWidget);
-    expect(find.text('1/3 completed'), findsNWidgets(2));
+    expect(
+      find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('calls increment when add icon is tapped', (
@@ -172,7 +179,8 @@ void main() {
     await tester.pumpWidget(buildWidget());
     await tester.pump();
 
-    final Finder incrementButton = find.byIcon(Icons.add_circle_outline);
+    final Finder incrementButton =
+        find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)');
     expect(incrementButton, findsOneWidget);
     await tester.tap(incrementButton);
     await tester.pump();
