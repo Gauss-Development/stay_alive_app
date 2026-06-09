@@ -44,7 +44,7 @@ android {
     productFlavors {
         create("dev") {
             dimension = "environment"
-            applicationIdSuffix = ".dev"
+            applicationIdSuffix = "dev"
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "Stay Alive Dev")
             manifestPlaceholders["appwriteCallbackScheme"] =

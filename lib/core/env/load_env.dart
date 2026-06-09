@@ -18,7 +18,7 @@ Future<void> loadEnvForFlavor(AppFlavor flavor) async {
   await dotenv.load(fileName: flavorAsset, mergeWith: dotenv.env);
   try {
     await dotenv.load(fileName: 'assets/env/app.env', mergeWith: dotenv.env);
-  } on Exception {
+  } on FileNotFoundError {
     // Optional `app.env` is often omitted from the asset bundle.
   }
 }
