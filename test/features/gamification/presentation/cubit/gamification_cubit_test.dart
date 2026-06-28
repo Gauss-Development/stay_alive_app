@@ -3,74 +3,76 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stay_alive/core/error/failures.dart';
+import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/core/usecase/usecase.dart';
-import 'package:stay_alive/features/gamification/domain/entities/gamification_progress.dart';
-import 'package:stay_alive/features/gamification/domain/usecases/get_gamification_progress_usecase.dart';
+import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
+import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
+import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_progress_usecase.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 
-class _MockGetGamificationProgressUseCase extends Mock
-    implements GetGamificationProgressUseCase {}
-
-class _FakeNoParams extends Fake implements NoParams {}
+class _MockReconcileGamificationProgressUseCase extends Mock
+    implements ReconcileGamificationProgressUseCase {}
 
 void main() {
-  setUpAll(() {
-    registerFallbackValue(_FakeNoParams());
-  });
+  late _MockReconcileGamificationProgressUseCase useCase;
 
-  late _MockGetGamificationProgressUseCase useCase;
-
-  const GamificationProgress progress = GamificationProgress(
+  final UserGameProfile profile = UserGameProfile(
     userId: 'user_1',
-    xp: 145,
-    level: 2,
-    currentLevelXp: 100,
-    nextLevelXp: 200,
-    currentStreak: 2,
-    bestStreak: 3,
-    completedDays: 4,
-    lastCompletedDate: '2026-05-06',
-    badges: <String>['first_log', 'perfect_day'],
+    totalXp: 120,
+    currentLevel: GameLevelTable.levels.first,
+    currentStreak: 1,
+    longestStreak: 2,
+    activityStreak: 1,
+    completedDates: <String>['2026-05-01'],
+    earlyLogDates: <String>[],
+    earnedBadges: <EarnedBadge>[],
+    totalCategoriesCompleted: 1,
   );
 
+  setUpAll(() {
+    registerFallbackValue(const NoParams());
+  });
+
   setUp(() {
-    useCase = _MockGetGamificationProgressUseCase();
+    useCase = _MockReconcileGamificationProgressUseCase();
   });
 
   GamificationCubit buildCubit() {
-    return GamificationCubit(getGamificationProgressUseCase: useCase);
+    return GamificationCubit(
+      reconcileGamificationProgressUseCase: useCase,
+    );
   }
 
   blocTest<GamificationCubit, GamificationState>(
-    'emits loading then loaded when progress loads',
-    build: () {
+    'emits loaded state when load succeeds',
+    build: buildCubit,
+    setUp: () {
       when(() => useCase(any())).thenAnswer(
-        (_) async => const Right<Failure, GamificationProgress>(progress),
+        (_) async => Right<Failure, UserGameProfile>(profile),
       );
-      return buildCubit();
     },
     act: (GamificationCubit cubit) => cubit.load(),
     expect: () => <GamificationState>[
       const GamificationLoading(),
-      const GamificationLoaded(progress),
+      GamificationLoaded(profile: profile),
     ],
   );
 
   blocTest<GamificationCubit, GamificationState>(
-    'emits loading then error when progress fails',
-    build: () {
+    'emits error when load fails',
+    build: buildCubit,
+    setUp: () {
       when(() => useCase(any())).thenAnswer(
-        (_) async => const Left<Failure, GamificationProgress>(
-          DatabaseFailure('Could not load rewards'),
+        (_) async => const Left<Failure, UserGameProfile>(
+          UnknownFailure('Could not load progress'),
         ),
       );
-      return buildCubit();
     },
     act: (GamificationCubit cubit) => cubit.load(),
     expect: () => <GamificationState>[
       const GamificationLoading(),
-      const GamificationError('Could not load rewards'),
+      const GamificationError('Could not load progress'),
     ],
   );
 }

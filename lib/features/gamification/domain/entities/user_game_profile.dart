@@ -4,10 +4,12 @@ import 'package:stay_alive/features/gamification/domain/entities/game_level.dart
 
 class UserGameProfile extends Equatable {
   const UserGameProfile({
+    required this.userId,
     required this.totalXp,
     required this.currentLevel,
     required this.currentStreak,
     required this.longestStreak,
+    required this.activityStreak,
     required this.completedDates,
     required this.earlyLogDates,
     required this.earnedBadges,
@@ -15,7 +17,8 @@ class UserGameProfile extends Equatable {
   });
 
   const UserGameProfile.empty()
-      : totalXp = 0,
+      : userId = '',
+        totalXp = 0,
         currentLevel = const GameLevel(
           level: 1,
           title: 'Seedling',
@@ -24,15 +27,18 @@ class UserGameProfile extends Equatable {
         ),
         currentStreak = 0,
         longestStreak = 0,
+        activityStreak = 0,
         completedDates = const <String>[],
         earlyLogDates = const <String>[],
         earnedBadges = const <EarnedBadge>[],
         totalCategoriesCompleted = 0;
 
+  final String userId;
   final int totalXp;
   final GameLevel currentLevel;
   final int currentStreak;
   final int longestStreak;
+  final int activityStreak;
 
   /// Fully completed days as 'yyyy-MM-dd', sorted ascending.
   final List<String> completedDates;
@@ -44,20 +50,24 @@ class UserGameProfile extends Equatable {
   final int totalCategoriesCompleted;
 
   UserGameProfile copyWith({
+    String? userId,
     int? totalXp,
     GameLevel? currentLevel,
     int? currentStreak,
     int? longestStreak,
+    int? activityStreak,
     List<String>? completedDates,
     List<String>? earlyLogDates,
     List<EarnedBadge>? earnedBadges,
     int? totalCategoriesCompleted,
   }) {
     return UserGameProfile(
+      userId: userId ?? this.userId,
       totalXp: totalXp ?? this.totalXp,
       currentLevel: currentLevel ?? this.currentLevel,
       currentStreak: currentStreak ?? this.currentStreak,
       longestStreak: longestStreak ?? this.longestStreak,
+      activityStreak: activityStreak ?? this.activityStreak,
       completedDates: completedDates ?? this.completedDates,
       earlyLogDates: earlyLogDates ?? this.earlyLogDates,
       earnedBadges: earnedBadges ?? this.earnedBadges,
@@ -68,10 +78,12 @@ class UserGameProfile extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
+        userId,
         totalXp,
         currentLevel,
         currentStreak,
         longestStreak,
+        activityStreak,
         completedDates,
         earlyLogDates,
         earnedBadges,

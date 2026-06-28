@@ -1,7 +1,7 @@
 import 'package:home_widget/home_widget.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
-import 'package:stay_alive/features/gamification/domain/entities/gamification_progress.dart';
+import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 
 abstract class HomeWidgetGateway {
   Future<void> setAppGroupId(String appGroupId);
@@ -65,7 +65,7 @@ class DailyGoalWidgetService {
 
   Future<void> updateDailyGoal({
     required DailyLog log,
-    GamificationProgress? progress,
+    UserGameProfile? profile,
   }) async {
     await _gateway.saveInt('daily_goal_completed', log.totalCompleted);
     await _gateway.saveInt('daily_goal_target', log.totalTarget);
@@ -76,9 +76,12 @@ class DailyGoalWidgetService {
     await _gateway.saveString('daily_goal_date', log.dateKey);
     await _gateway.saveInt(
       'daily_goal_streak',
-      progress?.currentStreak ?? 0,
+      profile?.currentStreak ?? 0,
     );
-    await _gateway.saveInt('daily_goal_level', progress?.level ?? 1);
+    await _gateway.saveInt(
+      'daily_goal_level',
+      profile?.currentLevel.level ?? 1,
+    );
     await _gateway.updateWidget(
       androidName: androidProviderName,
       iOSName: iOSWidgetName,

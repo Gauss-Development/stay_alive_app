@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:stay_alive/features/gamification/domain/entities/gamification_progress.dart';
+import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/badge_list.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/streak_chip.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/xp_level_bar.dart';
 
 class GamificationProgressCard extends StatelessWidget {
   const GamificationProgressCard({
-    required this.progress,
+    required this.profile,
     super.key,
   });
 
-  final GamificationProgress progress;
+  final UserGameProfile profile;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final int xpIntoLevel = progress.xp % 100;
-    final double levelProgress = xpIntoLevel / 100;
+    final ColorScheme colors = theme.colorScheme;
 
     return Card(
       child: Padding(
@@ -25,71 +27,100 @@ class GamificationProgressCard extends StatelessWidget {
               children: <Widget>[
                 Icon(
                   Icons.emoji_events_outlined,
-                  color: theme.colorScheme.primary,
+                  color: colors.primary,
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Level ${progress.level}',
+                  'Your progress',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 const Spacer(),
-                Text('${progress.xp} XP'),
+                StreakChip(
+                  streak: profile.currentStreak,
+                  style: StreakChipStyle.compact,
+                ),
               ],
             ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: LinearProgressIndicator(
-                value: levelProgress,
-                minHeight: 10,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${progress.nextLevelXp - progress.xp} XP to next level',
-              style: theme.textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
+            XpLevelBar(profile: profile),
+            const SizedBox(height: 16),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: <Widget>[
-                Chip(label: Text('🔥 ${progress.currentStreak} day streak')),
-                Chip(label: Text('🏆 Best ${progress.bestStreak}')),
-                Chip(label: Text('✅ ${progress.completedDays} perfect days')),
+                _StatChip(
+                  icon: Icons.local_fire_department_outlined,
+                  label: 'Perfect streak',
+                  value: '${profile.currentStreak}',
+                ),
+                _StatChip(
+                  icon: Icons.bolt_outlined,
+                  label: 'Active streak',
+                  value: '${profile.activityStreak}',
+                ),
+                _StatChip(
+                  icon: Icons.emoji_events_outlined,
+                  label: 'Best streak',
+                  value: '${profile.longestStreak}',
+                ),
+                _StatChip(
+                  icon: Icons.check_circle_outline,
+                  label: 'Perfect days',
+                  value: '${profile.completedDates.length}',
+                ),
               ],
             ),
-            if (progress.badges.isNotEmpty) ...<Widget>[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: progress.badges
-                    .map(
-                      (String badge) => InputChip(
-                        avatar: const Icon(Icons.workspace_premium, size: 18),
-                        label: Text(_formatBadge(badge)),
-                      ),
-                    )
-                    .toList(growable: false),
+            if (profile.earnedBadges.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 16),
+              Text(
+                'Badges',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
               ),
+              const SizedBox(height: 8),
+              BadgeList(badges: profile.earnedBadges),
             ],
           ],
         ),
       ),
     );
   }
+}
 
-  String _formatBadge(String badge) {
-    return badge
-        .split('_')
-        .map(
-          (String word) => word.isEmpty
-              ? word
-              : '${word[0].toUpperCase()}${word.substring(1)}',
-        )
-        .join(' ');
+class _StatChip extends StatelessWidget {
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 16, color: colors.primary),
+          const SizedBox(width: 6),
+          Text(
+            '$label: $value',
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
+        ],
+      ),
+    );
   }
 }

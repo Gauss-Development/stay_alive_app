@@ -13,7 +13,9 @@ import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_catego
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
-import 'package:stay_alive/features/gamification/domain/entities/gamification_progress.dart';
+import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
+import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
+import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 
@@ -63,7 +65,7 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
   @override
   Future<void> updateDailyGoal({
     required DailyLog log,
-    GamificationProgress? progress,
+    UserGameProfile? profile,
   }) async {}
 }
 
@@ -125,25 +127,26 @@ void main() {
     when(() => cubit.increment(any())).thenAnswer((_) async {});
     when(() => cubit.decrement(any())).thenAnswer((_) async {});
     when(() => cubit.resetToday()).thenAnswer((_) async {});
+    final UserGameProfile gamificationProfile = UserGameProfile(
+      userId: 'user_1',
+      totalXp: 35,
+      currentLevel: GameLevelTable.levels.first,
+      currentStreak: 1,
+      longestStreak: 1,
+      activityStreak: 1,
+      completedDates: <String>[],
+      earlyLogDates: <String>[],
+      earnedBadges: <EarnedBadge>[],
+      totalCategoriesCompleted: 0,
+    );
+
     when(() => gamificationCubit.state).thenReturn(
-      const GamificationLoaded(
-        GamificationProgress(
-          userId: 'user_1',
-          xp: 35,
-          level: 1,
-          currentLevelXp: 0,
-          nextLevelXp: 100,
-          currentStreak: 1,
-          bestStreak: 1,
-          completedDays: 0,
-          lastCompletedDate: null,
-          badges: <String>['first_log'],
-        ),
-      ),
+      GamificationLoaded(profile: gamificationProfile),
     );
     when(() => gamificationCubit.stream).thenAnswer(
       (_) => const Stream<GamificationState>.empty(),
     );
+    when(() => gamificationCubit.load()).thenAnswer((_) async {});
     when(() => gamificationCubit.refresh()).thenAnswer((_) async {});
   });
 

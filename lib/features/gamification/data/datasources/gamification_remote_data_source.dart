@@ -5,10 +5,13 @@ import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
-import 'package:stay_alive/features/gamification/data/models/gamification_progress_model.dart';
+import 'package:stay_alive/features/gamification/data/models/user_game_profile_model.dart';
+import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
+import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
+import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
 
 abstract class GamificationRemoteDataSource {
-  Future<GamificationProgressModel> fetchProgress();
+  Future<UserGameProfileModel> reconcileProgress();
 }
 
 class AppwriteGamificationRemoteDataSource
@@ -17,28 +20,32 @@ class AppwriteGamificationRemoteDataSource
     required Account account,
     required Databases databases,
     required EnvConfig envConfig,
+    GamificationEngine? engine,
   })  : _account = account,
         _databases = databases,
-        _envConfig = envConfig;
+        _envConfig = envConfig,
+        _engine = engine ?? const GamificationEngine();
 
   final Account _account;
   final Databases _databases;
   final EnvConfig _envConfig;
+  final GamificationEngine _engine;
 
   @override
-  Future<GamificationProgressModel> fetchProgress() async {
+  Future<UserGameProfileModel> reconcileProgress() async {
     final appwrite_models.User user = await _account.get();
-    final List<DailyLogModel> logs = await _loadLogs(user.$id);
-    final GamificationProgressModel progress = _calculateProgress(
+    final List<DailyLogModel> logs = await _loadLogsWithItems(user.$id);
+    final UserGameProfile profile = _engine.reconcile(
       userId: user.$id,
       logs: logs,
     );
-    await _upsertProfile(progress);
-    await _upsertBadgeEvents(progress);
-    return progress;
+    final UserGameProfileModel model = UserGameProfileModel.fromProfile(profile);
+    await _upsertProfile(model);
+    await _upsertBadgeEvents(model);
+    return model;
   }
 
-  Future<List<DailyLogModel>> _loadLogs(String userId) async {
+  Future<List<DailyLogModel>> _loadLogsWithItems(String userId) async {
     final appwrite_models.DocumentList documents = await _databases
         .listDocuments(
       databaseId: _envConfig.appwriteDatabaseId,
@@ -49,104 +56,60 @@ class AppwriteGamificationRemoteDataSource
         Query.limit(365),
       ],
     );
+
+    final Map<String, List<DailyLogItemModel>> itemsByLogId =
+        await _loadItemsByLogId(userId);
+
     return documents.documents
         .map(
-          (appwrite_models.Document document) => DailyLogModel.fromDocument(
-            document: document,
-            items: const <DailyLogItemModel>[],
-          ),
+          (appwrite_models.Document document) {
+            final String logId =
+                document.data['log_id']?.toString() ?? document.$id;
+            return DailyLogModel.fromDocument(
+              document: document,
+              items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
+            );
+          },
         )
         .toList(growable: false);
   }
 
-  GamificationProgressModel _calculateProgress({
-    required String userId,
-    required List<DailyLogModel> logs,
-  }) {
-    int xp = 0;
-    int completedDays = 0;
-    int currentStreak = 0;
-    int bestStreak = 0;
-    String? lastCompletedDate;
-    DateTime? previousCompletedDate;
-    final Set<String> badges = <String>{};
+  Future<Map<String, List<DailyLogItemModel>>> _loadItemsByLogId(
+    String userId,
+  ) async {
+    final appwrite_models.DocumentList itemDocuments =
+        await _databases.listDocuments(
+      databaseId: _envConfig.appwriteDatabaseId,
+      collectionId: _envConfig.dailyLogItemsCollectionId,
+      queries: <String>[
+        Query.equal('user_id', userId),
+        Query.limit(5000),
+      ],
+    );
 
-    for (final DailyLogModel log in logs) {
-      if (log.totalCompleted > 0) {
-        badges.add('first_log');
-      }
-      xp += log.totalCompleted * 5;
-
-      if (!log.isFullyCompleted) {
+    final Map<String, List<DailyLogItemModel>> itemsByLogId =
+        <String, List<DailyLogItemModel>>{};
+    for (final appwrite_models.Document document in itemDocuments.documents) {
+      final Map<String, dynamic> data = document.data;
+      final String logId = data['log_id']?.toString() ?? '';
+      if (logId.isEmpty) {
         continue;
       }
-
-      badges.add('perfect_day');
-      completedDays += 1;
-      xp += 25;
-
-      if (previousCompletedDate == null) {
-        currentStreak = 1;
-      } else {
-        final int dayGap = DateTime.utc(
-          log.logDate.year,
-          log.logDate.month,
-          log.logDate.day,
-        )
-            .difference(
-              DateTime.utc(
-                previousCompletedDate.year,
-                previousCompletedDate.month,
-                previousCompletedDate.day,
-              ),
-            )
-            .inDays;
-        currentStreak = dayGap == 1 ? currentStreak + 1 : 1;
-      }
-
-      if (currentStreak > 1) {
-        xp += 10;
-      }
-      if (currentStreak > bestStreak) {
-        bestStreak = currentStreak;
-      }
-      previousCompletedDate = log.logDate;
-      lastCompletedDate = log.dateKey;
+      itemsByLogId.putIfAbsent(logId, () => <DailyLogItemModel>[]).add(
+            DailyLogItemModel.fromDocumentWithoutCategory(document),
+          );
     }
-
-    if (bestStreak >= 3) {
-      badges.add('three_day_streak');
-    }
-    if (bestStreak >= 7) {
-      badges.add('seven_day_streak');
-    }
-
-    final int level = (xp / 100).floor() + 1;
-    final int nextLevelXp = level * 100;
-    final int currentLevelBaseXp = (level - 1) * 100;
-
-    return GamificationProgressModel(
-      userId: userId,
-      xp: xp,
-      level: level,
-      nextLevelXp: nextLevelXp,
-      currentLevelXp: currentLevelBaseXp,
-      currentStreak: currentStreak,
-      bestStreak: bestStreak,
-      completedDays: completedDays,
-      lastCompletedDate: lastCompletedDate,
-      badges: badges.toList(growable: false)..sort(),
-    );
+    return itemsByLogId;
   }
 
-  Future<void> _upsertProfile(GamificationProgressModel progress) async {
+  Future<void> _upsertProfile(UserGameProfileModel profile) async {
     final String now = DateTime.now().toUtc().toIso8601String();
-    final Map<String, dynamic> data = progress.toDocumentData(now: now);
+    final Map<String, dynamic> data = profile.toDocumentData(now: now);
     try {
       await _databases.updateDocument(
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.gamificationProfilesCollectionId,
-        documentId: progress.userId,
+        documentId: profile.userId,
         data: data,
       );
     } on AppwriteException catch (exception) {
@@ -156,29 +119,30 @@ class AppwriteGamificationRemoteDataSource
       await _databases.createDocument(
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.gamificationProfilesCollectionId,
-        documentId: progress.userId,
+        documentId: profile.userId,
         data: <String, dynamic>{
           ...data,
           'created_at': now,
         },
         permissions: <String>[
-          Permission.read(Role.user(progress.userId)),
-          Permission.update(Role.user(progress.userId)),
-          Permission.delete(Role.user(progress.userId)),
+          Permission.read(Role.user(profile.userId)),
+          Permission.update(Role.user(profile.userId)),
+          Permission.delete(Role.user(profile.userId)),
         ],
       );
     }
   }
 
-  Future<void> _upsertBadgeEvents(GamificationProgressModel progress) async {
-    for (final String badge in progress.badges) {
+  Future<void> _upsertBadgeEvents(UserGameProfileModel profile) async {
+    for (final EarnedBadge badge in profile.earnedBadges) {
+      final String eventType = badge.id.name;
       final appwrite_models.DocumentList existing = await _databases
           .listDocuments(
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.gamificationEventsCollectionId,
         queries: <String>[
-          Query.equal('user_id', progress.userId),
-          Query.equal('event_type', badge),
+          Query.equal('user_id', profile.userId),
+          Query.equal('event_type', eventType),
           Query.limit(1),
         ],
       );
@@ -194,17 +158,19 @@ class AppwriteGamificationRemoteDataSource
           documentId: documentId,
           data: <String, dynamic>{
             'event_id': documentId,
-            'user_id': progress.userId,
-            'event_type': badge,
-            'xp_delta': 0,
-            'log_date': progress.lastCompletedDate ?? '',
+            'user_id': profile.userId,
+            'event_type': eventType,
+            'xp_delta':
+                GamificationEngine.badgeXpBonuses[badge.id] ?? 0,
+            'log_date': badge.earnedAt.toIso8601String().substring(0, 10),
             'metadata_json': jsonEncode(<String, Object?>{
-              'level': progress.level,
-              'xp': progress.xp,
+              'level': profile.currentLevel.level,
+              'xp': profile.totalXp,
+              'badge_id': badge.id.name,
             }),
-            'created_at': DateTime.now().toUtc().toIso8601String(),
+            'created_at': badge.earnedAt.toUtc().toIso8601String(),
           },
-          permissions: <String>[Permission.read(Role.user(progress.userId))],
+          permissions: <String>[Permission.read(Role.user(profile.userId))],
         );
       } on AppwriteException catch (exception) {
         if (exception.code != 409) {
