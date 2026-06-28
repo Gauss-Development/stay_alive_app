@@ -5,8 +5,11 @@ class GamificationOverviewModel extends GamificationOverview {
   const GamificationOverviewModel({
     required super.profile,
     required super.dailyChallenge,
+    required super.weeklyChallenge,
     required super.categoryMastery,
     required super.recentXpEvents,
+    super.isPremium,
+    super.xpMultiplier,
   });
 
   factory GamificationOverviewModel.fromOverview(GamificationOverview overview) {
@@ -22,10 +25,15 @@ class GamificationOverviewModel extends GamificationOverview {
         earlyLogDates: overview.profile.earlyLogDates,
         earnedBadges: overview.profile.earnedBadges,
         totalCategoriesCompleted: overview.profile.totalCategoriesCompleted,
+        streakFreezesRemaining: overview.profile.streakFreezesRemaining,
+        streakFreezeUsedDates: overview.profile.streakFreezeUsedDates,
       ),
       dailyChallenge: overview.dailyChallenge,
+      weeklyChallenge: overview.weeklyChallenge,
       categoryMastery: overview.categoryMastery,
       recentXpEvents: overview.recentXpEvents,
+      isPremium: overview.isPremium,
+      xpMultiplier: overview.xpMultiplier,
     );
   }
 }

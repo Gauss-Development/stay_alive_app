@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
+import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
 import 'package:stay_alive/features/gamification/data/datasources/gamification_remote_data_source.dart';
 import 'package:stay_alive/features/gamification/data/models/gamification_overview_model.dart';
 import 'package:stay_alive/features/gamification/data/repositories_impl/gamification_repository_impl.dart';
@@ -14,11 +16,8 @@ import 'package:stay_alive/features/gamification/domain/entities/user_game_profi
 class _MockGamificationRemoteDataSource extends Mock
     implements GamificationRemoteDataSource {}
 
-void main() {
-  late _MockGamificationRemoteDataSource dataSource;
-  late GamificationRepositoryImpl repository;
-
-  final GamificationOverviewModel overview = GamificationOverviewModel(
+GamificationOverviewModel _overviewFixture() {
+  return GamificationOverviewModel(
     profile: UserGameProfile(
       userId: 'user_1',
       totalXp: 120,
@@ -41,9 +40,25 @@ void main() {
       xpReward: 35,
       dateKey: '2026-06-28',
     ),
+    weeklyChallenge: const GamificationChallenge(
+      id: 'weekly_2026-06-23',
+      type: ChallengeType.perfectDaysInWeek,
+      title: 'Weekly Perfectionist',
+      description: 'Hit 3 perfect days this week.',
+      target: 3,
+      progress: 1,
+      xpReward: 120,
+      dateKey: '2026-06-23',
+      period: ChallengePeriod.weekly,
+    ),
     categoryMastery: const <CategoryMastery>[],
     recentXpEvents: const <GamificationXpEvent>[],
   );
+}
+
+void main() {
+  late _MockGamificationRemoteDataSource dataSource;
+  late GamificationRepositoryImpl repository;
 
   setUp(() {
     dataSource = _MockGamificationRemoteDataSource();
@@ -51,9 +66,12 @@ void main() {
   });
 
   test('returns overview from remote reconcile', () async {
-    when(() => dataSource.reconcileOverview()).thenAnswer((_) async => overview);
+    final GamificationOverviewModel overview = _overviewFixture();
+    when(
+      () => dataSource.reconcileOverview(isPremium: false),
+    ).thenAnswer((_) async => overview);
 
-    final result = await repository.reconcileOverview();
+    final result = await repository.reconcileOverview(isPremium: false);
 
     expect(result.isRight(), isTrue);
     result.fold(
@@ -62,10 +80,39 @@ void main() {
     );
   });
 
-  test('maps remote exceptions to failures', () async {
-    when(() => dataSource.reconcileOverview()).thenThrow(Exception('boom'));
+  test('returns today overview from remote incremental reconcile', () async {
+    final GamificationOverviewModel overview = _overviewFixture();
+    final DailyLog todayLog = DailyLog(
+      id: '2026-06-28',
+      userId: 'user_1',
+      logDate: DateTime.parse('2026-06-28T12:00:00'),
+      items: const <DailyLogItem>[],
+      totalCompleted: 1,
+      totalTarget: 3,
+      completionPercentage: 33,
+      isFullyCompleted: false,
+    );
+    when(
+      () => dataSource.reconcileTodayOverview(
+        todayLog: todayLog,
+        isPremium: true,
+      ),
+    ).thenAnswer((_) async => overview);
 
-    final result = await repository.reconcileOverview();
+    final result = await repository.reconcileTodayOverview(
+      todayLog: todayLog,
+      isPremium: true,
+    );
+
+    expect(result.isRight(), isTrue);
+  });
+
+  test('maps remote exceptions to failures', () async {
+    when(
+      () => dataSource.reconcileOverview(isPremium: false),
+    ).thenThrow(Exception('boom'));
+
+    final result = await repository.reconcileOverview(isPremium: false);
 
     expect(result.isLeft(), isTrue);
   });

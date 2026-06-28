@@ -1,32 +1,58 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stay_alive/core/usecase/usecase.dart';
+import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_effect.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
 import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_overview_usecase.dart';
+import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_params.dart';
+import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_today_usecase.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 
 class GamificationCubit extends Cubit<GamificationState> {
   GamificationCubit({
     required ReconcileGamificationOverviewUseCase
         reconcileGamificationOverviewUseCase,
+    required ReconcileGamificationTodayUseCase reconcileGamificationTodayUseCase,
     GamificationEngine? engine,
   })  : _reconcileGamificationOverviewUseCase =
             reconcileGamificationOverviewUseCase,
+        _reconcileGamificationTodayUseCase =
+            reconcileGamificationTodayUseCase,
         _engine = engine ?? const GamificationEngine(),
         super(const GamificationInitial());
 
   final ReconcileGamificationOverviewUseCase
       _reconcileGamificationOverviewUseCase;
+  final ReconcileGamificationTodayUseCase _reconcileGamificationTodayUseCase;
   final GamificationEngine _engine;
 
-  Future<void> load() async {
+  Future<void> load({required bool isPremium}) async {
     emit(const GamificationLoading());
-    await _reconcile(emitLoadingState: false);
+    await _reconcile(
+      isPremium: isPremium,
+      emitLoadingState: false,
+      useTodayPath: false,
+    );
   }
 
-  Future<void> refresh() async {
-    await _reconcile(emitLoadingState: state is! GamificationLoaded);
+  Future<void> refresh({required bool isPremium}) async {
+    await _reconcile(
+      isPremium: isPremium,
+      emitLoadingState: state is! GamificationLoaded,
+      useTodayPath: false,
+    );
+  }
+
+  Future<void> refreshToday({
+    required DailyLog todayLog,
+    required bool isPremium,
+  }) async {
+    await _reconcile(
+      isPremium: isPremium,
+      emitLoadingState: false,
+      useTodayPath: true,
+      todayLog: todayLog,
+    );
   }
 
   void clearEffects() {
@@ -47,7 +73,12 @@ class GamificationCubit extends Cubit<GamificationState> {
     emit(current.copyWith(pendingEffects: remaining));
   }
 
-  Future<void> _reconcile({required bool emitLoadingState}) async {
+  Future<void> _reconcile({
+    required bool isPremium,
+    required bool emitLoadingState,
+    required bool useTodayPath,
+    DailyLog? todayLog,
+  }) async {
     if (emitLoadingState) {
       emit(const GamificationLoading());
     }
@@ -58,8 +89,17 @@ class GamificationCubit extends Cubit<GamificationState> {
       _ => null,
     };
 
-    final result =
-        await _reconcileGamificationOverviewUseCase(const NoParams());
+    final result = useTodayPath && todayLog != null
+        ? await _reconcileGamificationTodayUseCase(
+            ReconcileGamificationTodayParams(
+              todayLog: todayLog,
+              isPremium: isPremium,
+            ),
+          )
+        : await _reconcileGamificationOverviewUseCase(
+            ReconcileGamificationParams(isPremium: isPremium),
+          );
+
     result.fold(
       (failure) => emit(GamificationError(failure.message)),
       (GamificationOverview overview) {
@@ -92,6 +132,12 @@ class GamificationCubit extends Cubit<GamificationState> {
     if (!previous.dailyChallenge.isCompleted &&
         next.dailyChallenge.isCompleted) {
       effects.add(ChallengeCompletedEffect(next.dailyChallenge));
+    }
+
+    if (!previous.weeklyChallenge.isCompleted &&
+        next.weeklyChallenge.isCompleted &&
+        (!next.weeklyChallenge.isPremiumOnly || next.isPremium)) {
+      effects.add(WeeklyChallengeCompletedEffect(next.weeklyChallenge));
     }
 
     return effects;

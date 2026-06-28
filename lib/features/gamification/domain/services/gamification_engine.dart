@@ -13,6 +13,8 @@ class GamificationEngine {
   static const int xpStreakDay = 15;
   static const int xpFirstLogOfDay = 10;
   static const int xpEarlyBirdDay = 5;
+  static const double premiumXpMultiplier = 1.25;
+  static const int premiumStreakFreezeAllowance = 2;
 
   static const Map<BadgeId, int> badgeXpBonuses = <BadgeId, int>{
     BadgeId.firstStep: 25,
@@ -21,12 +23,18 @@ class GamificationEngine {
     BadgeId.ironWill: 300,
     BadgeId.earlyBird: 75,
     BadgeId.centurion: 500,
+    BadgeId.winterWellness: 120,
+    BadgeId.secretKeeper: 200,
+    BadgeId.patron: 150,
   };
 
   UserGameProfile reconcile({
     required String userId,
     required List<DailyLog> logs,
     DateTime? referenceDate,
+    bool isPremium = false,
+    int streakFreezesRemaining = 0,
+    List<String> streakFreezeUsedDates = const <String>[],
   }) {
     final DateTime reference = _dateOnly(referenceDate ?? DateTime.now());
     final List<DailyLog> sortedLogs = List<DailyLog>.of(logs)
@@ -41,6 +49,7 @@ class GamificationEngine {
     final Set<String> earlyLogDates = <String>{};
     final Set<String> completedCategoryIds = <String>{};
     final Map<BadgeId, DateTime> earnedBadges = <BadgeId, DateTime>{};
+    int winterPerfectDays = 0;
 
     for (final DailyLog log in sortedLogs) {
       final bool hadActivity = log.totalCompleted > 0;
@@ -54,10 +63,12 @@ class GamificationEngine {
             completedCategoryIds.add(item.categoryId);
           }
         }
-        _awardBadge(
+        _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.firstStep,
           _dateAtMidnight(log.logDate),
+          reference,
+          isPremium: isPremium,
         );
       }
 
@@ -77,10 +88,12 @@ class GamificationEngine {
         earlyLogDates.add(log.dateKey);
         xp += xpEarlyBirdDay;
         if (earlyLogDates.length >= 5) {
-          _awardBadge(
+          _awardBadgeIfAvailable(
             earnedBadges,
             BadgeId.earlyBird,
             _dateAtMidnight(log.logDate),
+            reference,
+            isPremium: isPremium,
           );
         }
       }
@@ -91,11 +104,26 @@ class GamificationEngine {
 
       completedDates.add(log.dateKey);
       xp += xpPerfectDay;
-      _awardBadge(
+      _awardBadgeIfAvailable(
         earnedBadges,
         BadgeId.perfectDay,
         _dateAtMidnight(log.logDate),
+        reference,
+        isPremium: isPremium,
       );
+
+      if (_isWinterMonth(log.logDate.month)) {
+        winterPerfectDays += 1;
+        if (winterPerfectDays >= 5) {
+          _awardBadgeIfAvailable(
+            earnedBadges,
+            BadgeId.winterWellness,
+            _dateAtMidnight(log.logDate),
+            reference,
+            isPremium: isPremium,
+          );
+        }
+      }
 
       if (previousPerfectDate == null ||
           _isNextDay(previousPerfectDate, log.dateKey)) {
@@ -109,28 +137,53 @@ class GamificationEngine {
       }
 
       if (perfectRun >= 7) {
-        _awardBadge(
+        _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.weekStreak,
           _dateAtMidnight(log.logDate),
+          reference,
+          isPremium: isPremium,
+        );
+      }
+      if (perfectRun >= 14) {
+        _awardBadgeIfAvailable(
+          earnedBadges,
+          BadgeId.secretKeeper,
+          _dateAtMidnight(log.logDate),
+          reference,
+          isPremium: isPremium,
         );
       }
       if (perfectRun >= 30) {
-        _awardBadge(
+        _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.ironWill,
           _dateAtMidnight(log.logDate),
+          reference,
+          isPremium: isPremium,
         );
       }
       if (completedDates.length >= 100) {
-        _awardBadge(
+        _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.centurion,
           _dateAtMidnight(log.logDate),
+          reference,
+          isPremium: isPremium,
         );
       }
 
       previousPerfectDate = log.dateKey;
+    }
+
+    if (isPremium) {
+      _awardBadgeIfAvailable(
+        earnedBadges,
+        BadgeId.patron,
+        reference,
+        reference,
+        isPremium: true,
+      );
     }
 
     for (final MapEntry<BadgeId, int> entry in badgeXpBonuses.entries) {
@@ -139,10 +192,31 @@ class GamificationEngine {
       }
     }
 
-    final int longestPerfectStreak = _longestConsecutiveStreak(completedDates);
-    final int perfectStreak = _currentConsecutiveStreak(
-      dates: completedDates,
+    if (isPremium) {
+      xp = (xp * premiumXpMultiplier).round();
+    }
+
+    final List<String> freezeUsedDates =
+        List<String>.of(streakFreezeUsedDates);
+    int freezesRemaining = isPremium
+        ? _premiumFreezeAllowance(streakFreezesRemaining)
+        : streakFreezesRemaining;
+
+    final _StreakFreezeResult freezeResult = _applyAutoStreakFreeze(
+      completedDates: completedDates,
       reference: reference,
+      freezesRemaining: freezesRemaining,
+      freezeUsedDates: freezeUsedDates,
+    );
+    freezesRemaining = freezeResult.freezesRemaining;
+    final List<String> effectiveCompletedDates = freezeResult.completedDates;
+
+    final int longestPerfectStreak =
+        _longestConsecutiveStreak(effectiveCompletedDates, freezeUsedDates);
+    final int perfectStreak = _currentConsecutiveStreak(
+      dates: effectiveCompletedDates,
+      reference: reference,
+      freezeUsedDates: freezeUsedDates,
     );
     final int activityStreak = _calculateActivityStreak(
       sortedLogs: sortedLogs,
@@ -174,6 +248,8 @@ class GamificationEngine {
       earlyLogDates: earlyLogDates.toList(growable: false)..sort(),
       earnedBadges: badges,
       totalCategoriesCompleted: completedCategoryIds.length,
+      streakFreezesRemaining: freezesRemaining,
+      streakFreezeUsedDates: freezeUsedDates,
     );
   }
 
@@ -204,7 +280,76 @@ class GamificationEngine {
     return effects;
   }
 
-  int _longestConsecutiveStreak(List<String> dates) {
+  int _premiumFreezeAllowance(int currentRemaining) {
+    if (currentRemaining >= premiumStreakFreezeAllowance) {
+      return currentRemaining;
+    }
+    return premiumStreakFreezeAllowance;
+  }
+
+  _StreakFreezeResult _applyAutoStreakFreeze({
+    required List<String> completedDates,
+    required DateTime reference,
+    required int freezesRemaining,
+    required List<String> freezeUsedDates,
+  }) {
+    if (completedDates.isEmpty || freezesRemaining <= 0) {
+      return _StreakFreezeResult(
+        completedDates: completedDates,
+        freezesRemaining: freezesRemaining,
+      );
+    }
+
+    final String lastPerfectDate = completedDates.last;
+    if (_isStreakCurrent(lastPerfectDate, reference)) {
+      return _StreakFreezeResult(
+        completedDates: completedDates,
+        freezesRemaining: freezesRemaining,
+      );
+    }
+
+    final DateTime? lastPerfect = DateTime.tryParse('${lastPerfectDate}T00:00:00');
+    if (lastPerfect == null) {
+      return _StreakFreezeResult(
+        completedDates: completedDates,
+        freezesRemaining: freezesRemaining,
+      );
+    }
+
+    final int daysSince =
+        _dateOnly(reference).difference(_dateOnly(lastPerfect)).inDays;
+    if (daysSince != 2) {
+      return _StreakFreezeResult(
+        completedDates: completedDates,
+        freezesRemaining: freezesRemaining,
+      );
+    }
+
+    final String missedDate = _dateKey(
+      _dateOnly(reference).subtract(const Duration(days: 1)),
+    );
+    if (freezeUsedDates.contains(missedDate)) {
+      return _StreakFreezeResult(
+        completedDates: completedDates,
+        freezesRemaining: freezesRemaining,
+      );
+    }
+
+    final List<String> bridgedDates = List<String>.of(completedDates)
+      ..add(missedDate)
+      ..sort();
+    freezeUsedDates.add(missedDate);
+
+    return _StreakFreezeResult(
+      completedDates: bridgedDates,
+      freezesRemaining: freezesRemaining - 1,
+    );
+  }
+
+  int _longestConsecutiveStreak(
+    List<String> dates,
+    List<String> freezeUsedDates,
+  ) {
     if (dates.isEmpty) {
       return 0;
     }
@@ -212,7 +357,7 @@ class GamificationEngine {
     int longest = 1;
     int current = 1;
     for (int index = 1; index < dates.length; index += 1) {
-      if (_isNextDay(dates[index - 1], dates[index])) {
+      if (_isConnectedDay(dates[index - 1], dates[index], freezeUsedDates)) {
         current += 1;
         if (current > longest) {
           longest = current;
@@ -227,6 +372,7 @@ class GamificationEngine {
   int _currentConsecutiveStreak({
     required List<String> dates,
     required DateTime reference,
+    required List<String> freezeUsedDates,
   }) {
     if (dates.isEmpty || !_isStreakCurrent(dates.last, reference)) {
       return 0;
@@ -234,7 +380,11 @@ class GamificationEngine {
 
     int streak = 1;
     for (int index = dates.length - 2; index >= 0; index -= 1) {
-      if (_isNextDay(dates[index], dates[index + 1])) {
+      if (_isConnectedDay(
+        dates[index],
+        dates[index + 1],
+        freezeUsedDates,
+      )) {
         streak += 1;
       } else {
         break;
@@ -271,6 +421,33 @@ class GamificationEngine {
     return streak;
   }
 
+  bool _isConnectedDay(
+    String previous,
+    String current,
+    List<String> freezeUsedDates,
+  ) {
+    if (_isNextDay(previous, current)) {
+      return true;
+    }
+
+    final DateTime? previousDate = DateTime.tryParse('${previous}T00:00:00');
+    final DateTime? currentDate = DateTime.tryParse('${current}T00:00:00');
+    if (previousDate == null || currentDate == null) {
+      return false;
+    }
+
+    final int gap =
+        _dateOnly(currentDate).difference(_dateOnly(previousDate)).inDays;
+    if (gap != 2) {
+      return false;
+    }
+
+    final String bridgeDate = _dateKey(
+      _dateOnly(previousDate).add(const Duration(days: 1)),
+    );
+    return freezeUsedDates.contains(bridgeDate);
+  }
+
   bool _isEarlyBirdDay(DailyLog log) {
     for (final DailyLogItem item in log.items) {
       if (item.completedCount <= 0) {
@@ -284,12 +461,25 @@ class GamificationEngine {
     return false;
   }
 
-  void _awardBadge(
+  void _awardBadgeIfAvailable(
     Map<BadgeId, DateTime> earnedBadges,
     BadgeId badgeId,
     DateTime earnedAt,
-  ) {
+    DateTime reference, {
+    required bool isPremium,
+  }) {
+    final BadgeDefinition definition = BadgeDefinition.all[badgeId]!;
+    if (definition.requiresPremium && !isPremium) {
+      return;
+    }
+    if (!definition.isAvailableOn(reference)) {
+      return;
+    }
     earnedBadges.putIfAbsent(badgeId, () => earnedAt);
+  }
+
+  bool _isWinterMonth(int month) {
+    return month == 12 || month == 1 || month == 2;
   }
 
   bool _isStreakCurrent(String? lastDate, DateTime reference) {
@@ -300,7 +490,8 @@ class GamificationEngine {
     if (parsed == null) {
       return false;
     }
-    final int daysSince = _dateOnly(reference).difference(_dateOnly(parsed)).inDays;
+    final int daysSince =
+        _dateOnly(reference).difference(_dateOnly(parsed)).inDays;
     return daysSince == 0 || daysSince == 1;
   }
 
@@ -310,7 +501,14 @@ class GamificationEngine {
     if (previousDate == null || currentDate == null) {
       return false;
     }
-    return _dateOnly(currentDate).difference(_dateOnly(previousDate)).inDays == 1;
+    return _dateOnly(currentDate).difference(_dateOnly(previousDate)).inDays ==
+        1;
+  }
+
+  String _dateKey(DateTime date) {
+    final String month = date.month.toString().padLeft(2, '0');
+    final String day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 
   DateTime _dateOnly(DateTime value) {
@@ -320,6 +518,16 @@ class GamificationEngine {
   DateTime _dateAtMidnight(DateTime value) {
     return DateTime(value.year, value.month, value.day);
   }
+}
+
+class _StreakFreezeResult {
+  const _StreakFreezeResult({
+    required this.completedDates,
+    required this.freezesRemaining,
+  });
+
+  final List<String> completedDates;
+  final int freezesRemaining;
 }
 
 sealed class GamificationEffectCandidate {

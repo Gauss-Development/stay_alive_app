@@ -65,7 +65,7 @@ class _BadgeGalleryTile extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            item.definition.name,
+            unlocked ? item.definition.name : item.definition.lockedDisplayName,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,

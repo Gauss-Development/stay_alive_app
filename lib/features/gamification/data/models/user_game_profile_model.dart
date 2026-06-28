@@ -15,6 +15,8 @@ class UserGameProfileModel extends UserGameProfile {
     required super.earlyLogDates,
     required super.earnedBadges,
     required super.totalCategoriesCompleted,
+    super.streakFreezesRemaining,
+    super.streakFreezeUsedDates,
   });
 
   factory UserGameProfileModel.fromProfile(UserGameProfile profile) {
@@ -29,6 +31,8 @@ class UserGameProfileModel extends UserGameProfile {
       earlyLogDates: profile.earlyLogDates,
       earnedBadges: profile.earnedBadges,
       totalCategoriesCompleted: profile.totalCategoriesCompleted,
+      streakFreezesRemaining: profile.streakFreezesRemaining,
+      streakFreezeUsedDates: profile.streakFreezeUsedDates,
     );
   }
 
@@ -41,6 +45,10 @@ class UserGameProfileModel extends UserGameProfile {
             <dynamic>[])
         .map((dynamic value) => value.toString())
         .toList(growable: false);
+    final List<String> freezeUsedDates =
+        (data['streak_freezes_used'] as List<dynamic>? ?? <dynamic>[])
+            .map((dynamic value) => value.toString())
+            .toList(growable: false);
 
     return UserGameProfileModel(
       userId: data['user_id']?.toString() ?? document.$id,
@@ -48,17 +56,18 @@ class UserGameProfileModel extends UserGameProfile {
       currentLevel: GameLevelTable.forXp(xp),
       currentStreak: (data['current_streak'] as num?)?.toInt() ?? 0,
       longestStreak: (data['best_streak'] as num?)?.toInt() ?? 0,
-      activityStreak: 0,
-      completedDates: _completedDaysFromCount(
-        (data['completed_days'] as num?)?.toInt() ?? 0,
-        data['last_completed_date']?.toString(),
-      ),
-      earlyLogDates: const <String>[],
+      activityStreak: (data['activity_streak'] as num?)?.toInt() ?? 0,
+      completedDates: _parseDateList(data['completed_dates_json']),
+      earlyLogDates: _parseDateList(data['early_log_dates_json']),
       earnedBadges: badgeSlugs
           .map(_badgeFromLegacySlug)
           .whereType<EarnedBadge>()
           .toList(growable: false),
-      totalCategoriesCompleted: 0,
+      totalCategoriesCompleted:
+          (data['total_categories_completed'] as num?)?.toInt() ?? 0,
+      streakFreezesRemaining:
+          (data['streak_freezes_remaining'] as num?)?.toInt() ?? 0,
+      streakFreezeUsedDates: freezeUsedDates,
     );
   }
 
@@ -69,9 +78,15 @@ class UserGameProfileModel extends UserGameProfile {
       'level': currentLevel.level,
       'current_streak': currentStreak,
       'best_streak': longestStreak,
+      'activity_streak': activityStreak,
       'completed_days': completedDates.length,
       'last_completed_date':
           completedDates.isEmpty ? null : completedDates.last,
+      'completed_dates_json': completedDates,
+      'early_log_dates_json': earlyLogDates,
+      'total_categories_completed': totalCategoriesCompleted,
+      'streak_freezes_remaining': streakFreezesRemaining,
+      'streak_freezes_used': streakFreezeUsedDates,
       'badges': earnedBadges
           .map((EarnedBadge badge) => badge.id.name)
           .toList(growable: false),
@@ -79,14 +94,11 @@ class UserGameProfileModel extends UserGameProfile {
     };
   }
 
-  static List<String> _completedDaysFromCount(
-    int completedDays,
-    String? lastCompletedDate,
-  ) {
-    if (completedDays <= 0 || lastCompletedDate == null) {
+  static List<String> _parseDateList(Object? raw) {
+    if (raw is! List<dynamic>) {
       return const <String>[];
     }
-    return <String>[lastCompletedDate];
+    return raw.map((dynamic value) => value.toString()).toList(growable: false);
   }
 
   static EarnedBadge? _badgeFromLegacySlug(String slug) {
@@ -97,6 +109,9 @@ class UserGameProfileModel extends UserGameProfile {
       'ironWill' => BadgeId.ironWill,
       'earlyBird' => BadgeId.earlyBird,
       'centurion' => BadgeId.centurion,
+      'winterWellness' => BadgeId.winterWellness,
+      'secretKeeper' => BadgeId.secretKeeper,
+      'patron' => BadgeId.patron,
       'first_log' => BadgeId.firstStep,
       'perfect_day' => BadgeId.perfectDay,
       'three_day_streak' => null,

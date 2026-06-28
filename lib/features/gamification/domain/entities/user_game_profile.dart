@@ -14,6 +14,8 @@ class UserGameProfile extends Equatable {
     required this.earlyLogDates,
     required this.earnedBadges,
     required this.totalCategoriesCompleted,
+    this.streakFreezesRemaining = 0,
+    this.streakFreezeUsedDates = const <String>[],
   });
 
   const UserGameProfile.empty()
@@ -31,7 +33,9 @@ class UserGameProfile extends Equatable {
         completedDates = const <String>[],
         earlyLogDates = const <String>[],
         earnedBadges = const <EarnedBadge>[],
-        totalCategoriesCompleted = 0;
+        totalCategoriesCompleted = 0,
+        streakFreezesRemaining = 0,
+        streakFreezeUsedDates = const <String>[];
 
   final String userId;
   final int totalXp;
@@ -48,6 +52,10 @@ class UserGameProfile extends Equatable {
 
   final List<EarnedBadge> earnedBadges;
   final int totalCategoriesCompleted;
+  final int streakFreezesRemaining;
+
+  /// Missed dates bridged by a streak freeze, as 'yyyy-MM-dd'.
+  final List<String> streakFreezeUsedDates;
 
   UserGameProfile copyWith({
     String? userId,
@@ -60,6 +68,8 @@ class UserGameProfile extends Equatable {
     List<String>? earlyLogDates,
     List<EarnedBadge>? earnedBadges,
     int? totalCategoriesCompleted,
+    int? streakFreezesRemaining,
+    List<String>? streakFreezeUsedDates,
   }) {
     return UserGameProfile(
       userId: userId ?? this.userId,
@@ -73,6 +83,10 @@ class UserGameProfile extends Equatable {
       earnedBadges: earnedBadges ?? this.earnedBadges,
       totalCategoriesCompleted:
           totalCategoriesCompleted ?? this.totalCategoriesCompleted,
+      streakFreezesRemaining:
+          streakFreezesRemaining ?? this.streakFreezesRemaining,
+      streakFreezeUsedDates:
+          streakFreezeUsedDates ?? this.streakFreezeUsedDates,
     );
   }
 
@@ -88,5 +102,7 @@ class UserGameProfile extends Equatable {
         earlyLogDates,
         earnedBadges,
         totalCategoriesCompleted,
+        streakFreezesRemaining,
+        streakFreezeUsedDates,
       ];
 }

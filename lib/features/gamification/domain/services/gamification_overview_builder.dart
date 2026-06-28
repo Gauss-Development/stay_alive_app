@@ -19,15 +19,23 @@ class GamificationOverviewBuilder {
     required List<DailyLog> logs,
     required List<GamificationXpEvent> persistedEvents,
     DateTime? referenceDate,
+    bool isPremium = false,
+    int streakFreezesRemaining = 0,
+    List<String> streakFreezeUsedDates = const <String>[],
   }) {
     final DateTime reference = referenceDate ?? DateTime.now();
     final String todayKey = _dateKey(reference);
     final DailyLog? todayLog = _logForDate(logs, todayKey);
+    final String weekKey = _weekKey(reference);
+    final List<DailyLog> weekLogs = _logsForWeek(logs, reference);
 
     UserGameProfile profile = _engine.reconcile(
       userId: userId,
       logs: logs,
       referenceDate: reference,
+      isPremium: isPremium,
+      streakFreezesRemaining: streakFreezesRemaining,
+      streakFreezeUsedDates: streakFreezeUsedDates,
     );
 
     final GamificationChallenge dailyChallenge = buildDailyChallenge(
@@ -36,14 +44,31 @@ class GamificationOverviewBuilder {
       todayLog: todayLog,
     );
 
-    final bool challengeAlreadyRewarded = persistedEvents.any(
+    final GamificationChallenge weeklyChallenge = buildWeeklyChallenge(
+      userId: userId,
+      weekKey: weekKey,
+      weekLogs: weekLogs,
+      isPremium: isPremium,
+    );
+
+    final bool dailyChallengeRewarded = persistedEvents.any(
       (GamificationXpEvent event) =>
           event.eventType == 'challenge_completed' &&
           event.logDate == todayKey,
     );
-
-    if (dailyChallenge.isCompleted && !challengeAlreadyRewarded) {
+    if (dailyChallenge.isCompleted && !dailyChallengeRewarded) {
       profile = _applyBonusXp(profile, dailyChallenge.xpReward);
+    }
+
+    final bool weeklyChallengeRewarded = persistedEvents.any(
+      (GamificationXpEvent event) =>
+          event.eventType == 'weekly_challenge_completed' &&
+          event.logDate == weekKey,
+    );
+    if (weeklyChallenge.isCompleted &&
+        !weeklyChallengeRewarded &&
+        (!weeklyChallenge.isPremiumOnly || isPremium)) {
+      profile = _applyBonusXp(profile, weeklyChallenge.xpReward);
     }
 
     final List<CategoryMastery> mastery = buildCategoryMastery(logs);
@@ -53,8 +78,12 @@ class GamificationOverviewBuilder {
     return GamificationOverview(
       profile: profile,
       dailyChallenge: dailyChallenge,
+      weeklyChallenge: weeklyChallenge,
       categoryMastery: mastery,
       recentXpEvents: recentXpEvents,
+      isPremium: isPremium,
+      xpMultiplier:
+          isPremium ? GamificationEngine.premiumXpMultiplier : 1,
     );
   }
 
@@ -64,8 +93,8 @@ class GamificationOverviewBuilder {
     required DailyLog? todayLog,
   }) {
     final int seed = Object.hash(userId, dateKey);
-    final int templateIndex = seed.abs() % _templates.length;
-    final _ChallengeTemplate template = _templates[templateIndex];
+    final int templateIndex = seed.abs() % _dailyTemplates.length;
+    final _ChallengeTemplate template = _dailyTemplates[templateIndex];
 
     return switch (template.type) {
       ChallengeType.closeCategories => GamificationChallenge(
@@ -114,6 +143,64 @@ class GamificationOverviewBuilder {
           xpReward: template.xpReward,
           dateKey: dateKey,
         ),
+      ChallengeType.perfectDaysInWeek ||
+      ChallengeType.activeDaysInWeek =>
+        throw StateError('Weekly templates cannot be used for daily challenges.'),
+    };
+  }
+
+  GamificationChallenge buildWeeklyChallenge({
+    required String userId,
+    required String weekKey,
+    required List<DailyLog> weekLogs,
+    required bool isPremium,
+  }) {
+    final int seed = Object.hash(userId, weekKey, 'weekly');
+    final int templateIndex = seed.abs() % _weeklyTemplates.length;
+    final _ChallengeTemplate template = _weeklyTemplates[templateIndex];
+
+    return switch (template.type) {
+      ChallengeType.perfectDaysInWeek => GamificationChallenge(
+          id: 'weekly_$weekKey',
+          type: template.type,
+          title: template.title,
+          description: template.description,
+          target: template.target,
+          progress: _perfectDaysInWeek(weekLogs),
+          xpReward: template.xpReward,
+          dateKey: weekKey,
+          period: ChallengePeriod.weekly,
+          isPremiumOnly: template.isPremiumOnly,
+        ),
+      ChallengeType.logServings => GamificationChallenge(
+          id: 'weekly_$weekKey',
+          type: template.type,
+          title: template.title,
+          description: template.description,
+          target: template.target,
+          progress: _servingsInWeek(weekLogs),
+          xpReward: template.xpReward,
+          dateKey: weekKey,
+          period: ChallengePeriod.weekly,
+          isPremiumOnly: template.isPremiumOnly,
+        ),
+      ChallengeType.activeDaysInWeek => GamificationChallenge(
+          id: 'weekly_$weekKey',
+          type: template.type,
+          title: template.title,
+          description: template.description,
+          target: template.target,
+          progress: _activeDaysInWeek(weekLogs),
+          xpReward: template.xpReward,
+          dateKey: weekKey,
+          period: ChallengePeriod.weekly,
+          isPremiumOnly: template.isPremiumOnly,
+        ),
+      ChallengeType.closeCategories ||
+      ChallengeType.earlyLog ||
+      ChallengeType.completeCategory ||
+      ChallengeType.perfectDay =>
+        throw StateError('Daily templates cannot be used for weekly challenges.'),
     };
   }
 
@@ -218,6 +305,37 @@ class GamificationOverviewBuilder {
     return sorted.take(30).toList(growable: false);
   }
 
+  List<DailyLog> _logsForWeek(List<DailyLog> logs, DateTime reference) {
+    final DateTime weekStart = _weekStart(reference);
+    final String weekStartKey = _dateKey(weekStart);
+    return logs
+        .where((DailyLog log) => log.dateKey.compareTo(weekStartKey) >= 0)
+        .toList(growable: false);
+  }
+
+  DateTime _weekStart(DateTime date) {
+    return _dateOnly(date).subtract(Duration(days: date.weekday - 1));
+  }
+
+  String _weekKey(DateTime date) {
+    return _dateKey(_weekStart(date));
+  }
+
+  int _perfectDaysInWeek(List<DailyLog> weekLogs) {
+    return weekLogs.where((DailyLog log) => log.isFullyCompleted).length;
+  }
+
+  int _servingsInWeek(List<DailyLog> weekLogs) {
+    return weekLogs.fold<int>(
+      0,
+      (int total, DailyLog log) => total + log.totalCompleted,
+    );
+  }
+
+  int _activeDaysInWeek(List<DailyLog> weekLogs) {
+    return weekLogs.where((DailyLog log) => log.totalCompleted > 0).length;
+  }
+
   DailyLog? _logForDate(List<DailyLog> logs, String dateKey) {
     for (final DailyLog log in logs) {
       if (log.dateKey == dateKey) {
@@ -255,6 +373,10 @@ class GamificationOverviewBuilder {
     return '${date.year}-$month-$day';
   }
 
+  DateTime _dateOnly(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
+
   String _titleForCategory(String categoryId) {
     return categoryId
         .split('_')
@@ -275,7 +397,7 @@ class GamificationOverviewBuilder {
     'nuts',
   ];
 
-  static const List<_ChallengeTemplate> _templates = <_ChallengeTemplate>[
+  static const List<_ChallengeTemplate> _dailyTemplates = <_ChallengeTemplate>[
     _ChallengeTemplate(
       type: ChallengeType.closeCategories,
       title: 'Category Closer',
@@ -312,6 +434,33 @@ class GamificationOverviewBuilder {
       xpReward: 60,
     ),
   ];
+
+  static const List<_ChallengeTemplate> _weeklyTemplates = <_ChallengeTemplate>[
+    _ChallengeTemplate(
+      type: ChallengeType.perfectDaysInWeek,
+      title: 'Weekly Perfectionist',
+      description: 'Hit 3 perfect days this week.',
+      target: 3,
+      xpReward: 120,
+      isPremiumOnly: false,
+    ),
+    _ChallengeTemplate(
+      type: ChallengeType.logServings,
+      title: 'Weekly Servings',
+      description: 'Log 30 servings this week.',
+      target: 30,
+      xpReward: 100,
+      isPremiumOnly: false,
+    ),
+    _ChallengeTemplate(
+      type: ChallengeType.activeDaysInWeek,
+      title: 'Consistency Crew',
+      description: 'Stay active on 5 days this week.',
+      target: 5,
+      xpReward: 150,
+      isPremiumOnly: true,
+    ),
+  ];
 }
 
 class _ChallengeTemplate {
@@ -321,6 +470,7 @@ class _ChallengeTemplate {
     required this.description,
     required this.target,
     required this.xpReward,
+    this.isPremiumOnly = false,
   });
 
   final ChallengeType type;
@@ -328,6 +478,7 @@ class _ChallengeTemplate {
   final String description;
   final int target;
   final int xpReward;
+  final bool isPremiumOnly;
 }
 
 class _MasteryAccumulator {

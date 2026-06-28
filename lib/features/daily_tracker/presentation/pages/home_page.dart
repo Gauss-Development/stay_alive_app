@@ -12,6 +12,7 @@ import 'package:stay_alive/features/gamification/presentation/cubit/gamification
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/daily_challenge_card.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/gamification_progress_card.dart';
+import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({
@@ -31,8 +32,10 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        final bool isPremium =
+            context.read<SubscriptionCubit>().state.isPremiumActive;
         context.read<DailyTrackerCubit>().loadToday();
-        context.read<GamificationCubit>().load();
+        context.read<GamificationCubit>().load(isPremium: isPremium);
       }
     });
   }
@@ -60,7 +63,14 @@ class _HomePageState extends State<HomePage> {
 
               if (state.status == DailyTrackerStatus.loaded &&
                   state.log != null) {
-                unawaited(context.read<GamificationCubit>().refresh());
+                final bool isPremium =
+                    context.read<SubscriptionCubit>().state.isPremiumActive;
+                unawaited(
+                  context.read<GamificationCubit>().refreshToday(
+                        todayLog: state.log!,
+                        isPremium: isPremium,
+                      ),
+                );
               }
             },
             builder: (BuildContext context, DailyTrackerState state) {
@@ -117,7 +127,11 @@ class _HomePageState extends State<HomePage> {
                     if (!context.mounted) {
                       return;
                     }
-                    await context.read<GamificationCubit>().refresh();
+                    final bool isPremium =
+                        context.read<SubscriptionCubit>().state.isPremiumActive;
+                    await context.read<GamificationCubit>().refresh(
+                          isPremium: isPremium,
+                        );
                   },
                   child: ListView(
                     padding: const EdgeInsets.all(16),
@@ -130,8 +144,11 @@ class _HomePageState extends State<HomePage> {
                           GamificationState gamificationState,
                         ) {
                           if (gamificationState is GamificationLoaded) {
+                            final overview = gamificationState.overview;
                             return GamificationProgressCard(
-                              profile: gamificationState.overview.profile,
+                              profile: overview.profile,
+                              isPremium: overview.isPremium,
+                              xpMultiplier: overview.xpMultiplier,
                             );
                           }
 
@@ -180,9 +197,10 @@ class _HomePageState extends State<HomePage> {
                           GamificationState gamificationState,
                         ) {
                           if (gamificationState is GamificationLoaded) {
+                            final overview = gamificationState.overview;
                             return DailyChallengeCard(
-                              challenge:
-                                  gamificationState.overview.dailyChallenge,
+                              challenge: overview.dailyChallenge,
+                              isPremium: overview.isPremium,
                             );
                           }
 

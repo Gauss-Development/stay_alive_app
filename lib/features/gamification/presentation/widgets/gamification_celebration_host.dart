@@ -68,7 +68,17 @@ class _GamificationCelebrationHostState
     }
 
     if (effect is ChallengeCompletedEffect) {
-      _showChallengeSnackBar(effect);
+      _showChallengeSnackBar(
+        'Daily challenge complete: ${effect.challenge.title} (+${effect.challenge.xpReward} XP)',
+      );
+      context.read<GamificationCubit>().dismissEffect(effect);
+      return;
+    }
+
+    if (effect is WeeklyChallengeCompletedEffect) {
+      _showChallengeSnackBar(
+        'Weekly challenge complete: ${effect.challenge.title} (+${effect.challenge.xpReward} XP)',
+      );
       context.read<GamificationCubit>().dismissEffect(effect);
       return;
     }
@@ -90,14 +100,12 @@ class _GamificationCelebrationHostState
       );
   }
 
-  void _showChallengeSnackBar(ChallengeCompletedEffect effect) {
+  void _showChallengeSnackBar(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(
-            'Challenge complete: ${effect.challenge.title} (+${effect.challenge.xpReward} XP)',
-          ),
+          content: Text(message),
           behavior: SnackBarBehavior.floating,
         ),
       );

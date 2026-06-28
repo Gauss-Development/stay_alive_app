@@ -30,6 +30,8 @@ class GamificationXpEventModel extends GamificationXpEvent {
   static String _labelForEventType(String eventType) {
     return switch (eventType) {
       'challenge_completed' => 'Daily challenge completed',
+      'weekly_challenge_completed' => 'Weekly challenge completed',
+      'streak_freeze_used' => 'Streak freeze used',
       'level_up' => 'Level up',
       'firstStep' => 'Badge: First Step',
       'perfectDay' => 'Badge: Perfect Day',
@@ -37,6 +39,9 @@ class GamificationXpEventModel extends GamificationXpEvent {
       'ironWill' => 'Badge: Iron Will',
       'earlyBird' => 'Badge: Early Bird',
       'centurion' => 'Badge: Centurion',
+      'winterWellness' => 'Badge: Winter Wellness',
+      'secretKeeper' => 'Badge: Secret Keeper',
+      'patron' => 'Badge: Patron',
       'first_log' => 'Badge: First Log',
       'perfect_day' => 'Badge: Perfect Day',
       'seven_day_streak' => 'Badge: Week Warrior',

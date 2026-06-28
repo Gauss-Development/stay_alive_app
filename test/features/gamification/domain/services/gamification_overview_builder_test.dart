@@ -62,6 +62,19 @@ void main() {
       expect(mastery.first.tier, MasteryTier.none);
     });
 
+    test('builds deterministic weekly challenge for user and week', () {
+      final GamificationChallenge challenge = builder.buildWeeklyChallenge(
+        userId: 'user_1',
+        weekKey: '2026-06-23',
+        weekLogs: const <DailyLog>[],
+        isPremium: true,
+      );
+
+      expect(challenge.id, 'weekly_2026-06-23');
+      expect(challenge.period, ChallengePeriod.weekly);
+      expect(challenge.target, greaterThan(0));
+    });
+
     test('adds challenge XP only when challenge is newly completed', () {
       final DailyLog todayLog = DailyLog(
         id: '2026-06-28',
@@ -87,7 +100,10 @@ void main() {
         logs: <DailyLog>[todayLog],
         persistedEvents: const <GamificationXpEvent>[],
         referenceDate: DateTime.parse('2026-06-28T18:00:00'),
+        isPremium: false,
       );
+
+      expect(overview.weeklyChallenge.period, ChallengePeriod.weekly);
 
       if (overview.dailyChallenge.type == ChallengeType.logServings &&
           overview.dailyChallenge.isCompleted) {

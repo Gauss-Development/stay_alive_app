@@ -36,3 +36,12 @@ class ChallengeCompletedEffect extends GamificationEffect {
   @override
   List<Object?> get props => <Object?>[challenge];
 }
+
+class WeeklyChallengeCompletedEffect extends GamificationEffect {
+  const WeeklyChallengeCompletedEffect(this.challenge);
+
+  final GamificationChallenge challenge;
+
+  @override
+  List<Object?> get props => <Object?>[challenge];
+}

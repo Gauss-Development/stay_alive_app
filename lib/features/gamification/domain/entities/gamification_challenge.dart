@@ -6,6 +6,13 @@ enum ChallengeType {
   earlyLog,
   completeCategory,
   perfectDay,
+  perfectDaysInWeek,
+  activeDaysInWeek,
+}
+
+enum ChallengePeriod {
+  daily,
+  weekly,
 }
 
 class GamificationChallenge extends Equatable {
@@ -18,7 +25,9 @@ class GamificationChallenge extends Equatable {
     required this.progress,
     required this.xpReward,
     required this.dateKey,
+    this.period = ChallengePeriod.daily,
     this.categoryId,
+    this.isPremiumOnly = false,
   });
 
   final String id;
@@ -29,7 +38,9 @@ class GamificationChallenge extends Equatable {
   final int progress;
   final int xpReward;
   final String dateKey;
+  final ChallengePeriod period;
   final String? categoryId;
+  final bool isPremiumOnly;
 
   bool get isCompleted => progress >= target && target > 0;
 
@@ -50,6 +61,8 @@ class GamificationChallenge extends Equatable {
         progress,
         xpReward,
         dateKey,
+        period,
         categoryId,
+        isPremiumOnly,
       ];
 }

@@ -5,6 +5,7 @@ import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
+import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/gamification/data/models/gamification_overview_model.dart';
 import 'package:stay_alive/features/gamification/data/models/gamification_xp_event_model.dart';
 import 'package:stay_alive/features/gamification/data/models/user_game_profile_model.dart';
@@ -17,7 +18,14 @@ import 'package:stay_alive/features/gamification/domain/services/gamification_en
 import 'package:stay_alive/features/gamification/domain/services/gamification_overview_builder.dart';
 
 abstract class GamificationRemoteDataSource {
-  Future<GamificationOverviewModel> reconcileOverview();
+  Future<GamificationOverviewModel> reconcileOverview({
+    required bool isPremium,
+  });
+
+  Future<GamificationOverviewModel> reconcileTodayOverview({
+    required DailyLog todayLog,
+    required bool isPremium,
+  });
 }
 
 class AppwriteGamificationRemoteDataSource
@@ -39,17 +47,71 @@ class AppwriteGamificationRemoteDataSource
   final EnvConfig _envConfig;
   final GamificationOverviewBuilder _overviewBuilder;
 
+  static const int _fullReconcileDayWindow = 365;
+  static const int _todayReconcileDayWindow = 45;
+
   @override
-  Future<GamificationOverviewModel> reconcileOverview() async {
+  Future<GamificationOverviewModel> reconcileOverview({
+    required bool isPremium,
+  }) async {
     final appwrite_models.User user = await _account.get();
-    final List<DailyLogModel> logs = await _loadLogsWithItems(user.$id);
+    final UserGameProfileModel? persistedProfile =
+        await _loadPersistedProfile(user.$id);
+    final List<DailyLogModel> logs =
+        await _loadLogsWithItems(user.$id, dayWindow: _fullReconcileDayWindow);
     final List<GamificationXpEventModel> persistedEvents =
         await _fetchXpEvents(user.$id);
 
-    final GamificationOverview overview = _overviewBuilder.build(
+    return _buildAndPersist(
       userId: user.$id,
       logs: logs,
       persistedEvents: persistedEvents,
+      isPremium: isPremium,
+      persistedProfile: persistedProfile,
+    );
+  }
+
+  @override
+  Future<GamificationOverviewModel> reconcileTodayOverview({
+    required DailyLog todayLog,
+    required bool isPremium,
+  }) async {
+    final appwrite_models.User user = await _account.get();
+    final UserGameProfileModel? persistedProfile =
+        await _loadPersistedProfile(user.$id);
+    final List<DailyLogModel> logs = await _loadLogsWithItems(
+      user.$id,
+      dayWindow: _todayReconcileDayWindow,
+    );
+    final List<DailyLogModel> mergedLogs = _mergeTodayLog(logs, todayLog);
+    final List<GamificationXpEventModel> persistedEvents =
+        await _fetchXpEvents(user.$id);
+
+    return _buildAndPersist(
+      userId: user.$id,
+      logs: mergedLogs,
+      persistedEvents: persistedEvents,
+      isPremium: isPremium,
+      persistedProfile: persistedProfile,
+    );
+  }
+
+  Future<GamificationOverviewModel> _buildAndPersist({
+    required String userId,
+    required List<DailyLogModel> logs,
+    required List<GamificationXpEventModel> persistedEvents,
+    required bool isPremium,
+    required UserGameProfileModel? persistedProfile,
+  }) async {
+    final GamificationOverview overview = _overviewBuilder.build(
+      userId: userId,
+      logs: logs,
+      persistedEvents: persistedEvents,
+      isPremium: isPremium,
+      streakFreezesRemaining:
+          persistedProfile?.streakFreezesRemaining ?? 0,
+      streakFreezeUsedDates:
+          persistedProfile?.streakFreezeUsedDates ?? const <String>[],
     );
 
     final UserGameProfileModel profileModel =
@@ -57,21 +119,68 @@ class AppwriteGamificationRemoteDataSource
     await _upsertProfile(profileModel);
     await _upsertBadgeEvents(profileModel);
     await _upsertChallengeEvent(
-      userId: user.$id,
+      userId: userId,
       challenge: overview.dailyChallenge,
       profile: overview.profile,
       persistedEvents: persistedEvents,
+      eventType: 'challenge_completed',
+      isPremium: isPremium,
+    );
+    await _upsertChallengeEvent(
+      userId: userId,
+      challenge: overview.weeklyChallenge,
+      profile: overview.profile,
+      persistedEvents: persistedEvents,
+      eventType: 'weekly_challenge_completed',
+      isPremium: isPremium,
+    );
+    await _upsertStreakFreezeEvents(
+      userId: userId,
+      previousProfile: persistedProfile,
+      nextProfile: overview.profile,
     );
 
     final List<GamificationXpEventModel> refreshedEvents =
-        await _fetchXpEvents(user.$id);
+        await _fetchXpEvents(userId);
 
     return GamificationOverviewModel(
       profile: overview.profile,
       dailyChallenge: overview.dailyChallenge,
+      weeklyChallenge: overview.weeklyChallenge,
       categoryMastery: overview.categoryMastery,
       recentXpEvents: refreshedEvents,
+      isPremium: overview.isPremium,
+      xpMultiplier: overview.xpMultiplier,
     );
+  }
+
+  Future<UserGameProfileModel?> _loadPersistedProfile(String userId) async {
+    try {
+      final appwrite_models.Document document = await _databases.getDocument(
+        databaseId: _envConfig.appwriteDatabaseId,
+        collectionId: _envConfig.gamificationProfilesCollectionId,
+        documentId: userId,
+      );
+      return UserGameProfileModel.fromDocument(document);
+    } on AppwriteException catch (exception) {
+      if (exception.code == 404) {
+        return null;
+      }
+      rethrow;
+    }
+  }
+
+  List<DailyLogModel> _mergeTodayLog(
+    List<DailyLogModel> logs,
+    DailyLog todayLog,
+  ) {
+    final List<DailyLogModel> merged = List<DailyLogModel>.of(logs)
+      ..removeWhere((DailyLogModel log) => log.dateKey == todayLog.dateKey);
+    merged.add(DailyLogModel.fromEntity(todayLog));
+    merged.sort(
+      (DailyLogModel a, DailyLogModel b) => a.dateKey.compareTo(b.dateKey),
+    );
+    return merged;
   }
 
   Future<List<GamificationXpEventModel>> _fetchXpEvents(String userId) async {
@@ -91,20 +200,34 @@ class AppwriteGamificationRemoteDataSource
         .toList(growable: false);
   }
 
-  Future<List<DailyLogModel>> _loadLogsWithItems(String userId) async {
+  Future<List<DailyLogModel>> _loadLogsWithItems(
+    String userId, {
+    required int dayWindow,
+  }) async {
+    final DateTime cutoff =
+        DateTime.now().toUtc().subtract(Duration(days: dayWindow));
+    final String cutoffKey = _dateKey(cutoff);
+
     final appwrite_models.DocumentList documents = await _databases
         .listDocuments(
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.dailyLogsCollectionId,
       queries: <String>[
         Query.equal('user_id', userId),
+        Query.greaterThanEqual('log_date', cutoffKey),
         Query.orderAsc('log_date'),
-        Query.limit(365),
+        Query.limit(dayWindow),
       ],
     );
 
+    final List<String> logIds = documents.documents
+        .map(
+          (appwrite_models.Document document) =>
+              document.data['log_id']?.toString() ?? document.$id,
+        )
+        .toList(growable: false);
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
-        await _loadItemsByLogId(userId);
+        await _loadItemsByLogIds(userId, logIds);
 
     return documents.documents
         .map(
@@ -120,15 +243,21 @@ class AppwriteGamificationRemoteDataSource
         .toList(growable: false);
   }
 
-  Future<Map<String, List<DailyLogItemModel>>> _loadItemsByLogId(
+  Future<Map<String, List<DailyLogItemModel>>> _loadItemsByLogIds(
     String userId,
+    List<String> logIds,
   ) async {
+    if (logIds.isEmpty) {
+      return const <String, List<DailyLogItemModel>>{};
+    }
+
     final appwrite_models.DocumentList itemDocuments =
         await _databases.listDocuments(
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.dailyLogItemsCollectionId,
       queries: <String>[
         Query.equal('user_id', userId),
+        Query.equal('log_id', logIds),
         Query.limit(5000),
       ],
     );
@@ -201,15 +330,20 @@ class AppwriteGamificationRemoteDataSource
     required GamificationChallenge challenge,
     required UserGameProfile profile,
     required List<GamificationXpEvent> persistedEvents,
+    required String eventType,
+    required bool isPremium,
   }) async {
     if (!challenge.isCompleted) {
       return;
     }
 
+    if (challenge.isPremiumOnly && !isPremium) {
+      return;
+    }
+
     final bool exists = persistedEvents.any(
       (GamificationXpEvent event) =>
-          event.eventType == 'challenge_completed' &&
-          event.logDate == challenge.dateKey,
+          event.eventType == eventType && event.logDate == challenge.dateKey,
     );
     if (exists) {
       return;
@@ -217,17 +351,44 @@ class AppwriteGamificationRemoteDataSource
 
     await _createEventIfMissing(
       userId: userId,
-      eventType: 'challenge_completed',
+      eventType: eventType,
       xpDelta: challenge.xpReward,
       logDate: challenge.dateKey,
       createdAt: DateTime.now().toUtc(),
       metadata: <String, Object?>{
         'challenge_id': challenge.id,
         'challenge_title': challenge.title,
+        'challenge_period': challenge.period.name,
         'level': profile.currentLevel.level,
         'xp': profile.totalXp,
       },
     );
+  }
+
+  Future<void> _upsertStreakFreezeEvents({
+    required String userId,
+    required UserGameProfile? previousProfile,
+    required UserGameProfile nextProfile,
+  }) async {
+    final Set<String> previousUsed = (previousProfile?.streakFreezeUsedDates ??
+            const <String>[])
+        .toSet();
+    for (final String date in nextProfile.streakFreezeUsedDates) {
+      if (previousUsed.contains(date)) {
+        continue;
+      }
+      await _createEventIfMissing(
+        userId: userId,
+        eventType: 'streak_freeze_used',
+        xpDelta: 0,
+        logDate: date,
+        createdAt: DateTime.now().toUtc(),
+        metadata: <String, Object?>{
+          'missed_date': date,
+          'freezes_remaining': nextProfile.streakFreezesRemaining,
+        },
+      );
+    }
   }
 
   Future<void> _createEventIfMissing({
@@ -275,5 +436,11 @@ class AppwriteGamificationRemoteDataSource
         rethrow;
       }
     }
+  }
+
+  String _dateKey(DateTime date) {
+    final String month = date.month.toString().padLeft(2, '0');
+    final String day = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$month-$day';
   }
 }

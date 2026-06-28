@@ -22,12 +22,17 @@ import 'package:stay_alive/features/gamification/domain/entities/game_level.dart
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
+import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
+import 'package:stay_alive/features/subscription/presentation/cubit/subscription_state.dart';
 
 class _MockDailyTrackerCubit extends MockCubit<DailyTrackerState>
     implements DailyTrackerCubit {}
 
 class _MockGamificationCubit extends MockCubit<GamificationState>
     implements GamificationCubit {}
+
+class _MockSubscriptionCubit extends MockCubit<SubscriptionState>
+    implements SubscriptionCubit {}
 
 class _FakeHomeWidgetGateway extends Fake implements HomeWidgetGateway {}
 
@@ -76,12 +81,29 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
 void main() {
   late _MockDailyTrackerCubit cubit;
   late _MockGamificationCubit gamificationCubit;
+  late _MockSubscriptionCubit subscriptionCubit;
   late _FakeDailyGoalWidgetService dailyGoalWidgetService;
   late DailyTrackerState loadedState;
+
+  setUpAll(() {
+    registerFallbackValue(
+      DailyLog(
+        id: 'fallback',
+        userId: 'user_1',
+        logDate: DateTime.parse('2026-04-09T00:00:00Z'),
+        items: const <DailyLogItem>[],
+        totalCompleted: 0,
+        totalTarget: 0,
+        completionPercentage: 0,
+        isFullyCompleted: false,
+      ),
+    );
+  });
 
   setUp(() {
     cubit = _MockDailyTrackerCubit();
     gamificationCubit = _MockGamificationCubit();
+    subscriptionCubit = _MockSubscriptionCubit();
     dailyGoalWidgetService = _FakeDailyGoalWidgetService();
     final DateTime now = DateTime.parse('2026-04-09T00:00:00Z');
     const TrackerCategory category = TrackerCategory(
@@ -155,6 +177,17 @@ void main() {
         xpReward: 35,
         dateKey: '2026-04-09',
       ),
+      weeklyChallenge: const GamificationChallenge(
+        id: 'weekly_2026-04-07',
+        type: ChallengeType.perfectDaysInWeek,
+        title: 'Weekly Perfectionist',
+        description: 'Hit 3 perfect days this week.',
+        target: 3,
+        progress: 0,
+        xpReward: 120,
+        dateKey: '2026-04-07',
+        period: ChallengePeriod.weekly,
+      ),
       categoryMastery: const <CategoryMastery>[],
       recentXpEvents: const <GamificationXpEvent>[],
     );
@@ -168,17 +201,33 @@ void main() {
       Stream<GamificationState>.value(gamificationLoaded),
       initialState: gamificationLoaded,
     );
-    when(() => gamificationCubit.load()).thenAnswer((_) async {});
-    when(() => gamificationCubit.refresh()).thenAnswer((_) async {});
+    whenListen<SubscriptionState>(
+      subscriptionCubit,
+      Stream<SubscriptionState>.value(const SubscriptionState.initial()),
+      initialState: const SubscriptionState.initial(),
+    );
+    when(() => gamificationCubit.load(isPremium: any(named: 'isPremium')))
+        .thenAnswer((_) async {});
+    when(
+      () => gamificationCubit.refreshToday(
+        todayLog: any(named: 'todayLog'),
+        isPremium: any(named: 'isPremium'),
+      ),
+    ).thenAnswer((_) async {});
+    when(() => gamificationCubit.refresh(isPremium: any(named: 'isPremium')))
+        .thenAnswer((_) async {});
   });
 
   Widget buildWidget() {
     return MaterialApp(
       home: BlocProvider<DailyTrackerCubit>.value(
         value: cubit,
-        child: BlocProvider<GamificationCubit>.value(
-          value: gamificationCubit,
-          child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
+        child: BlocProvider<SubscriptionCubit>.value(
+          value: subscriptionCubit,
+          child: BlocProvider<GamificationCubit>.value(
+            value: gamificationCubit,
+            child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
+          ),
         ),
       ),
     );

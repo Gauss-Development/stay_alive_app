@@ -4,16 +4,19 @@ import 'package:stay_alive/features/gamification/domain/entities/gamification_ov
 import 'package:stay_alive/features/gamification/domain/repositories/gamification_repository.dart';
 import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_params.dart';
 
-class ReconcileGamificationOverviewUseCase
-    implements UseCase<GamificationOverview, ReconcileGamificationParams> {
-  const ReconcileGamificationOverviewUseCase(this._repository);
+class ReconcileGamificationTodayUseCase
+    implements UseCase<GamificationOverview, ReconcileGamificationTodayParams> {
+  const ReconcileGamificationTodayUseCase(this._repository);
 
   final GamificationRepository _repository;
 
   @override
   Future<Result<GamificationOverview>> call(
-    ReconcileGamificationParams params,
+    ReconcileGamificationTodayParams params,
   ) {
-    return _repository.reconcileOverview(isPremium: params.isPremium);
+    return _repository.reconcileTodayOverview(
+      todayLog: params.todayLog,
+      isPremium: params.isPremium,
+    );
   }
 }

@@ -9,14 +9,20 @@ class GamificationOverview extends Equatable {
   const GamificationOverview({
     required this.profile,
     required this.dailyChallenge,
+    required this.weeklyChallenge,
     required this.categoryMastery,
     required this.recentXpEvents,
+    this.isPremium = false,
+    this.xpMultiplier = 1,
   });
 
   final UserGameProfile profile;
   final GamificationChallenge dailyChallenge;
+  final GamificationChallenge weeklyChallenge;
   final List<CategoryMastery> categoryMastery;
   final List<GamificationXpEvent> recentXpEvents;
+  final bool isPremium;
+  final double xpMultiplier;
 
   List<BadgeGalleryItem> get badgeGallery {
     final Set<BadgeId> earnedIds = profile.earnedBadges
@@ -27,6 +33,13 @@ class GamificationOverview extends Equatable {
     };
 
     return BadgeId.values
+        .where((BadgeId id) {
+          final BadgeDefinition definition = BadgeDefinition.all[id]!;
+          if (definition.isHidden && !earnedIds.contains(id)) {
+            return false;
+          }
+          return true;
+        })
         .map((BadgeId id) {
           final EarnedBadge? earned = earnedById[id];
           return BadgeGalleryItem(
@@ -42,8 +55,11 @@ class GamificationOverview extends Equatable {
   List<Object?> get props => <Object?>[
         profile,
         dailyChallenge,
+        weeklyChallenge,
         categoryMastery,
         recentXpEvents,
+        isPremium,
+        xpMultiplier,
       ];
 }
 

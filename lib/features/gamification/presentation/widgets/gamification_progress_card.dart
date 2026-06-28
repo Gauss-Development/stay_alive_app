@@ -9,10 +9,14 @@ import 'package:stay_alive/features/gamification/presentation/widgets/xp_level_b
 class GamificationProgressCard extends StatelessWidget {
   const GamificationProgressCard({
     required this.profile,
+    this.isPremium = false,
+    this.xpMultiplier = 1,
     super.key,
   });
 
   final UserGameProfile profile;
+  final bool isPremium;
+  final double xpMultiplier;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +49,16 @@ class GamificationProgressCard extends StatelessWidget {
                 ),
               ],
             ),
+            if (isPremium) ...<Widget>[
+              const SizedBox(height: 8),
+              Text(
+                'Premium active · ${xpMultiplier}x XP',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: colors.tertiary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             XpLevelBar(profile: profile),
             const SizedBox(height: 16),
@@ -71,6 +85,11 @@ class GamificationProgressCard extends StatelessWidget {
                   icon: Icons.check_circle_outline,
                   label: 'Perfect days',
                   value: '${profile.completedDates.length}',
+                ),
+                _StatChip(
+                  icon: Icons.ac_unit_outlined,
+                  label: 'Streak freezes',
+                  value: '${profile.streakFreezesRemaining}',
                 ),
               ],
             ),

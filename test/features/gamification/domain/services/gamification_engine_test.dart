@@ -129,6 +129,27 @@ void main() {
       expect(profile.activityStreak, 2);
     });
 
+    test('awards patron badge and premium freeze allowance', () {
+      final UserGameProfile profile = engine.reconcile(
+        userId: 'user_1',
+        logs: <DailyLog>[
+          logForDate(
+            dateKey: '2026-05-01',
+            completed: 1,
+            target: 3,
+          ),
+        ],
+        referenceDate: DateTime.parse('2026-05-01T20:00:00'),
+        isPremium: true,
+      );
+
+      expect(
+        profile.earnedBadges.map((EarnedBadge badge) => badge.id),
+        contains(BadgeId.patron),
+      );
+      expect(profile.streakFreezesRemaining, 2);
+    });
+
     test('diffProfiles emits level up and badge unlock effects', () {
       const UserGameProfile previous = UserGameProfile(
         userId: 'user_1',

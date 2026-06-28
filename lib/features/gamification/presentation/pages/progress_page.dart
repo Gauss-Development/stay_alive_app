@@ -8,6 +8,7 @@ import 'package:stay_alive/features/gamification/presentation/widgets/category_m
 import 'package:stay_alive/features/gamification/presentation/widgets/daily_challenge_card.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/xp_event_timeline.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/xp_level_bar.dart';
+import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
@@ -23,8 +24,10 @@ class _ProgressPageState extends State<ProgressPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final GamificationState state = context.read<GamificationCubit>().state;
+        final bool isPremium =
+            context.read<SubscriptionCubit>().state.isPremiumActive;
         if (state is! GamificationLoaded) {
-          context.read<GamificationCubit>().load();
+          context.read<GamificationCubit>().load(isPremium: isPremium);
         }
       }
     });
@@ -35,104 +38,138 @@ class _ProgressPageState extends State<ProgressPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Progress')),
       body: BlocBuilder<GamificationCubit, GamificationState>(
-          builder: (BuildContext context, GamificationState state) {
-            if (state is GamificationInitial || state is GamificationLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        builder: (BuildContext context, GamificationState state) {
+          if (state is GamificationInitial || state is GamificationLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            if (state is GamificationError) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+          if (state is GamificationError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(state.message, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () {
+                        final bool isPremium = context
+                            .read<SubscriptionCubit>()
+                            .state
+                            .isPremiumActive;
+                        context
+                            .read<GamificationCubit>()
+                            .load(isPremium: isPremium);
+                      },
+                      child: const Text('Try again'),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          if (state is! GamificationLoaded) {
+            return const SizedBox.shrink();
+          }
+
+          final overview = state.overview;
+          final profile = overview.profile;
+
+          return RefreshIndicator(
+            onRefresh: () {
+              final bool isPremium =
+                  context.read<SubscriptionCubit>().state.isPremiumActive;
+              return context
+                  .read<GamificationCubit>()
+                  .refresh(isPremium: isPremium);
+            },
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: <Widget>[
+                Text(
+                  '${profile.currentLevel.title} · Level ${profile.currentLevel.level}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+                if (overview.isPremium) ...<Widget>[
+                  const SizedBox(height: 4),
+                  Text(
+                    'Premium perks active · ${overview.xpMultiplier}x XP',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.tertiary,
+                        ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                XpLevelBar(profile: profile),
+                const SizedBox(height: 16),
+                DailyChallengeCard(
+                  challenge: overview.dailyChallenge,
+                  isPremium: overview.isPremium,
+                ),
+                const SizedBox(height: 16),
+                DailyChallengeCard(
+                  challenge: overview.weeklyChallenge,
+                  isPremium: overview.isPremium,
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: 'Streaks',
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
                     children: <Widget>[
-                      Text(state.message, textAlign: TextAlign.center),
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        onPressed: () =>
-                            context.read<GamificationCubit>().load(),
-                        child: const Text('Try again'),
+                      _InfoChip(
+                        label: 'Perfect streak',
+                        value: '${profile.currentStreak}',
+                      ),
+                      _InfoChip(
+                        label: 'Active streak',
+                        value: '${profile.activityStreak}',
+                      ),
+                      _InfoChip(
+                        label: 'Best streak',
+                        value: '${profile.longestStreak}',
+                      ),
+                      _InfoChip(
+                        label: 'Perfect days',
+                        value: '${profile.completedDates.length}',
+                      ),
+                      _InfoChip(
+                        label: 'Streak freezes',
+                        value: '${profile.streakFreezesRemaining}',
                       ),
                     ],
                   ),
                 ),
-              );
-            }
-
-            if (state is! GamificationLoaded) {
-              return const SizedBox.shrink();
-            }
-
-            final overview = state.overview;
-            final profile = overview.profile;
-
-            return RefreshIndicator(
-              onRefresh: () => context.read<GamificationCubit>().refresh(),
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: <Widget>[
-                  Text(
-                    '${profile.currentLevel.title} · Level ${profile.currentLevel.level}',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                  const SizedBox(height: 12),
-                  XpLevelBar(profile: profile),
-                  const SizedBox(height: 16),
-                  DailyChallengeCard(challenge: overview.dailyChallenge),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'Streaks',
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        _InfoChip(
-                          label: 'Perfect streak',
-                          value: '${profile.currentStreak}',
-                        ),
-                        _InfoChip(
-                          label: 'Active streak',
-                          value: '${profile.activityStreak}',
-                        ),
-                        _InfoChip(
-                          label: 'Best streak',
-                          value: '${profile.longestStreak}',
-                        ),
-                        _InfoChip(
-                          label: 'Perfect days',
-                          value: '${profile.completedDates.length}',
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'Badge Gallery',
-                    child: BadgeGallery(items: overview.badgeGallery),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'Recent Badges',
-                    child: BadgeList(badges: profile.earnedBadges),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'Category Mastery',
-                    child: CategoryMasteryList(items: overview.categoryMastery),
-                  ),
-                  const SizedBox(height: 16),
-                  _SectionCard(
-                    title: 'XP Activity',
-                    child: XpEventTimeline(events: overview.recentXpEvents),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: 'Badge Gallery',
+                  child: BadgeGallery(items: overview.badgeGallery),
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: 'Recent Badges',
+                  child: BadgeList(badges: profile.earnedBadges),
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: 'Category Mastery',
+                  child: CategoryMasteryList(items: overview.categoryMastery),
+                ),
+                const SizedBox(height: 16),
+                _SectionCard(
+                  title: 'XP Activity',
+                  child: XpEventTimeline(events: overview.recentXpEvents),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
