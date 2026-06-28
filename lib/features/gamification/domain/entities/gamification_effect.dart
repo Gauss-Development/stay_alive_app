@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_challenge.dart';
 
 abstract class GamificationEffect extends Equatable {
   const GamificationEffect();
@@ -25,4 +26,13 @@ class BadgeUnlockedEffect extends GamificationEffect {
 
   @override
   List<Object?> get props => <Object?>[badge];
+}
+
+class ChallengeCompletedEffect extends GamificationEffect {
+  const ChallengeCompletedEffect(this.challenge);
+
+  final GamificationChallenge challenge;
+
+  @override
+  List<Object?> get props => <Object?>[challenge];
 }

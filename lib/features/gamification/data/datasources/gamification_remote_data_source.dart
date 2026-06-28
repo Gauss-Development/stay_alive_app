@@ -5,13 +5,19 @@ import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
+import 'package:stay_alive/features/gamification/data/models/gamification_overview_model.dart';
+import 'package:stay_alive/features/gamification/data/models/gamification_xp_event_model.dart';
 import 'package:stay_alive/features/gamification/data/models/user_game_profile_model.dart';
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_challenge.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
+import 'package:stay_alive/features/gamification/domain/services/gamification_overview_builder.dart';
 
 abstract class GamificationRemoteDataSource {
-  Future<UserGameProfileModel> reconcileProgress();
+  Future<GamificationOverviewModel> reconcileOverview();
 }
 
 class AppwriteGamificationRemoteDataSource
@@ -21,28 +27,68 @@ class AppwriteGamificationRemoteDataSource
     required Databases databases,
     required EnvConfig envConfig,
     GamificationEngine? engine,
+    GamificationOverviewBuilder? overviewBuilder,
   })  : _account = account,
         _databases = databases,
         _envConfig = envConfig,
-        _engine = engine ?? const GamificationEngine();
+        _overviewBuilder =
+            overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
 
   final Account _account;
   final Databases _databases;
   final EnvConfig _envConfig;
-  final GamificationEngine _engine;
+  final GamificationOverviewBuilder _overviewBuilder;
 
   @override
-  Future<UserGameProfileModel> reconcileProgress() async {
+  Future<GamificationOverviewModel> reconcileOverview() async {
     final appwrite_models.User user = await _account.get();
     final List<DailyLogModel> logs = await _loadLogsWithItems(user.$id);
-    final UserGameProfile profile = _engine.reconcile(
+    final List<GamificationXpEventModel> persistedEvents =
+        await _fetchXpEvents(user.$id);
+
+    final GamificationOverview overview = _overviewBuilder.build(
       userId: user.$id,
       logs: logs,
+      persistedEvents: persistedEvents,
     );
-    final UserGameProfileModel model = UserGameProfileModel.fromProfile(profile);
-    await _upsertProfile(model);
-    await _upsertBadgeEvents(model);
-    return model;
+
+    final UserGameProfileModel profileModel =
+        UserGameProfileModel.fromProfile(overview.profile);
+    await _upsertProfile(profileModel);
+    await _upsertBadgeEvents(profileModel);
+    await _upsertChallengeEvent(
+      userId: user.$id,
+      challenge: overview.dailyChallenge,
+      profile: overview.profile,
+      persistedEvents: persistedEvents,
+    );
+
+    final List<GamificationXpEventModel> refreshedEvents =
+        await _fetchXpEvents(user.$id);
+
+    return GamificationOverviewModel(
+      profile: overview.profile,
+      dailyChallenge: overview.dailyChallenge,
+      categoryMastery: overview.categoryMastery,
+      recentXpEvents: refreshedEvents,
+    );
+  }
+
+  Future<List<GamificationXpEventModel>> _fetchXpEvents(String userId) async {
+    final appwrite_models.DocumentList documents = await _databases
+        .listDocuments(
+      databaseId: _envConfig.appwriteDatabaseId,
+      collectionId: _envConfig.gamificationEventsCollectionId,
+      queries: <String>[
+        Query.equal('user_id', userId),
+        Query.orderDesc('\$createdAt'),
+        Query.limit(50),
+      ],
+    );
+
+    return documents.documents
+        .map(GamificationXpEventModel.fromDocument)
+        .toList(growable: false);
   }
 
   Future<List<DailyLogModel>> _loadLogsWithItems(String userId) async {
@@ -135,47 +181,98 @@ class AppwriteGamificationRemoteDataSource
 
   Future<void> _upsertBadgeEvents(UserGameProfileModel profile) async {
     for (final EarnedBadge badge in profile.earnedBadges) {
-      final String eventType = badge.id.name;
-      final appwrite_models.DocumentList existing = await _databases
-          .listDocuments(
+      await _createEventIfMissing(
+        userId: profile.userId,
+        eventType: badge.id.name,
+        xpDelta: GamificationEngine.badgeXpBonuses[badge.id] ?? 0,
+        logDate: badge.earnedAt.toIso8601String().substring(0, 10),
+        createdAt: badge.earnedAt.toUtc(),
+        metadata: <String, Object?>{
+          'badge_id': badge.id.name,
+          'level': profile.currentLevel.level,
+          'xp': profile.totalXp,
+        },
+      );
+    }
+  }
+
+  Future<void> _upsertChallengeEvent({
+    required String userId,
+    required GamificationChallenge challenge,
+    required UserGameProfile profile,
+    required List<GamificationXpEvent> persistedEvents,
+  }) async {
+    if (!challenge.isCompleted) {
+      return;
+    }
+
+    final bool exists = persistedEvents.any(
+      (GamificationXpEvent event) =>
+          event.eventType == 'challenge_completed' &&
+          event.logDate == challenge.dateKey,
+    );
+    if (exists) {
+      return;
+    }
+
+    await _createEventIfMissing(
+      userId: userId,
+      eventType: 'challenge_completed',
+      xpDelta: challenge.xpReward,
+      logDate: challenge.dateKey,
+      createdAt: DateTime.now().toUtc(),
+      metadata: <String, Object?>{
+        'challenge_id': challenge.id,
+        'challenge_title': challenge.title,
+        'level': profile.currentLevel.level,
+        'xp': profile.totalXp,
+      },
+    );
+  }
+
+  Future<void> _createEventIfMissing({
+    required String userId,
+    required String eventType,
+    required int xpDelta,
+    required String logDate,
+    required DateTime createdAt,
+    required Map<String, Object?> metadata,
+  }) async {
+    final appwrite_models.DocumentList existing = await _databases
+        .listDocuments(
+      databaseId: _envConfig.appwriteDatabaseId,
+      collectionId: _envConfig.gamificationEventsCollectionId,
+      queries: <String>[
+        Query.equal('user_id', userId),
+        Query.equal('event_type', eventType),
+        Query.equal('log_date', logDate),
+        Query.limit(1),
+      ],
+    );
+    if (existing.documents.isNotEmpty) {
+      return;
+    }
+
+    try {
+      final String documentId = ID.unique();
+      await _databases.createDocument(
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.gamificationEventsCollectionId,
-        queries: <String>[
-          Query.equal('user_id', profile.userId),
-          Query.equal('event_type', eventType),
-          Query.limit(1),
-        ],
+        documentId: documentId,
+        data: <String, dynamic>{
+          'event_id': documentId,
+          'user_id': userId,
+          'event_type': eventType,
+          'xp_delta': xpDelta,
+          'log_date': logDate,
+          'metadata_json': jsonEncode(metadata),
+          'created_at': createdAt.toIso8601String(),
+        },
+        permissions: <String>[Permission.read(Role.user(userId))],
       );
-      if (existing.documents.isNotEmpty) {
-        continue;
-      }
-
-      try {
-        final String documentId = ID.unique();
-        await _databases.createDocument(
-          databaseId: _envConfig.appwriteDatabaseId,
-          collectionId: _envConfig.gamificationEventsCollectionId,
-          documentId: documentId,
-          data: <String, dynamic>{
-            'event_id': documentId,
-            'user_id': profile.userId,
-            'event_type': eventType,
-            'xp_delta':
-                GamificationEngine.badgeXpBonuses[badge.id] ?? 0,
-            'log_date': badge.earnedAt.toIso8601String().substring(0, 10),
-            'metadata_json': jsonEncode(<String, Object?>{
-              'level': profile.currentLevel.level,
-              'xp': profile.totalXp,
-              'badge_id': badge.id.name,
-            }),
-            'created_at': badge.earnedAt.toUtc().toIso8601String(),
-          },
-          permissions: <String>[Permission.read(Role.user(profile.userId))],
-        );
-      } on AppwriteException catch (exception) {
-        if (exception.code != 409) {
-          rethrow;
-        }
+    } on AppwriteException catch (exception) {
+      if (exception.code != 409) {
+        rethrow;
       }
     }
   }

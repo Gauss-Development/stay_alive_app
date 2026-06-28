@@ -14,6 +14,10 @@ import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_track
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
+import 'package:stay_alive/features/gamification/domain/entities/category_mastery.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_challenge.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
 import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
@@ -119,32 +123,50 @@ void main() {
       summary: summary,
     );
 
-    when(() => cubit.state).thenReturn(loadedState);
-    when(
-      () => cubit.stream,
-    ).thenAnswer((_) => Stream<DailyTrackerState>.value(loadedState));
+    whenListen<DailyTrackerState>(
+      cubit,
+      Stream<DailyTrackerState>.value(loadedState),
+      initialState: loadedState,
+    );
     when(() => cubit.loadToday()).thenAnswer((_) async {});
     when(() => cubit.increment(any())).thenAnswer((_) async {});
     when(() => cubit.decrement(any())).thenAnswer((_) async {});
     when(() => cubit.resetToday()).thenAnswer((_) async {});
-    final UserGameProfile gamificationProfile = UserGameProfile(
-      userId: 'user_1',
-      totalXp: 35,
-      currentLevel: GameLevelTable.levels.first,
-      currentStreak: 1,
-      longestStreak: 1,
-      activityStreak: 1,
-      completedDates: <String>[],
-      earlyLogDates: <String>[],
-      earnedBadges: <EarnedBadge>[],
-      totalCategoriesCompleted: 0,
+    final GamificationOverview gamificationOverview = GamificationOverview(
+      profile: UserGameProfile(
+        userId: 'user_1',
+        totalXp: 35,
+        currentLevel: GameLevelTable.levels.first,
+        currentStreak: 1,
+        longestStreak: 1,
+        activityStreak: 1,
+        completedDates: <String>[],
+        earlyLogDates: <String>[],
+        earnedBadges: <EarnedBadge>[],
+        totalCategoriesCompleted: 0,
+      ),
+      dailyChallenge: const GamificationChallenge(
+        id: 'daily_2026-04-09',
+        type: ChallengeType.logServings,
+        title: 'Servings Sprint',
+        description: 'Log 8 servings today.',
+        target: 8,
+        progress: 1,
+        xpReward: 35,
+        dateKey: '2026-04-09',
+      ),
+      categoryMastery: const <CategoryMastery>[],
+      recentXpEvents: const <GamificationXpEvent>[],
     );
 
-    when(() => gamificationCubit.state).thenReturn(
-      GamificationLoaded(profile: gamificationProfile),
+    final GamificationLoaded gamificationLoaded = GamificationLoaded(
+      overview: gamificationOverview,
     );
-    when(() => gamificationCubit.stream).thenAnswer(
-      (_) => const Stream<GamificationState>.empty(),
+
+    whenListen<GamificationState>(
+      gamificationCubit,
+      Stream<GamificationState>.value(gamificationLoaded),
+      initialState: gamificationLoaded,
     );
     when(() => gamificationCubit.load()).thenAnswer((_) async {});
     when(() => gamificationCubit.refresh()).thenAnswer((_) async {});
@@ -152,12 +174,12 @@ void main() {
 
   Widget buildWidget() {
     return MaterialApp(
-      home: MultiBlocProvider(
-        providers: <BlocProvider<dynamic>>[
-          BlocProvider<DailyTrackerCubit>.value(value: cubit),
-          BlocProvider<GamificationCubit>.value(value: gamificationCubit),
-        ],
-        child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
+      home: BlocProvider<DailyTrackerCubit>.value(
+        value: cubit,
+        child: BlocProvider<GamificationCubit>.value(
+          value: gamificationCubit,
+          child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
+        ),
       ),
     );
   }
@@ -167,8 +189,17 @@ void main() {
   ) async {
     await tester.pumpWidget(buildWidget());
     await tester.pump();
+    await tester.pump();
 
-    expect(find.text('What did you eat today?'), findsOneWidget);
+    final Finder checklistHeading = find.text('What did you eat today?');
+    await tester.scrollUntilVisible(
+      checklistHeading,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pump();
+
+    expect(checklistHeading, findsOneWidget);
     expect(find.text('Beans / Legumes'), findsOneWidget);
     expect(
       find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)'),
@@ -181,16 +212,17 @@ void main() {
   ) async {
     await tester.pumpWidget(buildWidget());
     await tester.pump();
+    await tester.pump();
 
     final Finder incrementButton =
         find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)');
-    expect(incrementButton, findsOneWidget);
     await tester.scrollUntilVisible(
       incrementButton,
       120,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    expect(incrementButton, findsOneWidget);
     await tester.tap(incrementButton);
     await tester.pump();
 

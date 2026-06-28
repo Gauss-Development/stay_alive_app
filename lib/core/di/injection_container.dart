@@ -33,7 +33,7 @@ import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_track
 import 'package:stay_alive/features/gamification/data/datasources/gamification_remote_data_source.dart';
 import 'package:stay_alive/features/gamification/data/repositories_impl/gamification_repository_impl.dart';
 import 'package:stay_alive/features/gamification/domain/repositories/gamification_repository.dart';
-import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_progress_usecase.dart';
+import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_overview_usecase.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/analytics/data/datasources/analytics_remote_data_source.dart';
 import 'package:stay_alive/features/analytics/data/repositories_impl/analytics_repository_impl.dart';
@@ -235,13 +235,13 @@ void _registerGamificationFeature() {
     ..registerLazySingleton<GamificationRepository>(
       () => GamificationRepositoryImpl(sl<GamificationRemoteDataSource>()),
     )
-    ..registerLazySingleton<ReconcileGamificationProgressUseCase>(
-      () => ReconcileGamificationProgressUseCase(sl<GamificationRepository>()),
+    ..registerLazySingleton<ReconcileGamificationOverviewUseCase>(
+      () => ReconcileGamificationOverviewUseCase(sl<GamificationRepository>()),
     )
     ..registerFactory<GamificationCubit>(
       () => GamificationCubit(
-        reconcileGamificationProgressUseCase:
-            sl<ReconcileGamificationProgressUseCase>(),
+        reconcileGamificationOverviewUseCase:
+            sl<ReconcileGamificationOverviewUseCase>(),
       ),
     );
 }

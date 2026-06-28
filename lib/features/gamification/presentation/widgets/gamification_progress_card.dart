@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/badge_list.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/streak_chip.dart';
@@ -83,6 +85,15 @@ class GamificationProgressCard extends StatelessWidget {
               const SizedBox(height: 8),
               BadgeList(badges: profile.earnedBadges),
             ],
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () => context.push(AppRoutes.progress),
+                icon: const Icon(Icons.insights_outlined),
+                label: const Text('View full progress'),
+              ),
+            ),
           ],
         ),
       ),

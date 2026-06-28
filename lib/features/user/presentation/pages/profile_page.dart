@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_state.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
@@ -65,6 +67,12 @@ class _ProfilePageState extends State<ProfilePage> {
               Text(
                 'Onboarding completed: '
                 '${profile.onboardingCompleted ? 'Yes' : 'No'}',
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: () => context.push(AppRoutes.progress),
+                icon: const Icon(Icons.emoji_events_outlined),
+                label: const Text('View Progress & Badges'),
               ),
               const SizedBox(height: 32),
               const Divider(),

@@ -9,6 +9,7 @@ abstract final class AppRoutes {
   static const String history = '/history';
   static const String profile = '/profile';
   static const String settings = '/settings';
+  static const String progress = '/progress';
   static const String premium = '/premium';
   static const String analytics = '/analytics';
   static const String education = '/education/:categoryId';

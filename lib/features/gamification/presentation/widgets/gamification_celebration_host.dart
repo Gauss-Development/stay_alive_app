@@ -67,6 +67,12 @@ class _GamificationCelebrationHostState
       return;
     }
 
+    if (effect is ChallengeCompletedEffect) {
+      _showChallengeSnackBar(effect);
+      context.read<GamificationCubit>().dismissEffect(effect);
+      return;
+    }
+
     setState(() {
       _activeEffect = effect;
     });
@@ -79,6 +85,19 @@ class _GamificationCelebrationHostState
       ..showSnackBar(
         SnackBar(
           content: Text('${badge.emoji} Badge unlocked: ${badge.name}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  void _showChallengeSnackBar(ChallengeCompletedEffect effect) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            'Challenge complete: ${effect.challenge.title} (+${effect.challenge.xpReward} XP)',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );

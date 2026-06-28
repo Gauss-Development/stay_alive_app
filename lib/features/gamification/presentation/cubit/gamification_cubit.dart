@@ -1,23 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_effect.dart';
-import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
-import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_progress_usecase.dart';
+import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_overview_usecase.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 
 class GamificationCubit extends Cubit<GamificationState> {
   GamificationCubit({
-    required ReconcileGamificationProgressUseCase
-        reconcileGamificationProgressUseCase,
+    required ReconcileGamificationOverviewUseCase
+        reconcileGamificationOverviewUseCase,
     GamificationEngine? engine,
-  })  : _reconcileGamificationProgressUseCase =
-            reconcileGamificationProgressUseCase,
+  })  : _reconcileGamificationOverviewUseCase =
+            reconcileGamificationOverviewUseCase,
         _engine = engine ?? const GamificationEngine(),
         super(const GamificationInitial());
 
-  final ReconcileGamificationProgressUseCase
-      _reconcileGamificationProgressUseCase;
+  final ReconcileGamificationOverviewUseCase
+      _reconcileGamificationOverviewUseCase;
   final GamificationEngine _engine;
 
   Future<void> load() async {
@@ -52,21 +52,24 @@ class GamificationCubit extends Cubit<GamificationState> {
       emit(const GamificationLoading());
     }
 
-    final UserGameProfile? previousProfile = switch (state) {
-      GamificationLoaded(profile: final UserGameProfile profile) => profile,
+    final GamificationOverview? previousOverview = switch (state) {
+      GamificationLoaded(overview: final GamificationOverview overview) =>
+        overview,
       _ => null,
     };
 
-    final result = await _reconcileGamificationProgressUseCase(const NoParams());
+    final result =
+        await _reconcileGamificationOverviewUseCase(const NoParams());
     result.fold(
       (failure) => emit(GamificationError(failure.message)),
-      (UserGameProfile profile) {
+      (GamificationOverview overview) {
         final List<GamificationEffect> effects = _mapEffects(
-          _engine.diffProfiles(previousProfile, profile),
+          previousOverview,
+          overview,
         );
         emit(
           GamificationLoaded(
-            profile: profile,
+            overview: overview,
             pendingEffects: effects,
           ),
         );
@@ -75,6 +78,26 @@ class GamificationCubit extends Cubit<GamificationState> {
   }
 
   List<GamificationEffect> _mapEffects(
+    GamificationOverview? previous,
+    GamificationOverview next,
+  ) {
+    if (previous == null) {
+      return const <GamificationEffect>[];
+    }
+
+    final List<GamificationEffect> effects = _mapEngineEffects(
+      _engine.diffProfiles(previous.profile, next.profile),
+    );
+
+    if (!previous.dailyChallenge.isCompleted &&
+        next.dailyChallenge.isCompleted) {
+      effects.add(ChallengeCompletedEffect(next.dailyChallenge));
+    }
+
+    return effects;
+  }
+
+  List<GamificationEffect> _mapEngineEffects(
     List<GamificationEffectCandidate> candidates,
   ) {
     return candidates.map((GamificationEffectCandidate candidate) {

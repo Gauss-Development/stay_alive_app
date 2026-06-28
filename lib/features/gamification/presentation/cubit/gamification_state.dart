@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_effect.dart';
-import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 
 abstract class GamificationState extends Equatable {
   const GamificationState();
@@ -19,20 +19,20 @@ class GamificationLoading extends GamificationState {
 
 class GamificationLoaded extends GamificationState {
   const GamificationLoaded({
-    required this.profile,
+    required this.overview,
     this.pendingEffects = const <GamificationEffect>[],
   });
 
-  final UserGameProfile profile;
+  final GamificationOverview overview;
   final List<GamificationEffect> pendingEffects;
 
   GamificationLoaded copyWith({
-    UserGameProfile? profile,
+    GamificationOverview? overview,
     List<GamificationEffect>? pendingEffects,
     bool clearEffects = false,
   }) {
     return GamificationLoaded(
-      profile: profile ?? this.profile,
+      overview: overview ?? this.overview,
       pendingEffects: clearEffects
           ? const <GamificationEffect>[]
           : pendingEffects ?? this.pendingEffects,
@@ -40,7 +40,7 @@ class GamificationLoaded extends GamificationState {
   }
 
   @override
-  List<Object?> get props => <Object?>[profile, pendingEffects];
+  List<Object?> get props => <Object?>[overview, pendingEffects];
 }
 
 class GamificationError extends GamificationState {

@@ -3,7 +3,7 @@ import 'package:stay_alive/core/error/appwrite_failure_mapper.dart';
 import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/core/result/result.dart';
 import 'package:stay_alive/features/gamification/data/datasources/gamification_remote_data_source.dart';
-import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
+import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/repositories/gamification_repository.dart';
 
 class GamificationRepositoryImpl implements GamificationRepository {
@@ -12,13 +12,13 @@ class GamificationRepositoryImpl implements GamificationRepository {
   final GamificationRemoteDataSource _remoteDataSource;
 
   @override
-  Future<Result<UserGameProfile>> reconcileProgress() async {
+  Future<Result<GamificationOverview>> reconcileOverview() async {
     try {
-      final UserGameProfile profile =
-          await _remoteDataSource.reconcileProgress();
-      return Right<Failure, UserGameProfile>(profile);
+      final GamificationOverview overview =
+          await _remoteDataSource.reconcileOverview();
+      return Right<Failure, GamificationOverview>(overview);
     } catch (exception) {
-      return Left<Failure, UserGameProfile>(
+      return Left<Failure, GamificationOverview>(
         mapExceptionToFailure(exception),
       );
     }

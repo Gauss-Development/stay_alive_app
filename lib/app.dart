@@ -8,6 +8,7 @@ import 'package:stay_alive/features/auth/presentation/cubit/app_startup_cubit.da
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/gamification_celebration_host.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
@@ -67,12 +68,14 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
           create: (_) => sl<SubscriptionCubit>(),
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Daily Dozen',
-        debugShowCheckedModeBanner: widget.flavor.isDevelopment,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        routerConfig: _router,
+      child: GamificationCelebrationHost(
+        child: MaterialApp.router(
+          title: 'Daily Dozen',
+          debugShowCheckedModeBanner: widget.flavor.isDevelopment,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          routerConfig: _router,
+        ),
       ),
     );
   }

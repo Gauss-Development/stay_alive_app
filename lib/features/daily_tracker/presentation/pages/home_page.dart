@@ -10,7 +10,7 @@ import 'package:stay_alive/features/daily_tracker/presentation/widgets/category_
 import 'package:stay_alive/features/daily_tracker/presentation/widgets/daily_progress_card.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
-import 'package:stay_alive/features/gamification/presentation/widgets/gamification_celebration_host.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/daily_challenge_card.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/gamification_progress_card.dart';
 
 class HomePage extends StatefulWidget {
@@ -39,10 +39,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return GamificationCelebrationHost(
-      child: Scaffold(
-        appBar: AppBar(title: const Text('Daily Dozen')),
-        body: SafeArea(
+    return Scaffold(
+      appBar: AppBar(title: const Text('Daily Dozen')),
+      body: SafeArea(
           child: BlocConsumer<DailyTrackerCubit, DailyTrackerState>(
             listenWhen: (
               DailyTrackerState previous,
@@ -94,7 +93,8 @@ class _HomePageState extends State<HomePage> {
                 ) =>
                     current is GamificationLoaded &&
                     (previous is! GamificationLoaded ||
-                        previous.profile != current.profile),
+                        previous.overview.profile !=
+                            current.overview.profile),
                 listener: (
                   BuildContext context,
                   GamificationState gamificationState,
@@ -107,7 +107,7 @@ class _HomePageState extends State<HomePage> {
                             sl<DailyGoalWidgetService>())
                         .updateDailyGoal(
                       log: log,
-                      profile: gamificationState.profile,
+                      profile: gamificationState.overview.profile,
                     ),
                   );
                 },
@@ -131,7 +131,7 @@ class _HomePageState extends State<HomePage> {
                         ) {
                           if (gamificationState is GamificationLoaded) {
                             return GamificationProgressCard(
-                              profile: gamificationState.profile,
+                              profile: gamificationState.overview.profile,
                             );
                           }
 
@@ -162,6 +162,31 @@ class _HomePageState extends State<HomePage> {
                               ),
                             ),
                           );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      BlocBuilder<GamificationCubit, GamificationState>(
+                        buildWhen: (
+                          GamificationState previous,
+                          GamificationState current,
+                        ) =>
+                            previous.runtimeType != current.runtimeType ||
+                            (current is GamificationLoaded &&
+                                previous is GamificationLoaded &&
+                                previous.overview.dailyChallenge !=
+                                    current.overview.dailyChallenge),
+                        builder: (
+                          BuildContext context,
+                          GamificationState gamificationState,
+                        ) {
+                          if (gamificationState is GamificationLoaded) {
+                            return DailyChallengeCard(
+                              challenge:
+                                  gamificationState.overview.dailyChallenge,
+                            );
+                          }
+
+                          return const SizedBox.shrink();
                         },
                       ),
                       const SizedBox(height: 16),
@@ -201,7 +226,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               );
             },
-          ),
         ),
       ),
     );
