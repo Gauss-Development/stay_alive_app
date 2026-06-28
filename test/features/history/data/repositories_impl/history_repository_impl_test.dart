@@ -58,6 +58,11 @@ void main() {
           expect(summary.currentStreak, 2);
           expect(summary.bestStreak, 2);
           expect(summary.averageCompletionPercentage, 90);
+          expect(summary.dailyPoints, hasLength(6));
+          expect(summary.dailyPoints.first.dateKey, '2026-05-01');
+          expect(summary.dailyPoints[2].hasLog, isFalse);
+          expect(summary.dailyPoints[2].completionPercentage, 0);
+          expect(summary.pointsForLastDays(2), hasLength(2));
         },
       );
     });

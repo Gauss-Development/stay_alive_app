@@ -4,6 +4,7 @@ import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/core/result/result.dart';
 import 'package:stay_alive/features/history/data/datasources/history_remote_data_source.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
+import 'package:stay_alive/features/history/domain/entities/daily_history_point.dart';
 import 'package:stay_alive/features/history/domain/entities/history_summary.dart';
 import 'package:stay_alive/features/history/domain/repositories/history_repository.dart';
 
@@ -71,6 +72,12 @@ class HistoryRepositoryImpl implements HistoryRepository {
       return !date.isBefore(_dateOnly(weekStart));
     }).toList(growable: false);
 
+    final List<DailyHistoryPoint> dailyPoints = _buildDailyPoints(
+      startDate: startDate,
+      endDate: endDate,
+      logs: logs,
+    );
+
     return HistorySummary(
       periodLabel: totalDays <= 31 ? 'Last $totalDays days' : 'Custom period',
       averageCompletionPercentage: averageCompletion,
@@ -80,7 +87,40 @@ class HistoryRepositoryImpl implements HistoryRepository {
       bestStreak: bestStreak,
       weeklyCompletionPercent: _averageCompletion(weeklyLogs),
       monthlyCompletionPercent: averageCompletion,
+      dailyPoints: dailyPoints,
     );
+  }
+
+  List<DailyHistoryPoint> _buildDailyPoints({
+    required DateTime startDate,
+    required DateTime endDate,
+    required List<DailyLogModel> logs,
+  }) {
+    final Map<String, DailyLogModel> logsByDate = <String, DailyLogModel>{
+      for (final DailyLogModel log in logs) log.dateKey: log,
+    };
+
+    final List<DailyHistoryPoint> points = <DailyHistoryPoint>[];
+    DateTime cursor = _dateOnly(startDate);
+    final DateTime end = _dateOnly(endDate);
+
+    while (!cursor.isAfter(end)) {
+      final String key = _dateKey(cursor);
+      final DailyLogModel? log = logsByDate[key];
+      points.add(
+        DailyHistoryPoint(
+          date: cursor,
+          completionPercentage: log?.completionPercentage ?? 0,
+          totalCompleted: log?.totalCompleted ?? 0,
+          totalTarget: log?.totalTarget ?? 0,
+          isFullyCompleted: log?.isFullyCompleted ?? false,
+          hasLog: log != null,
+        ),
+      );
+      cursor = cursor.add(const Duration(days: 1));
+    }
+
+    return points;
   }
 
   double _averageCompletion(List<DailyLogModel> logs) {

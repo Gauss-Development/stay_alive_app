@@ -12,7 +12,6 @@ import 'package:stay_alive/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:stay_alive/features/auth/presentation/pages/splash_page.dart';
 import 'package:stay_alive/features/categories/presentation/pages/categories_page.dart';
 import 'package:stay_alive/features/education/presentation/pages/education_page.dart';
-import 'package:stay_alive/features/history/presentation/pages/history_page.dart';
 import 'package:stay_alive/features/subscription/presentation/pages/premium_page.dart';
 import 'package:stay_alive/shared/widgets/main_shell_page.dart';
 
@@ -90,12 +89,12 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.history,
         builder: (BuildContext context, GoRouterState state) =>
-            const HistoryPage(),
+            const MainShellPage(initialIndex: 1),
       ),
       GoRoute(
         path: AppRoutes.profile,
         builder: (BuildContext context, GoRouterState state) =>
-            const MainShellPage(initialIndex: 1),
+            const MainShellPage(initialIndex: 2),
       ),
       GoRoute(
         path: AppRoutes.premium,

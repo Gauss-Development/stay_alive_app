@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_state.dart';
+import 'package:stay_alive/features/history/presentation/widgets/completion_trend_chart.dart';
+import 'package:stay_alive/features/history/presentation/widgets/daily_completion_heatmap.dart';
+import 'package:stay_alive/features/history/presentation/widgets/daily_servings_chart.dart';
+import 'package:stay_alive/features/history/presentation/widgets/history_stats_grid.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_state.dart';
 
@@ -28,7 +32,7 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('History')),
+      appBar: AppBar(title: const Text('Statistics')),
       body: BlocConsumer<SubscriptionCubit, SubscriptionState>(
         listenWhen: (SubscriptionState previous, SubscriptionState current) =>
             previous.info != current.info && current.isPremiumActive,
@@ -47,79 +51,105 @@ class _HistoryPageState extends State<HistoryPage> {
             );
           }
 
-          return _HistoryBody();
+          return const _HistoryBody();
         },
       ),
     );
   }
 }
 
-class _HistoryBody extends StatelessWidget {
+class _HistoryBody extends StatefulWidget {
+  const _HistoryBody();
+
+  @override
+  State<_HistoryBody> createState() => _HistoryBodyState();
+}
+
+class _HistoryBodyState extends State<_HistoryBody> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<HistoryCubit>().load();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<HistoryCubit, HistoryState>(
-        builder: (BuildContext context, HistoryState state) {
-          if (state is HistoryInitial || state is HistoryLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      builder: (BuildContext context, HistoryState state) {
+        if (state is HistoryInitial || state is HistoryLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-          if (state is HistoryError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(state.message),
+        if (state is HistoryError) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(state.message, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  FilledButton(
+                    onPressed: () => context.read<HistoryCubit>().load(),
+                    child: const Text('Try again'),
+                  ),
+                ],
               ),
-            );
-          }
+            ),
+          );
+        }
 
-          if (state is! HistoryLoaded) {
-            return const SizedBox.shrink();
-          }
+        if (state is! HistoryLoaded) {
+          return const SizedBox.shrink();
+        }
 
-          final summary = state.summary;
-          if (summary.totalDays == 0) {
-            return const Center(
-              child: Padding(
-                padding: EdgeInsets.all(24),
-                child: Text('No history data available yet.'),
-              ),
-            );
-          }
+        final summary = state.summary;
+        final weeklyPoints = summary.pointsForLastDays(7);
+        final monthlyPoints = summary.dailyPoints;
 
-          return ListView(
+        return RefreshIndicator(
+          onRefresh: () => context.read<HistoryCubit>().load(),
+          child: ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
-              Card(
-                color: Theme.of(context).colorScheme.primaryContainer,
-                child: const ListTile(
-                  leading: Icon(Icons.lock_open),
-                  title: Text('Premium statistics unlocked'),
-                  subtitle: Text(
-                    'Your long-term healthy eating insights are active.',
-                  ),
-                ),
+              Text(
+                summary.periodLabel,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
               ),
-              Card(
-                child: ListTile(
-                  title: Text(summary.periodLabel),
-                  subtitle: Text(
-                    '${summary.completedDays}/${summary.totalDays} days completed',
-                  ),
-                  trailing: Text(
-                    '${summary.averageCompletionPercentage.toStringAsFixed(1)}%',
-                  ),
-                ),
+              const SizedBox(height: 4),
+              Text(
+                'Track how consistently you complete the Daily Dozen over time.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
-              Card(
-                child: ListTile(
-                  title: const Text('Current streak'),
-                  trailing: Text('${summary.currentStreak} days'),
-                ),
+              const SizedBox(height: 16),
+              HistoryStatsGrid(summary: summary),
+              const SizedBox(height: 16),
+              CompletionTrendChart(
+                points: weeklyPoints,
+                title: 'Last 7 days',
               ),
+              const SizedBox(height: 16),
+              CompletionTrendChart(
+                points: monthlyPoints,
+                title: 'Last 30 days',
+              ),
+              const SizedBox(height: 16),
+              DailyServingsChart(points: monthlyPoints),
+              const SizedBox(height: 16),
+              DailyCompletionHeatmap(points: monthlyPoints),
             ],
-          );
-        },
-      );
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -149,7 +179,7 @@ class _HistoryPaywallPrompt extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         const Text(
-          'Daily fruit and vegetable tracking stays free. Upgrade to see full trends, streaks, weekly averages, and monthly progress insights.',
+          'Daily fruit and vegetable tracking stays free. Upgrade to see completion trends, serving charts, streaks, and monthly progress insights.',
           textAlign: TextAlign.center,
         ),
         if (message != null) ...<Widget>[

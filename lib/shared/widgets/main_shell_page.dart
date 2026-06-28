@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
+import 'package:stay_alive/features/history/presentation/pages/history_page.dart';
 import 'package:stay_alive/features/user/presentation/pages/profile_page.dart';
 
-/// Main app shell with bottom navigation: home, profile, and logout.
+/// Main app shell with bottom navigation: home, statistics, and profile.
 class MainShellPage extends StatefulWidget {
   const MainShellPage({this.initialIndex = 0, super.key});
 
-  /// `0` = home, `1` = profile. Logout is not a tab index.
+  /// `0` = home, `1` = statistics, `2` = profile.
   final int initialIndex;
 
   @override
@@ -16,23 +17,24 @@ class MainShellPage extends StatefulWidget {
 class _MainShellPageState extends State<MainShellPage> {
   late int _tabIndex;
   Widget? _homePage;
+  Widget? _historyPage;
   Widget? _profilePage;
 
   @override
   void initState() {
     super.initState();
-    _tabIndex = widget.initialIndex.clamp(0, 1);
+    _tabIndex = widget.initialIndex.clamp(0, 2);
     _ensureTabInitialized(_tabIndex);
   }
 
   void _ensureTabInitialized(int index) {
-    if (index == 0) {
-      _homePage ??= const HomePage();
-      return;
-    }
-
-    if (index == 1) {
-      _profilePage ??= const ProfilePage();
+    switch (index) {
+      case 0:
+        _homePage ??= const HomePage();
+      case 1:
+        _historyPage ??= const HistoryPage();
+      case 2:
+        _profilePage ??= const ProfilePage();
     }
   }
 
@@ -43,6 +45,7 @@ class _MainShellPageState extends State<MainShellPage> {
         index: _tabIndex,
         children: <Widget>[
           _homePage ?? const SizedBox.shrink(),
+          _historyPage ?? const SizedBox.shrink(),
           _profilePage ?? const SizedBox.shrink(),
         ],
       ),
@@ -59,6 +62,11 @@ class _MainShellPageState extends State<MainShellPage> {
             icon: Icon(Icons.home_outlined),
             selectedIcon: Icon(Icons.home),
             label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bar_chart_outlined),
+            selectedIcon: Icon(Icons.bar_chart),
+            label: 'Stats',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),

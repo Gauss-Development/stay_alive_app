@@ -132,8 +132,17 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Today\'s Checklist',
+                    'What did you eat today?',
                     style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Tap + to log a serving in each Daily Dozen category.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   ...log.items.map(

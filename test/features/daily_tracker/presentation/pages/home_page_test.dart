@@ -165,7 +165,7 @@ void main() {
     await tester.pumpWidget(buildWidget());
     await tester.pump();
 
-    expect(find.text('Today\'s Checklist'), findsOneWidget);
+    expect(find.text('What did you eat today?'), findsOneWidget);
     expect(find.text('Beans / Legumes'), findsOneWidget);
     expect(
       find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)'),
@@ -182,6 +182,12 @@ void main() {
     final Finder incrementButton =
         find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)');
     expect(incrementButton, findsOneWidget);
+    await tester.scrollUntilVisible(
+      incrementButton,
+      120,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
     await tester.tap(incrementButton);
     await tester.pump();
 
