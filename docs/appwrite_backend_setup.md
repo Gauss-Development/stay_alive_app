@@ -17,9 +17,37 @@ This document defines the production backend architecture for the Stay Alive app
 
 Enable:
 - Email/Password auth
+- Anonymous auth (dev mock login)
 - OAuth providers:
   - Google
   - Apple
+
+### Automated auth configuration
+
+Run the idempotent auth setup script after creating a project API key with
+`project.write` scope:
+
+```bash
+export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="69de16de001dfb5c1e5d"
+export APPWRITE_API_KEY="<API_KEY_WITH_PROJECT_WRITE_SCOPE>"
+python3 scripts/appwrite_auth_setup.py
+```
+
+The script enables `email-password` and `anonymous` auth, registers Android/iOS
+platforms for `com.gaussdev.stayalive` and `com.gaussdev.stayalivedev`, and
+prints Google/Apple OAuth status. OAuth credentials must still be added in the
+Appwrite Console (Auth → Settings) — enabling OAuth via API requires valid
+client credentials.
+
+### Appwrite MCP (Cursor)
+
+To use the Appwrite API MCP server in Cursor, configure these env vars in
+**Cursor Settings → MCP → appwrite-api** (not the placeholder defaults):
+
+- `APPWRITE_ENDPOINT=https://sfo.cloud.appwrite.io/v1`
+- `APPWRITE_PROJECT_ID=69de16de001dfb5c1e5d`
+- `APPWRITE_API_KEY=<your project API key>`
 
 Flutter client uses:
 - `account.create(...)` for signup
@@ -52,7 +80,7 @@ the app and require an active RevenueCat `premium` entitlement.
 
 ## 3) Database Plan
 
-Database ID: `daily_dozen_db`
+Database ID: `69de1ac5002830be7040` (Stay Alive project default)
 
 Collections:
 
@@ -180,9 +208,10 @@ The repository includes an idempotent provisioning script that uses the Appwrite
 
 ```bash
 export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
-export APPWRITE_PROJECT_ID="<PROJECT_ID>"
+export APPWRITE_PROJECT_ID="69de16de001dfb5c1e5d"
 export APPWRITE_API_KEY="<API_KEY_WITH_DATABASE_AND_STORAGE_SCOPES>"
 python3 scripts/appwrite_provision.py
+python3 scripts/appwrite_auth_setup.py
 ```
 
 Run the script a second time to verify idempotency:

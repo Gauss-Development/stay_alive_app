@@ -1,7 +1,8 @@
 import 'package:appwrite/models.dart' as appwrite_models;
+import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
+import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
-import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 
 class DailyLogModel extends DailyLog {
   const DailyLogModel({
@@ -37,10 +38,18 @@ class DailyLogModel extends DailyLog {
     required List<DailyLogItemModel> items,
   }) {
     final Map<String, dynamic> data = document.data;
+    final String? dateKey =
+        DailyLogDocumentIds.dateKeyFromLogDocumentId(document.$id) ??
+            data['log_date']?.toString();
+    final String userId =
+        DailyLogDocumentIds.userIdFromLogDocumentId(document.$id) ??
+            data['user_id']?.toString() ??
+            '';
+
     return DailyLogModel(
-      id: (data['log_id'] as String?) ?? document.$id,
-      userId: data['user_id'] as String? ?? '',
-      logDate: DateTime.parse('${data['log_date'] as String}T00:00:00Z'),
+      id: document.$id,
+      userId: userId,
+      logDate: DateTime.parse('${dateKey ?? '1970-01-01'}T00:00:00Z'),
       items: items,
       totalCompleted: (data['total_completed'] as num?)?.toInt() ?? 0,
       totalTarget: (data['total_target'] as num?)?.toInt() ?? 0,
@@ -73,18 +82,13 @@ class DailyLogModel extends DailyLog {
     );
   }
 
+  /// Payload for the deployed `daily_logs` collection (no `log_date` / `log_id`).
   Map<String, dynamic> toCreateData() {
-    final String now = DateTime.now().toUtc().toIso8601String();
     return <String, dynamic>{
-      'log_id': id,
-      'user_id': userId,
-      'log_date': dateKey,
       'completion_percentage': completionPercentage,
       'total_completed': totalCompleted,
       'total_target': totalTarget,
       'is_fully_completed': isFullyCompleted,
-      'created_at': now,
-      'updated_at': now,
     };
   }
 
@@ -94,7 +98,6 @@ class DailyLogModel extends DailyLog {
       'total_completed': totalCompleted,
       'total_target': totalTarget,
       'is_fully_completed': isFullyCompleted,
-      'updated_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
 }

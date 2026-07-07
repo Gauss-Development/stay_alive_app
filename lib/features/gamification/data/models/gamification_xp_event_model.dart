@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
 
@@ -20,11 +22,34 @@ class GamificationXpEventModel extends GamificationXpEvent {
       eventType: data['event_type']?.toString() ?? '',
       label: _labelForEventType(data['event_type']?.toString() ?? ''),
       xpDelta: (data['xp_delta'] as num?)?.toInt() ?? 0,
-      logDate: data['log_date']?.toString() ?? '',
+      logDate: _logDateFromDocument(document),
       createdAt: DateTime.tryParse(data['created_at']?.toString() ?? '') ??
           DateTime.tryParse(document.$createdAt) ??
           DateTime.now().toUtc(),
     );
+  }
+
+  static String _logDateFromDocument(appwrite_models.Document document) {
+    final Map<String, dynamic> data = document.data;
+    final String? storedDate = data['log_date']?.toString();
+    if (storedDate != null && storedDate.isNotEmpty) {
+      return storedDate;
+    }
+    final Object? metadata = data['metadata_json'];
+    if (metadata is String && metadata.isNotEmpty) {
+      try {
+        final Object? decoded = jsonDecode(metadata);
+        if (decoded is Map<String, dynamic>) {
+          final String? metadataDate = decoded['log_date']?.toString();
+          if (metadataDate != null && metadataDate.isNotEmpty) {
+            return metadataDate;
+          }
+        }
+      } on FormatException {
+        return '';
+      }
+    }
+    return '';
   }
 
   static String _labelForEventType(String eventType) {

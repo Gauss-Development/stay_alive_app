@@ -17,6 +17,7 @@ import 'package:stay_alive/features/auth/domain/usecases/get_current_user_usecas
 import 'package:stay_alive/features/auth/domain/usecases/login_with_email_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/login_with_oauth_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/logout_usecase.dart';
+import 'package:stay_alive/features/auth/domain/usecases/sign_in_anonymously_usecase.dart';
 import 'package:stay_alive/features/auth/domain/usecases/sign_up_with_email_usecase.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/app_startup_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
@@ -135,6 +136,9 @@ void _registerAuthFeature() {
     )
     ..registerLazySingleton<DeleteAccountUseCase>(
       () => DeleteAccountUseCase(sl<AuthRepository>()),
+    )
+    ..registerLazySingleton<SignInAnonymouslyUseCase>(
+      () => SignInAnonymouslyUseCase(sl<AuthRepository>()),
     )
     ..registerFactory<AuthCubit>(
       () => AuthCubit(

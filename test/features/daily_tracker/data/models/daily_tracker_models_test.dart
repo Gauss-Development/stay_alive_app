@@ -51,13 +51,13 @@ void main() {
       );
       final Map<String, dynamic> updateData = item.toUpdateData();
 
-      expect(createData['item_id'], '2026-05-06_beans');
-      expect(createData['log_id'], '2026-05-06');
-      expect(createData['user_id'], 'user_1');
+      expect(createData.containsKey('item_id'), isFalse);
+      expect(createData.containsKey('log_id'), isFalse);
+      expect(createData.containsKey('user_id'), isFalse);
       expect(createData['category_id'], 'beans');
       expect(createData['completed_count'], 2);
       expect(updateData, containsPair('completed_count', 2));
-      expect(updateData, containsPair('updated_at', isA<String>()));
+      expect(updateData.containsKey('updated_at'), isFalse);
     });
   });
 
@@ -77,13 +77,13 @@ void main() {
       final Map<String, dynamic> createData = log.toCreateData();
       final Map<String, dynamic> updateData = log.toUpdateData();
 
-      expect(createData['log_id'], '2026-05-06');
-      expect(createData['user_id'], 'user_1');
-      expect(createData['log_date'], '2026-05-06');
+      expect(createData.containsKey('log_id'), isFalse);
+      expect(createData.containsKey('user_id'), isFalse);
+      expect(createData.containsKey('log_date'), isFalse);
       expect(createData['completion_percentage'], 25);
       expect(updateData['total_completed'], 6);
       expect(updateData['total_target'], 24);
-      expect(updateData, containsPair('updated_at', isA<String>()));
+      expect(updateData.containsKey('updated_at'), isFalse);
     });
   });
 }

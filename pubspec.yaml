@@ -46,6 +46,7 @@ dependencies:
   purchases_flutter: ^10.0.1
   sentry_flutter: ^9.7.0
   fl_chart: ^1.0.0
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

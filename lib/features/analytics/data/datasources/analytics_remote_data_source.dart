@@ -38,7 +38,6 @@ class AppwriteAnalyticsRemoteDataSource implements AnalyticsRemoteDataSource {
       documentId: ID.unique(),
       data: <String, dynamic>{
         'event_id': ID.unique(),
-        'user_id': userId ?? '',
         'event_name': event.name,
         'screen_name': event.screenName ?? '',
         'metadata_json': jsonEncode(event.metadata),

@@ -29,6 +29,9 @@ abstract class AuthRemoteDataSource {
 
   Future<AuthSessionModel?> getCurrentSession();
 
+  /// Dev-only: creates a real Appwrite anonymous session (throwaway user).
+  Future<AuthUserModel> createAnonymousSession();
+
   Future<AuthUserModel> updatePreferences({
     required Map<String, dynamic> preferences,
   });
@@ -59,6 +62,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     required String email,
     required String password,
   }) async {
+    await _deleteCurrentSessionIfActive();
     final appwrite_models.Session session = await _account
         .createEmailPasswordSession(
       email: email,
@@ -79,6 +83,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     required String password,
     required String name,
   }) async {
+    await _deleteCurrentSessionIfActive();
     await _account.create(
       userId: ID.unique(),
       email: email,
@@ -90,14 +95,9 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       data: <String, Object?>{'email': email},
     );
 
-    final appwrite_models.Session session = await _account
-        .createEmailPasswordSession(
+    await _createEmailPasswordSessionIfNeeded(
       email: email,
       password: password,
-    );
-    _logger.info(
-      'Signed in after account creation',
-      data: <String, Object?>{'sessionId': session.$id},
     );
 
     final appwrite_models.User user = await _account.get();
@@ -113,6 +113,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     String? failure,
     List<String>? scopes,
   }) async {
+    await _deleteCurrentSessionIfActive();
     await _account.createOAuth2Session(
       provider: provider,
       success: success,
@@ -155,6 +156,21 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   @override
+  Future<AuthUserModel> createAnonymousSession() async {
+    await _deleteCurrentSessionIfActive();
+    await _account.createAnonymousSession();
+    _logger.info('Created anonymous session (dev mock login)');
+    // Land the throwaway user straight on the home shell.
+    await _account.updatePrefs(
+      prefs: <String, dynamic>{'onboardingCompleted': true},
+    );
+    final appwrite_models.User user = await _account.get();
+    final AuthUserModel authUser = AuthUserModel.fromAppwrite(user);
+    await _ensureUserDocument(authUser);
+    return authUser;
+  }
+
+  @override
   Future<AuthUserModel> updatePreferences({
     required Map<String, dynamic> preferences,
   }) async {
@@ -169,13 +185,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     final AuthUserModel authUser = AuthUserModel.fromAppwrite(updatedUser);
     await _ensureUserDocument(authUser);
     if (preferences.containsKey('onboardingCompleted')) {
-      await _updateUserDocument(
-        authUser,
-        <String, dynamic>{
-          'onboarding_completed': preferences['onboardingCompleted'] == true,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        },
-      );
+      await _syncOnboardingToProfileDocument(authUser, preferences);
     }
     _logger.info(
       'Updated user preferences',
@@ -228,9 +238,8 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: collectionId,
         queries: <String>[
-          Query.equal('user_id', userId),
-          Query.limit(100),
-        ],
+        Query.limit(100),
+      ],
       );
       if (page.documents.isEmpty) {
         return;
@@ -284,22 +293,11 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   }
 
   Future<void> _createUserDocument(AuthUserModel user) async {
-    final String now = DateTime.now().toUtc().toIso8601String();
     await _databases.createDocument(
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.usersCollectionId,
       documentId: user.id,
-      data: <String, dynamic>{
-        'user_id': user.id,
-        'email': user.email,
-        'display_name': _displayNameFor(user),
-        'avatar_url': '',
-        'onboarding_completed': user.onboardingCompleted,
-        'units_preference': 'metric',
-        'locale': 'en',
-        'created_at': now,
-        'updated_at': now,
-      },
+      data: _userDocumentDataForCreate(user),
       permissions: <String>[
         Permission.read(Role.user(user.id)),
         Permission.update(Role.user(user.id)),
@@ -310,6 +308,19 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       'Created Appwrite user profile document',
       data: <String, Object?>{'userId': user.id},
     );
+  }
+
+  /// Payload for the deployed Stay Alive `users` collection.
+  ///
+  /// The live Appwrite schema uses the Auth user id as the document id and
+  /// stores `name` + `email` only. Extra fields from
+  /// [scripts/appwrite_provision.py] (e.g. `user_id`, `display_name`) are not
+  /// present on the console-provisioned collection.
+  Map<String, dynamic> _userDocumentDataForCreate(AuthUserModel user) {
+    return <String, dynamic>{
+      'email': _emailForUserDocument(user),
+      'name': _displayNameFor(user),
+    };
   }
 
   Future<void> _updateUserDocument(
@@ -337,14 +348,88 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     }
   }
 
+  /// Best-effort mirror of onboarding into the profile document when the
+  /// collection supports it. Auth prefs remain the source of truth.
+  Future<void> _syncOnboardingToProfileDocument(
+    AuthUserModel user,
+    Map<String, dynamic> preferences,
+  ) async {
+    try {
+      await _updateUserDocument(
+        user,
+        <String, dynamic>{
+          'onboarding_completed': preferences['onboardingCompleted'] == true,
+        },
+      );
+    } on AppwriteException catch (exception) {
+      _logger.warning(
+        'Skipped onboarding sync to users collection',
+        data: <String, Object?>{'reason': exception.message},
+      );
+    }
+  }
+
+  /// Appwrite 1.5+ rejects new sessions while one is already stored on device.
+  Future<void> _deleteCurrentSessionIfActive() async {
+    try {
+      await _account.deleteSession(sessionId: 'current');
+      _logger.info('Cleared active Appwrite session before creating a new one');
+    } on AppwriteException catch (exception) {
+      if (exception.code != 401) {
+        rethrow;
+      }
+    }
+  }
+
+  Future<void> _createEmailPasswordSessionIfNeeded({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final appwrite_models.Session session = await _account
+          .createEmailPasswordSession(
+        email: email,
+        password: password,
+      );
+      _logger.info(
+        'Signed in after account creation',
+        data: <String, Object?>{'sessionId': session.$id},
+      );
+    } on AppwriteException catch (exception) {
+      if (!_isSessionAlreadyActiveError(exception)) {
+        rethrow;
+      }
+      _logger.info(
+        'Skipped email session creation after sign-up; account already has an active session',
+      );
+    }
+  }
+
+  bool _isSessionAlreadyActiveError(AppwriteException exception) {
+    final String message = exception.message?.toLowerCase() ?? '';
+    return message.contains('session is prohibited') ||
+        message.contains('session is active');
+  }
+
   String _displayNameFor(AuthUserModel user) {
     if (user.displayName.trim().isNotEmpty) {
       return user.displayName.trim();
     }
-    final int separatorIndex = user.email.indexOf('@');
+    final String email = user.email.trim();
+    final int separatorIndex = email.indexOf('@');
     if (separatorIndex <= 0) {
       return 'Stay Alive User';
     }
-    return user.email.substring(0, separatorIndex);
+    return email.substring(0, separatorIndex);
+  }
+
+  /// Anonymous/guest Appwrite users have no email; the `users` collection
+  /// requires one, so we store a stable synthetic address keyed by user id.
+  String _emailForUserDocument(AuthUserModel user) {
+    final String email = user.email.trim();
+    if (email.isNotEmpty) {
+      return email;
+    }
+    return '${user.id}@guest.stayalive.local';
   }
 }

@@ -73,7 +73,6 @@ class UserGameProfileModel extends UserGameProfile {
 
   Map<String, dynamic> toDocumentData({required String now}) {
     return <String, dynamic>{
-      'user_id': userId,
       'xp': totalXp,
       'level': currentLevel.level,
       'current_streak': currentStreak,

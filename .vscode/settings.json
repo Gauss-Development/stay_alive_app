@@ -1,0 +1,10 @@
+{
+  "dart.flutterRunAdditionalArgs": [
+    "--flavor",
+    "dev"
+  ],
+  "dart.flutterTestAdditionalArgs": [
+    "--flavor",
+    "dev"
+  ]
+}

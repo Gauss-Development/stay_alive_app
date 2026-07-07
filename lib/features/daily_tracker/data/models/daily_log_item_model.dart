@@ -117,9 +117,6 @@ class DailyLogItemModel extends DailyLogItem {
     required String userId,
   }) {
     return <String, dynamic>{
-      'item_id': id,
-      'log_id': logId,
-      'user_id': userId,
       'category_id': category.id,
       'category_title': category.title,
       'description': category.description,
@@ -136,7 +133,6 @@ class DailyLogItemModel extends DailyLogItem {
   Map<String, dynamic> toUpdateData() {
     return <String, dynamic>{
       'completed_count': completedCount,
-      'updated_at': updatedAt.toUtc().toIso8601String(),
     };
   }
 }

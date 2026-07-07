@@ -100,6 +100,21 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<AuthUser>> signInAnonymously() async {
+    try {
+      final AuthUser user = await _remoteDataSource.createAnonymousSession();
+      return Right<Failure, AuthUser>(user);
+    } catch (exception, stackTrace) {
+      _logger.error(
+        'Failed to create anonymous session.',
+        error: exception,
+        stackTrace: stackTrace,
+      );
+      return Left<Failure, AuthUser>(mapExceptionToFailure(exception));
+    }
+  }
+
+  @override
   Future<Result<AuthSession>> checkSession() async {
     try {
       final AuthSession? session = await _remoteDataSource.getCurrentSession();

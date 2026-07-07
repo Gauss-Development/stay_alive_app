@@ -6,14 +6,18 @@ import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/features/analytics/presentation/pages/analytics_page.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_state.dart';
-import 'package:stay_alive/features/auth/presentation/pages/login_page.dart';
 import 'package:stay_alive/features/auth/presentation/pages/onboarding_page.dart';
-import 'package:stay_alive/features/auth/presentation/pages/sign_up_page.dart';
 import 'package:stay_alive/features/auth/presentation/pages/splash_page.dart';
 import 'package:stay_alive/features/categories/presentation/pages/categories_page.dart';
 import 'package:stay_alive/features/education/presentation/pages/education_page.dart';
 import 'package:stay_alive/features/gamification/presentation/pages/progress_page.dart';
 import 'package:stay_alive/features/subscription/presentation/pages/premium_page.dart';
+import 'package:stay_alive/features/rostok/presentation/pages/rostok_auth_page.dart';
+import 'package:stay_alive/features/rostok/presentation/pages/rostok_challenges_page.dart';
+import 'package:stay_alive/features/rostok/presentation/pages/rostok_gallery_page.dart';
+import 'package:stay_alive/features/rostok/presentation/pages/rostok_home_page.dart';
+import 'package:stay_alive/features/rostok/presentation/pages/rostok_profile_page.dart';
+import 'package:stay_alive/features/rostok/presentation/pages/rostok_reward_page.dart';
 import 'package:stay_alive/shared/widgets/main_shell_page.dart';
 
 class AppRouter {
@@ -70,12 +74,12 @@ class AppRouter {
       GoRoute(
         path: AppRoutes.login,
         builder: (BuildContext context, GoRouterState state) =>
-            const LoginPage(),
+            const RostokAuthPage(),
       ),
       GoRoute(
         path: AppRoutes.signUp,
         builder: (BuildContext context, GoRouterState state) =>
-            const SignUpPage(),
+            const RostokAuthPage(initialMode: RostokAuthMode.register),
       ),
       GoRoute(
         path: AppRoutes.onboarding,
@@ -123,6 +127,32 @@ class AppRouter {
           final String? categoryId = state.pathParameters['categoryId'];
           return EducationPage(categoryId: categoryId ?? '');
         },
+      ),
+      // Росток (Sprout) redesign — new screens alongside the current UI.
+      GoRoute(
+        path: AppRoutes.rostok,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RostokGalleryPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.rostokHome,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RostokHomePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.rostokProfile,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RostokProfilePage(),
+      ),
+      GoRoute(
+        path: AppRoutes.rostokChallenges,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RostokChallengesPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.rostokReward,
+        builder: (BuildContext context, GoRouterState state) =>
+            const RostokRewardPage(),
       ),
     ],
   );

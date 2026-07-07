@@ -2,6 +2,7 @@ import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
+import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/tracker_category_model.dart';
@@ -169,10 +170,11 @@ class AppwriteDailyTrackerRemoteDataSource
 
     final List<TrackerCategoryModel> categories = await _loadCategories();
     final DateTime now = DateTime.now().toUtc();
+    final String logDocumentId = DailyLogDocumentIds.log(user.$id, dateKey);
     final List<DailyLogItemModel> items = categories
         .map(
           (TrackerCategoryModel category) => DailyLogItemModel(
-            id: ID.unique(),
+            id: DailyLogDocumentIds.item(logDocumentId, category.id),
             category: category,
             completedCount: 0,
             createdAt: now,
@@ -183,7 +185,7 @@ class AppwriteDailyTrackerRemoteDataSource
 
     final DailyLogModel log = _recalculateLog(
       DailyLogModel(
-        id: ID.unique(),
+        id: logDocumentId,
         userId: user.$id,
         logDate: DateTime.parse('${dateKey}T00:00:00Z'),
         items: items,
@@ -287,41 +289,43 @@ class AppwriteDailyTrackerRemoteDataSource
     required String userId,
     required String dateKey,
   }) async {
-    final appwrite_models.DocumentList logs = await _databases.listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogsCollectionId,
-      queries: <String>[
-        Query.equal('user_id', userId),
-        Query.equal('log_date', dateKey),
-        Query.limit(1),
-      ],
-    );
-    if (logs.documents.isEmpty) {
-      return null;
+    final String logDocumentId = DailyLogDocumentIds.log(userId, dateKey);
+    try {
+      final appwrite_models.Document logDocument = await _databases.getDocument(
+        databaseId: _envConfig.appwriteDatabaseId,
+        collectionId: _envConfig.dailyLogsCollectionId,
+        documentId: logDocumentId,
+      );
+      final List<DailyLogItemModel> items = await _loadItemsForLog(
+        logDocumentId: logDocumentId,
+      );
+      return _recalculateLog(
+        DailyLogModel.fromDocument(document: logDocument, items: items),
+      );
+    } on AppwriteException catch (exception) {
+      if (exception.code == 404) {
+        return null;
+      }
+      rethrow;
     }
-
-    final appwrite_models.Document logDocument = logs.documents.first;
-    final List<DailyLogItemModel> items = await _loadItemsForLog(
-      logId: logDocument.data['log_id']?.toString() ?? logDocument.$id,
-    );
-    return _recalculateLog(
-      DailyLogModel.fromDocument(document: logDocument, items: items),
-    );
   }
 
   Future<List<DailyLogItemModel>> _loadItemsForLog({
-    required String logId,
+    required String logDocumentId,
   }) async {
     final appwrite_models.DocumentList itemDocuments =
         await _databases.listDocuments(
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.dailyLogItemsCollectionId,
       queries: <String>[
-        Query.equal('log_id', logId),
         Query.limit(100),
       ],
     );
     final List<DailyLogItemModel> items = itemDocuments.documents
+        .where(
+          (appwrite_models.Document document) =>
+              DailyLogDocumentIds.isItemForLog(document.$id, logDocumentId),
+        )
         .map(DailyLogItemModel.fromDocumentWithoutCategory)
         .toList(growable: false);
     items.sort(

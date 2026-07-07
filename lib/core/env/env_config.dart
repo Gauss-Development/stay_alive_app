@@ -86,7 +86,7 @@ class EnvConfig extends Equatable {
       ),
       appwriteDatabaseId: _str(
         'APPWRITE_DATABASE_ID',
-        'daily_dozen_db',
+        '69de1ac5002830be7040',
       ),
       usersCollectionId: _str(
         'APPWRITE_USERS_COLLECTION_ID',

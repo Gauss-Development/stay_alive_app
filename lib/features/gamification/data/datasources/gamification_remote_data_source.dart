@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/core/env/env_config.dart';
+import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
@@ -189,7 +190,6 @@ class AppwriteGamificationRemoteDataSource
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.gamificationEventsCollectionId,
       queries: <String>[
-        Query.equal('user_id', userId),
         Query.orderDesc('\$createdAt'),
         Query.limit(50),
       ],
@@ -213,27 +213,40 @@ class AppwriteGamificationRemoteDataSource
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.dailyLogsCollectionId,
       queries: <String>[
-        Query.equal('user_id', userId),
-        Query.greaterThanEqual('log_date', cutoffKey),
-        Query.orderAsc('log_date'),
-        Query.limit(dayWindow),
+        Query.limit(dayWindow + 30),
       ],
     );
 
-    final List<String> logIds = documents.documents
-        .map(
-          (appwrite_models.Document document) =>
-              document.data['log_id']?.toString() ?? document.$id,
-        )
+    final List<appwrite_models.Document> filteredLogs = documents.documents
+        .where((appwrite_models.Document document) {
+          final String? dateKey =
+              DailyLogDocumentIds.dateKeyFromLogDocumentId(document.$id);
+          if (dateKey == null) {
+            return false;
+          }
+          return dateKey.compareTo(cutoffKey) >= 0;
+        })
+        .toList(growable: false)
+      ..sort(
+        (appwrite_models.Document a, appwrite_models.Document b) {
+          final String? dateA =
+              DailyLogDocumentIds.dateKeyFromLogDocumentId(a.$id);
+          final String? dateB =
+              DailyLogDocumentIds.dateKeyFromLogDocumentId(b.$id);
+          return (dateA ?? '').compareTo(dateB ?? '');
+        },
+      );
+
+    final List<String> logIds = filteredLogs
+        .map((appwrite_models.Document document) => document.$id)
         .toList(growable: false);
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         await _loadItemsByLogIds(userId, logIds);
 
-    return documents.documents
+    return filteredLogs
         .map(
           (appwrite_models.Document document) {
-            final String logId =
-                document.data['log_id']?.toString() ?? document.$id;
+            final String logId = document.$id;
             return DailyLogModel.fromDocument(
               document: document,
               items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
@@ -256,8 +269,6 @@ class AppwriteGamificationRemoteDataSource
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.dailyLogItemsCollectionId,
       queries: <String>[
-        Query.equal('user_id', userId),
-        Query.equal('log_id', logIds),
         Query.limit(5000),
       ],
     );
@@ -265,12 +276,17 @@ class AppwriteGamificationRemoteDataSource
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         <String, List<DailyLogItemModel>>{};
     for (final appwrite_models.Document document in itemDocuments.documents) {
-      final Map<String, dynamic> data = document.data;
-      final String logId = data['log_id']?.toString() ?? '';
-      if (logId.isEmpty) {
+      String? matchedLogId;
+      for (final String logId in logIds) {
+        if (DailyLogDocumentIds.isItemForLog(document.$id, logId)) {
+          matchedLogId = logId;
+          break;
+        }
+      }
+      if (matchedLogId == null) {
         continue;
       }
-      itemsByLogId.putIfAbsent(logId, () => <DailyLogItemModel>[]).add(
+      itemsByLogId.putIfAbsent(matchedLogId, () => <DailyLogItemModel>[]).add(
             DailyLogItemModel.fromDocumentWithoutCategory(document),
           );
     }
@@ -404,13 +420,15 @@ class AppwriteGamificationRemoteDataSource
       databaseId: _envConfig.appwriteDatabaseId,
       collectionId: _envConfig.gamificationEventsCollectionId,
       queries: <String>[
-        Query.equal('user_id', userId),
         Query.equal('event_type', eventType),
-        Query.equal('log_date', logDate),
-        Query.limit(1),
+        Query.limit(50),
       ],
     );
-    if (existing.documents.isNotEmpty) {
+    final bool alreadyRecorded = existing.documents.any(
+      (appwrite_models.Document document) =>
+          _eventLogDate(document) == logDate,
+    );
+    if (alreadyRecorded) {
       return;
     }
 
@@ -421,13 +439,12 @@ class AppwriteGamificationRemoteDataSource
         collectionId: _envConfig.gamificationEventsCollectionId,
         documentId: documentId,
         data: <String, dynamic>{
-          'event_id': documentId,
-          'user_id': userId,
           'event_type': eventType,
           'xp_delta': xpDelta,
-          'log_date': logDate,
-          'metadata_json': jsonEncode(metadata),
-          'created_at': createdAt.toIso8601String(),
+          'metadata_json': jsonEncode(<String, Object?>{
+            ...metadata,
+            'log_date': logDate,
+          }),
         },
         permissions: <String>[Permission.read(Role.user(userId))],
       );
@@ -442,5 +459,28 @@ class AppwriteGamificationRemoteDataSource
     final String month = date.month.toString().padLeft(2, '0');
     final String day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
+  }
+
+  String _eventLogDate(appwrite_models.Document document) {
+    final Map<String, dynamic> data = document.data;
+    final String? storedDate = data['log_date']?.toString();
+    if (storedDate != null && storedDate.isNotEmpty) {
+      return storedDate;
+    }
+    final Object? metadata = data['metadata_json'];
+    if (metadata is String && metadata.isNotEmpty) {
+      try {
+        final Object? decoded = jsonDecode(metadata);
+        if (decoded is Map<String, dynamic>) {
+          final String? metadataDate = decoded['log_date']?.toString();
+          if (metadataDate != null && metadataDate.isNotEmpty) {
+            return metadataDate;
+          }
+        }
+      } on FormatException {
+        // Fall through to empty string.
+      }
+    }
+    return '';
   }
 }

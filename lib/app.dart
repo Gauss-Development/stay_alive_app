@@ -68,14 +68,17 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
           create: (_) => sl<SubscriptionCubit>(),
         ),
       ],
-      child: GamificationCelebrationHost(
-        child: MaterialApp.router(
-          title: 'Daily Dozen',
-          debugShowCheckedModeBanner: widget.flavor.isDevelopment,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          routerConfig: _router,
-        ),
+      child: MaterialApp.router(
+        title: 'Daily Dozen',
+        debugShowCheckedModeBanner: widget.flavor.isDevelopment,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        routerConfig: _router,
+        builder: (BuildContext context, Widget? child) {
+          return GamificationCelebrationHost(
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
       ),
     );
   }

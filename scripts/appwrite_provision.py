@@ -22,7 +22,7 @@ APPWRITE_ENDPOINT = os.environ.get("APPWRITE_ENDPOINT", "https://sfo.cloud.appwr
 APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "69de16de001dfb5c1e5d")
 APPWRITE_API_KEY = os.environ.get("APPWRITE_API_KEY", "")
 
-DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "daily_dozen_db")
+DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "69de1ac5002830be7040")
 
 COLLECTION_IDS = {
     "users": os.environ.get("APPWRITE_USERS_COLLECTION_ID", "users"),
@@ -448,6 +448,7 @@ def attribute_specs() -> list[AttributeSpec]:
         s("users", "string", "user_id", True, 64),
         s("users", "email", "email", True),
         s("users", "string", "display_name", True, 128),
+        s("users", "string", "name", True, 128),
         s("users", "url", "avatar_url", False),
         s("users", "boolean", "onboarding_completed", False, default=False),
         s("users", "string", "units_preference", False, 32, default="metric"),
