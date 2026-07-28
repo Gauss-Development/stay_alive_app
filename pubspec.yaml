@@ -47,6 +47,7 @@ dependencies:
   sentry_flutter: ^9.7.0
   fl_chart: ^1.0.0
   google_fonts: ^6.2.1
+  rive: ^0.14.9
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +69,12 @@ flutter:
     - assets/env/app.env.example
     - assets/env/app.dev.env
     - assets/env/app.prod.env
+    - assets/animations/green_sprout.riv
+    - assets/beans.png
+    - assets/berries.png
+    - assets/cruciferous_vegetables.png
+    - assets/fruits.png
+    - assets/greens.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
