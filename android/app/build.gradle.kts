@@ -91,3 +91,13 @@ android {
 flutter {
     source = "../.."
 }
+
+// home_widget 0.8.0 declares `androidx.glance:glance-appwidget:1.+`. That
+// dynamic range now resolves to a 1.3.0 alpha requiring AGP 9.1.0, which breaks
+// release builds on our AGP 8.11.1. Pin to the latest stable Glance instead.
+// ponytail: version pin over an AGP 9 upgrade; revisit if home_widget pins glance itself.
+configurations.all {
+    resolutionStrategy {
+        force("androidx.glance:glance-appwidget:1.1.1")
+    }
+}
