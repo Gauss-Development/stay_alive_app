@@ -38,8 +38,10 @@ class _RostokRewardPageState extends State<RostokRewardPage> {
         return;
       }
       if (context.read<GamificationCubit>().state is! GamificationLoaded) {
-        final bool isPremium =
-            context.read<SubscriptionCubit>().state.isPremiumActive;
+        final bool isPremium = context
+            .read<SubscriptionCubit>()
+            .state
+            .isPremiumActive;
         context.read<GamificationCubit>().load(isPremium: isPremium);
       }
       if (context.read<DailyTrackerCubit>().state.log == null) {
@@ -77,10 +79,7 @@ class _RostokRewardPageState extends State<RostokRewardPage> {
             padding: const EdgeInsets.fromLTRB(26, 12, 26, 24),
             child: Stack(
               fit: StackFit.expand,
-              children: <Widget>[
-                ..._confetti(),
-                _buildContent(),
-              ],
+              children: <Widget>[..._confetti(), _buildContent()],
             ),
           ),
         ),

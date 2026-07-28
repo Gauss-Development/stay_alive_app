@@ -11,18 +11,18 @@ import 'package:stay_alive/features/gamification/presentation/cubit/gamification
 class GamificationCubit extends Cubit<GamificationState> {
   GamificationCubit({
     required ReconcileGamificationOverviewUseCase
-        reconcileGamificationOverviewUseCase,
-    required ReconcileGamificationTodayUseCase reconcileGamificationTodayUseCase,
+    reconcileGamificationOverviewUseCase,
+    required ReconcileGamificationTodayUseCase
+    reconcileGamificationTodayUseCase,
     GamificationEngine? engine,
-  })  : _reconcileGamificationOverviewUseCase =
-            reconcileGamificationOverviewUseCase,
-        _reconcileGamificationTodayUseCase =
-            reconcileGamificationTodayUseCase,
-        _engine = engine ?? const GamificationEngine(),
-        super(const GamificationInitial());
+  }) : _reconcileGamificationOverviewUseCase =
+           reconcileGamificationOverviewUseCase,
+       _reconcileGamificationTodayUseCase = reconcileGamificationTodayUseCase,
+       _engine = engine ?? const GamificationEngine(),
+       super(const GamificationInitial());
 
   final ReconcileGamificationOverviewUseCase
-      _reconcileGamificationOverviewUseCase;
+  _reconcileGamificationOverviewUseCase;
   final ReconcileGamificationTodayUseCase _reconcileGamificationTodayUseCase;
   final GamificationEngine _engine;
 
@@ -100,21 +100,15 @@ class GamificationCubit extends Cubit<GamificationState> {
             ReconcileGamificationParams(isPremium: isPremium),
           );
 
-    result.fold(
-      (failure) => emit(GamificationError(failure.message)),
-      (GamificationOverview overview) {
-        final List<GamificationEffect> effects = _mapEffects(
-          previousOverview,
-          overview,
-        );
-        emit(
-          GamificationLoaded(
-            overview: overview,
-            pendingEffects: effects,
-          ),
-        );
-      },
-    );
+    result.fold((failure) => emit(GamificationError(failure.message)), (
+      GamificationOverview overview,
+    ) {
+      final List<GamificationEffect> effects = _mapEffects(
+        previousOverview,
+        overview,
+      );
+      emit(GamificationLoaded(overview: overview, pendingEffects: effects));
+    });
   }
 
   List<GamificationEffect> _mapEffects(
@@ -146,12 +140,14 @@ class GamificationCubit extends Cubit<GamificationState> {
   List<GamificationEffect> _mapEngineEffects(
     List<GamificationEffectCandidate> candidates,
   ) {
-    return candidates.map((GamificationEffectCandidate candidate) {
-      return switch (candidate) {
-        LevelUpEffectCandidate(level: final level) => LevelUpEffect(level),
-        BadgeUnlockedEffectCandidate(badge: final badge) =>
-          BadgeUnlockedEffect(badge),
-      };
-    }).toList(growable: false);
+    return candidates
+        .map((GamificationEffectCandidate candidate) {
+          return switch (candidate) {
+            LevelUpEffectCandidate(level: final level) => LevelUpEffect(level),
+            BadgeUnlockedEffectCandidate(badge: final badge) =>
+              BadgeUnlockedEffect(badge),
+          };
+        })
+        .toList(growable: false);
   }
 }

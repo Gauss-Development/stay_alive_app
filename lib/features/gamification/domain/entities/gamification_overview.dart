@@ -53,14 +53,14 @@ class GamificationOverview extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        profile,
-        dailyChallenge,
-        weeklyChallenge,
-        categoryMastery,
-        recentXpEvents,
-        isPremium,
-        xpMultiplier,
-      ];
+    profile,
+    dailyChallenge,
+    weeklyChallenge,
+    categoryMastery,
+    recentXpEvents,
+    isPremium,
+    xpMultiplier,
+  ];
 }
 
 class BadgeGalleryItem extends Equatable {

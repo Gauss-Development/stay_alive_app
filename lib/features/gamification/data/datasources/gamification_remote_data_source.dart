@@ -37,11 +37,11 @@ class AppwriteGamificationRemoteDataSource
     required EnvConfig envConfig,
     GamificationEngine? engine,
     GamificationOverviewBuilder? overviewBuilder,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig,
-        _overviewBuilder =
-            overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
+  }) : _account = account,
+       _databases = databases,
+       _envConfig = envConfig,
+       _overviewBuilder =
+           overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
 
   final Account _account;
   final Databases _databases;
@@ -56,12 +56,16 @@ class AppwriteGamificationRemoteDataSource
     required bool isPremium,
   }) async {
     final appwrite_models.User user = await _account.get();
-    final UserGameProfileModel? persistedProfile =
-        await _loadPersistedProfile(user.$id);
-    final List<DailyLogModel> logs =
-        await _loadLogsWithItems(user.$id, dayWindow: _fullReconcileDayWindow);
-    final List<GamificationXpEventModel> persistedEvents =
-        await _fetchXpEvents(user.$id);
+    final UserGameProfileModel? persistedProfile = await _loadPersistedProfile(
+      user.$id,
+    );
+    final List<DailyLogModel> logs = await _loadLogsWithItems(
+      user.$id,
+      dayWindow: _fullReconcileDayWindow,
+    );
+    final List<GamificationXpEventModel> persistedEvents = await _fetchXpEvents(
+      user.$id,
+    );
 
     return _buildAndPersist(
       userId: user.$id,
@@ -78,15 +82,17 @@ class AppwriteGamificationRemoteDataSource
     required bool isPremium,
   }) async {
     final appwrite_models.User user = await _account.get();
-    final UserGameProfileModel? persistedProfile =
-        await _loadPersistedProfile(user.$id);
+    final UserGameProfileModel? persistedProfile = await _loadPersistedProfile(
+      user.$id,
+    );
     final List<DailyLogModel> logs = await _loadLogsWithItems(
       user.$id,
       dayWindow: _todayReconcileDayWindow,
     );
     final List<DailyLogModel> mergedLogs = _mergeTodayLog(logs, todayLog);
-    final List<GamificationXpEventModel> persistedEvents =
-        await _fetchXpEvents(user.$id);
+    final List<GamificationXpEventModel> persistedEvents = await _fetchXpEvents(
+      user.$id,
+    );
 
     return _buildAndPersist(
       userId: user.$id,
@@ -109,14 +115,14 @@ class AppwriteGamificationRemoteDataSource
       logs: logs,
       persistedEvents: persistedEvents,
       isPremium: isPremium,
-      streakFreezesRemaining:
-          persistedProfile?.streakFreezesRemaining ?? 0,
+      streakFreezesRemaining: persistedProfile?.streakFreezesRemaining ?? 0,
       streakFreezeUsedDates:
           persistedProfile?.streakFreezeUsedDates ?? const <String>[],
     );
 
-    final UserGameProfileModel profileModel =
-        UserGameProfileModel.fromProfile(overview.profile);
+    final UserGameProfileModel profileModel = UserGameProfileModel.fromProfile(
+      overview.profile,
+    );
     await _upsertProfile(profileModel);
     await _upsertBadgeEvents(profileModel);
     await _upsertChallengeEvent(
@@ -141,8 +147,9 @@ class AppwriteGamificationRemoteDataSource
       nextProfile: overview.profile,
     );
 
-    final List<GamificationXpEventModel> refreshedEvents =
-        await _fetchXpEvents(userId);
+    final List<GamificationXpEventModel> refreshedEvents = await _fetchXpEvents(
+      userId,
+    );
 
     return GamificationOverviewModel(
       profile: overview.profile,
@@ -187,13 +194,10 @@ class AppwriteGamificationRemoteDataSource
   Future<List<GamificationXpEventModel>> _fetchXpEvents(String userId) async {
     final appwrite_models.DocumentList documents = await _databases
         .listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.gamificationEventsCollectionId,
-      queries: <String>[
-        Query.orderDesc('\$createdAt'),
-        Query.limit(50),
-      ],
-    );
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.gamificationEventsCollectionId,
+          queries: <String>[Query.orderDesc('\$createdAt'), Query.limit(50)],
+        );
 
     return documents.documents
         .map(GamificationXpEventModel.fromDocument)
@@ -204,55 +208,36 @@ class AppwriteGamificationRemoteDataSource
     String userId, {
     required int dayWindow,
   }) async {
-    final DateTime cutoff =
-        DateTime.now().toUtc().subtract(Duration(days: dayWindow));
+    final DateTime cutoff = DateTime.now().toUtc().subtract(
+      Duration(days: dayWindow),
+    );
     final String cutoffKey = _dateKey(cutoff);
 
     final appwrite_models.DocumentList documents = await _databases
         .listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogsCollectionId,
-      queries: <String>[
-        Query.limit(dayWindow + 30),
-      ],
-    );
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.dailyLogsCollectionId,
+          queries: <String>[
+            Query.greaterThanEqual('log_date', cutoffKey),
+            Query.orderAsc('log_date'),
+            Query.limit(dayWindow),
+          ],
+        );
 
-    final List<appwrite_models.Document> filteredLogs = documents.documents
-        .where((appwrite_models.Document document) {
-          final String? dateKey =
-              DailyLogDocumentIds.dateKeyFromLogDocumentId(document.$id);
-          if (dateKey == null) {
-            return false;
-          }
-          return dateKey.compareTo(cutoffKey) >= 0;
-        })
-        .toList(growable: false)
-      ..sort(
-        (appwrite_models.Document a, appwrite_models.Document b) {
-          final String? dateA =
-              DailyLogDocumentIds.dateKeyFromLogDocumentId(a.$id);
-          final String? dateB =
-              DailyLogDocumentIds.dateKeyFromLogDocumentId(b.$id);
-          return (dateA ?? '').compareTo(dateB ?? '');
-        },
-      );
-
-    final List<String> logIds = filteredLogs
+    final List<String> logIds = documents.documents
         .map((appwrite_models.Document document) => document.$id)
         .toList(growable: false);
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         await _loadItemsByLogIds(userId, logIds);
 
-    return filteredLogs
-        .map(
-          (appwrite_models.Document document) {
-            final String logId = document.$id;
-            return DailyLogModel.fromDocument(
-              document: document,
-              items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
-            );
-          },
-        )
+    return documents.documents
+        .map((appwrite_models.Document document) {
+          final String logId = document.$id;
+          return DailyLogModel.fromDocument(
+            document: document,
+            items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
+          );
+        })
         .toList(growable: false);
   }
 
@@ -264,31 +249,37 @@ class AppwriteGamificationRemoteDataSource
       return const <String, List<DailyLogItemModel>>{};
     }
 
-    final appwrite_models.DocumentList itemDocuments =
-        await _databases.listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogItemsCollectionId,
-      queries: <String>[
-        Query.limit(5000),
-      ],
-    );
+    final appwrite_models.DocumentList itemDocuments = await _databases
+        .listDocuments(
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.dailyLogItemsCollectionId,
+          queries: <String>[Query.limit(5000)],
+        );
 
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         <String, List<DailyLogItemModel>>{};
     for (final appwrite_models.Document document in itemDocuments.documents) {
+      final String? logDocumentIdFromData = document.data['log_document_id']
+          ?.toString();
       String? matchedLogId;
-      for (final String logId in logIds) {
-        if (DailyLogDocumentIds.isItemForLog(document.$id, logId)) {
-          matchedLogId = logId;
-          break;
+      if (logDocumentIdFromData != null &&
+          logDocumentIdFromData.isNotEmpty &&
+          logIds.contains(logDocumentIdFromData)) {
+        matchedLogId = logDocumentIdFromData;
+      } else {
+        for (final String logId in logIds) {
+          if (DailyLogDocumentIds.isLegacyItemForLog(document.$id, logId)) {
+            matchedLogId = logId;
+            break;
+          }
         }
       }
       if (matchedLogId == null) {
         continue;
       }
-      itemsByLogId.putIfAbsent(matchedLogId, () => <DailyLogItemModel>[]).add(
-            DailyLogItemModel.fromDocumentWithoutCategory(document),
-          );
+      itemsByLogId
+          .putIfAbsent(matchedLogId, () => <DailyLogItemModel>[])
+          .add(DailyLogItemModel.fromDocumentWithoutCategory(document));
     }
     return itemsByLogId;
   }
@@ -311,10 +302,7 @@ class AppwriteGamificationRemoteDataSource
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.gamificationProfilesCollectionId,
         documentId: profile.userId,
-        data: <String, dynamic>{
-          ...data,
-          'created_at': now,
-        },
+        data: <String, dynamic>{...data, 'created_at': now},
         permissions: <String>[
           Permission.read(Role.user(profile.userId)),
           Permission.update(Role.user(profile.userId)),
@@ -386,9 +374,8 @@ class AppwriteGamificationRemoteDataSource
     required UserGameProfile? previousProfile,
     required UserGameProfile nextProfile,
   }) async {
-    final Set<String> previousUsed = (previousProfile?.streakFreezeUsedDates ??
-            const <String>[])
-        .toSet();
+    final Set<String> previousUsed =
+        (previousProfile?.streakFreezeUsedDates ?? const <String>[]).toSet();
     for (final String date in nextProfile.streakFreezeUsedDates) {
       if (previousUsed.contains(date)) {
         continue;
@@ -417,18 +404,15 @@ class AppwriteGamificationRemoteDataSource
   }) async {
     final appwrite_models.DocumentList existing = await _databases
         .listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.gamificationEventsCollectionId,
-      queries: <String>[
-        Query.equal('event_type', eventType),
-        Query.limit(50),
-      ],
-    );
-    final bool alreadyRecorded = existing.documents.any(
-      (appwrite_models.Document document) =>
-          _eventLogDate(document) == logDate,
-    );
-    if (alreadyRecorded) {
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.gamificationEventsCollectionId,
+          queries: <String>[
+            Query.equal('event_type', eventType),
+            Query.equal('log_date', logDate),
+            Query.limit(1),
+          ],
+        );
+    if (existing.documents.isNotEmpty) {
       return;
     }
 
@@ -441,10 +425,9 @@ class AppwriteGamificationRemoteDataSource
         data: <String, dynamic>{
           'event_type': eventType,
           'xp_delta': xpDelta,
-          'metadata_json': jsonEncode(<String, Object?>{
-            ...metadata,
-            'log_date': logDate,
-          }),
+          'log_date': logDate,
+          'metadata_json': jsonEncode(metadata),
+          'created_at': createdAt.toIso8601String(),
         },
         permissions: <String>[Permission.read(Role.user(userId))],
       );
@@ -459,28 +442,5 @@ class AppwriteGamificationRemoteDataSource
     final String month = date.month.toString().padLeft(2, '0');
     final String day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
-  }
-
-  String _eventLogDate(appwrite_models.Document document) {
-    final Map<String, dynamic> data = document.data;
-    final String? storedDate = data['log_date']?.toString();
-    if (storedDate != null && storedDate.isNotEmpty) {
-      return storedDate;
-    }
-    final Object? metadata = data['metadata_json'];
-    if (metadata is String && metadata.isNotEmpty) {
-      try {
-        final Object? decoded = jsonDecode(metadata);
-        if (decoded is Map<String, dynamic>) {
-          final String? metadataDate = decoded['log_date']?.toString();
-          if (metadataDate != null && metadataDate.isNotEmpty) {
-            return metadataDate;
-          }
-        }
-      } on FormatException {
-        // Fall through to empty string.
-      }
-    }
-    return '';
   }
 }

@@ -19,11 +19,11 @@ class GamificationXpEvent extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        eventId,
-        eventType,
-        label,
-        xpDelta,
-        logDate,
-        createdAt,
-      ];
+    eventId,
+    eventType,
+    label,
+    xpDelta,
+    logDate,
+    createdAt,
+  ];
 }

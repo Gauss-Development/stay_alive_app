@@ -15,9 +15,9 @@ class CompletionSummary extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        totalCompleted,
-        totalTarget,
-        completionPercentage,
-        isFullyCompleted,
-      ];
+    totalCompleted,
+    totalTarget,
+    completionPercentage,
+    isFullyCompleted,
+  ];
 }

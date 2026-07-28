@@ -108,10 +108,7 @@ void _registerAuthFeature() {
       ),
     )
     ..registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(
-        sl<AuthRemoteDataSource>(),
-        sl<AppLogger>(),
-      ),
+      () => AuthRepositoryImpl(sl<AuthRemoteDataSource>(), sl<AppLogger>()),
     )
     ..registerLazySingleton<LoginWithEmailUseCase>(
       () => LoginWithEmailUseCase(sl<AuthRepository>()),
@@ -196,8 +193,10 @@ void _registerDailyTrackerFeature() {
       () => DailyTrackerCubit(
         getTodayLogUseCase: sl<GetTodayLogUseCase>(),
         initializeTodayLogUseCase: sl<InitializeTodayLogUseCase>(),
-        incrementCategoryProgressUseCase: sl<IncrementCategoryProgressUseCase>(),
-        decrementCategoryProgressUseCase: sl<DecrementCategoryProgressUseCase>(),
+        incrementCategoryProgressUseCase:
+            sl<IncrementCategoryProgressUseCase>(),
+        decrementCategoryProgressUseCase:
+            sl<DecrementCategoryProgressUseCase>(),
         resetTodayLogUseCase: sl<ResetTodayLogUseCase>(),
         getCompletionSummaryUseCase: sl<GetCompletionSummaryUseCase>(),
         logger: sl<AppLogger>(),
@@ -222,9 +221,8 @@ void _registerUserFeature() {
       () => GetUserProfileUseCase(sl<UserRepository>()),
     )
     ..registerFactory<UserProfileCubit>(
-      () => UserProfileCubit(
-        getUserProfileUseCase: sl<GetUserProfileUseCase>(),
-      ),
+      () =>
+          UserProfileCubit(getUserProfileUseCase: sl<GetUserProfileUseCase>()),
     );
 }
 

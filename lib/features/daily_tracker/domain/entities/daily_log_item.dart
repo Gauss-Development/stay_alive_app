@@ -55,10 +55,10 @@ class DailyLogItem extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        category,
-        completedCount,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    category,
+    completedCount,
+    createdAt,
+    updatedAt,
+  ];
 }

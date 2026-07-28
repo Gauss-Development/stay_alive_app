@@ -23,7 +23,8 @@ class GamificationXpEventModel extends GamificationXpEvent {
       label: _labelForEventType(data['event_type']?.toString() ?? ''),
       xpDelta: (data['xp_delta'] as num?)?.toInt() ?? 0,
       logDate: _logDateFromDocument(document),
-      createdAt: DateTime.tryParse(data['created_at']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(data['created_at']?.toString() ?? '') ??
           DateTime.tryParse(document.$createdAt) ??
           DateTime.now().toUtc(),
     );

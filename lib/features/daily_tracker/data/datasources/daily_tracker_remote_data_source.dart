@@ -29,10 +29,10 @@ class AppwriteDailyTrackerRemoteDataSource
     required Databases databases,
     required EnvConfig envConfig,
     required AppLogger logger,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig,
-        _logger = logger;
+  }) : _account = account,
+       _databases = databases,
+       _envConfig = envConfig,
+       _logger = logger;
 
   final Account _account;
   final Databases _databases;
@@ -41,115 +41,115 @@ class AppwriteDailyTrackerRemoteDataSource
 
   static const List<TrackerCategoryModel> _fallbackCategories =
       <TrackerCategoryModel>[
-    TrackerCategoryModel(
-      id: 'beans',
-      title: 'Beans / Legumes',
-      description: 'Track servings of beans and legumes',
-      targetCount: 3,
-      displayOrder: 1,
-      iconKey: 'beans',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'berries',
-      title: 'Berries',
-      description: 'Track servings of berries',
-      targetCount: 1,
-      displayOrder: 2,
-      iconKey: 'berries',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'fruits',
-      title: 'Fruits',
-      description: 'Track fruit servings',
-      targetCount: 3,
-      displayOrder: 3,
-      iconKey: 'fruits',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'cruciferous_vegetables',
-      title: 'Cruciferous Vegetables',
-      description: 'Track cruciferous veggie servings',
-      targetCount: 1,
-      displayOrder: 4,
-      iconKey: 'cruciferous_vegetables',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'greens',
-      title: 'Greens',
-      description: 'Track leafy greens servings',
-      targetCount: 2,
-      displayOrder: 5,
-      iconKey: 'greens',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'other_vegetables',
-      title: 'Other Vegetables',
-      description: 'Track other vegetable servings',
-      targetCount: 2,
-      displayOrder: 6,
-      iconKey: 'other_vegetables',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'flaxseeds',
-      title: 'Flaxseeds',
-      description: 'Track flaxseed servings',
-      targetCount: 1,
-      displayOrder: 7,
-      iconKey: 'flaxseeds',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'nuts',
-      title: 'Nuts',
-      description: 'Track nuts servings',
-      targetCount: 1,
-      displayOrder: 8,
-      iconKey: 'nuts',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'spices',
-      title: 'Spices',
-      description: 'Track turmeric/spice servings',
-      targetCount: 1,
-      displayOrder: 9,
-      iconKey: 'spices',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'whole_grains',
-      title: 'Whole Grains',
-      description: 'Track whole grain servings',
-      targetCount: 3,
-      displayOrder: 10,
-      iconKey: 'whole_grains',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'beverages',
-      title: 'Beverages',
-      description: 'Track healthy beverage goals',
-      targetCount: 5,
-      displayOrder: 11,
-      iconKey: 'beverages',
-      isActive: true,
-    ),
-    TrackerCategoryModel(
-      id: 'exercise',
-      title: 'Exercise',
-      description: 'Track exercise sessions',
-      targetCount: 1,
-      displayOrder: 12,
-      iconKey: 'exercise',
-      isActive: true,
-    ),
-  ];
+        TrackerCategoryModel(
+          id: 'beans',
+          title: 'Beans / Legumes',
+          description: 'Track servings of beans and legumes',
+          targetCount: 3,
+          displayOrder: 1,
+          iconKey: 'beans',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'berries',
+          title: 'Berries',
+          description: 'Track servings of berries',
+          targetCount: 1,
+          displayOrder: 2,
+          iconKey: 'berries',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'fruits',
+          title: 'Fruits',
+          description: 'Track fruit servings',
+          targetCount: 3,
+          displayOrder: 3,
+          iconKey: 'fruits',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'cruciferous_vegetables',
+          title: 'Cruciferous Vegetables',
+          description: 'Track cruciferous veggie servings',
+          targetCount: 1,
+          displayOrder: 4,
+          iconKey: 'cruciferous_vegetables',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'greens',
+          title: 'Greens',
+          description: 'Track leafy greens servings',
+          targetCount: 2,
+          displayOrder: 5,
+          iconKey: 'greens',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'other_vegetables',
+          title: 'Other Vegetables',
+          description: 'Track other vegetable servings',
+          targetCount: 2,
+          displayOrder: 6,
+          iconKey: 'other_vegetables',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'flaxseeds',
+          title: 'Flaxseeds',
+          description: 'Track flaxseed servings',
+          targetCount: 1,
+          displayOrder: 7,
+          iconKey: 'flaxseeds',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'nuts',
+          title: 'Nuts',
+          description: 'Track nuts servings',
+          targetCount: 1,
+          displayOrder: 8,
+          iconKey: 'nuts',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'spices',
+          title: 'Spices',
+          description: 'Track turmeric/spice servings',
+          targetCount: 1,
+          displayOrder: 9,
+          iconKey: 'spices',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'whole_grains',
+          title: 'Whole Grains',
+          description: 'Track whole grain servings',
+          targetCount: 3,
+          displayOrder: 10,
+          iconKey: 'whole_grains',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'beverages',
+          title: 'Beverages',
+          description: 'Track healthy beverage goals',
+          targetCount: 5,
+          displayOrder: 11,
+          iconKey: 'beverages',
+          isActive: true,
+        ),
+        TrackerCategoryModel(
+          id: 'exercise',
+          title: 'Exercise',
+          description: 'Track exercise sessions',
+          targetCount: 1,
+          displayOrder: 12,
+          iconKey: 'exercise',
+          isActive: true,
+        ),
+      ];
 
   @override
   Future<DailyLogModel?> getLogByDate(String dateKey) async {
@@ -174,7 +174,10 @@ class AppwriteDailyTrackerRemoteDataSource
     final List<DailyLogItemModel> items = categories
         .map(
           (TrackerCategoryModel category) => DailyLogItemModel(
-            id: DailyLogDocumentIds.item(logDocumentId, category.id),
+            id: DailyLogDocumentIds.item(
+              logDocumentId: logDocumentId,
+              categoryId: category.id,
+            ),
             category: category,
             completedCount: 0,
             createdAt: now,
@@ -212,7 +215,7 @@ class AppwriteDailyTrackerRemoteDataSource
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.dailyLogItemsCollectionId,
         documentId: item.id,
-        data: item.toCreateData(logId: log.id, userId: user.$id),
+        data: item.toCreateData(logDocumentId: log.id),
         permissions: _ownerPermissions(user.$id),
       );
     }
@@ -266,10 +269,9 @@ class AppwriteDailyTrackerRemoteDataSource
     final DailyLogModel current = await initializeLog(dateKey);
     final List<DailyLogItemModel> resetItems = current.items
         .map(
-          (DailyLogItem item) => DailyLogItemModel.fromEntity(item).copyWith(
-            completedCount: 0,
-            updatedAt: DateTime.now().toUtc(),
-          ),
+          (DailyLogItem item) => DailyLogItemModel.fromEntity(
+            item,
+          ).copyWith(completedCount: 0, updatedAt: DateTime.now().toUtc()),
         )
         .toList(growable: false);
 
@@ -313,21 +315,51 @@ class AppwriteDailyTrackerRemoteDataSource
   Future<List<DailyLogItemModel>> _loadItemsForLog({
     required String logDocumentId,
   }) async {
-    final appwrite_models.DocumentList itemDocuments =
-        await _databases.listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogItemsCollectionId,
-      queries: <String>[
-        Query.limit(100),
-      ],
-    );
+    try {
+      final appwrite_models.DocumentList itemDocuments = await _databases
+          .listDocuments(
+            databaseId: _envConfig.appwriteDatabaseId,
+            collectionId: _envConfig.dailyLogItemsCollectionId,
+            queries: <String>[
+              Query.equal('log_document_id', logDocumentId),
+              Query.limit(100),
+            ],
+          );
+      if (itemDocuments.documents.isNotEmpty) {
+        return _sortItems(
+          itemDocuments.documents
+              .map(DailyLogItemModel.fromDocumentWithoutCategory)
+              .toList(growable: false),
+        );
+      }
+    } on AppwriteException catch (exception) {
+      _logger.warning(
+        'Falling back to legacy daily log item lookup',
+        data: <String, Object?>{'reason': exception.message},
+      );
+    }
+
+    final appwrite_models.DocumentList itemDocuments = await _databases
+        .listDocuments(
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.dailyLogItemsCollectionId,
+          queries: <String>[Query.limit(100)],
+        );
     final List<DailyLogItemModel> items = itemDocuments.documents
         .where(
           (appwrite_models.Document document) =>
-              DailyLogDocumentIds.isItemForLog(document.$id, logDocumentId),
+              DailyLogDocumentIds.isLegacyItemForLog(
+                document.$id,
+                logDocumentId,
+              ) ||
+              document.data['log_document_id']?.toString() == logDocumentId,
         )
         .map(DailyLogItemModel.fromDocumentWithoutCategory)
         .toList(growable: false);
+    return _sortItems(items);
+  }
+
+  List<DailyLogItemModel> _sortItems(List<DailyLogItemModel> items) {
     items.sort(
       (DailyLogItemModel a, DailyLogItemModel b) =>
           a.category.displayOrder.compareTo(b.category.displayOrder),
@@ -337,16 +369,16 @@ class AppwriteDailyTrackerRemoteDataSource
 
   Future<List<TrackerCategoryModel>> _loadCategories() async {
     try {
-      final appwrite_models.DocumentList documents =
-          await _databases.listDocuments(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.categoryDefinitionsCollectionId,
-        queries: <String>[
-          Query.equal('is_active', true),
-          Query.orderAsc('display_order'),
-          Query.limit(100),
-        ],
-      );
+      final appwrite_models.DocumentList documents = await _databases
+          .listDocuments(
+            databaseId: _envConfig.appwriteDatabaseId,
+            collectionId: _envConfig.categoryDefinitionsCollectionId,
+            queries: <String>[
+              Query.equal('is_active', true),
+              Query.orderAsc('display_order'),
+              Query.limit(100),
+            ],
+          );
       if (documents.documents.isEmpty) {
         return _fallbackCategories;
       }
@@ -382,8 +414,9 @@ class AppwriteDailyTrackerRemoteDataSource
       0,
       (int value, DailyLogItem item) => value + item.targetCount,
     );
-    final double completionPercentage =
-        totalTarget == 0 ? 0 : (totalCompleted / totalTarget) * 100;
+    final double completionPercentage = totalTarget == 0
+        ? 0
+        : (totalCompleted / totalTarget) * 100;
 
     return log.copyWith(
       totalCompleted: totalCompleted,

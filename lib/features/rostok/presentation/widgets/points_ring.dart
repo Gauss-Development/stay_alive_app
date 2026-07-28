@@ -81,7 +81,13 @@ class _RingPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = thickness
         ..strokeCap = StrokeCap.round;
-      canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * fraction, false, progress);
+      canvas.drawArc(
+        rect,
+        -math.pi / 2,
+        2 * math.pi * fraction,
+        false,
+        progress,
+      );
     }
   }
 

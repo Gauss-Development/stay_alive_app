@@ -41,10 +41,12 @@ class DailyLogItemModel extends DailyLogItem {
       id: document.$id,
       category: category,
       completedCount: (data['completed_count'] as num?)?.toInt() ?? 0,
-      createdAt: DateTime.tryParse(data['created_at']?.toString() ?? '') ??
+      createdAt:
+          DateTime.tryParse(data['created_at']?.toString() ?? '') ??
           DateTime.tryParse(document.$createdAt) ??
           now,
-      updatedAt: DateTime.tryParse(data['updated_at']?.toString() ?? '') ??
+      updatedAt:
+          DateTime.tryParse(data['updated_at']?.toString() ?? '') ??
           DateTime.tryParse(document.$updatedAt) ??
           now,
     );
@@ -58,7 +60,8 @@ class DailyLogItemModel extends DailyLogItem {
       document: document,
       category: TrackerCategoryModel(
         id: data['category_id']?.toString() ?? '',
-        title: data['category_title']?.toString() ??
+        title:
+            data['category_title']?.toString() ??
             data['category_id']?.toString() ??
             'Category',
         description: data['description']?.toString() ?? '',
@@ -112,11 +115,9 @@ class DailyLogItemModel extends DailyLogItem {
     };
   }
 
-  Map<String, dynamic> toCreateData({
-    required String logId,
-    required String userId,
-  }) {
+  Map<String, dynamic> toCreateData({required String logDocumentId}) {
     return <String, dynamic>{
+      'log_document_id': logDocumentId,
       'category_id': category.id,
       'category_title': category.title,
       'description': category.description,
@@ -133,6 +134,7 @@ class DailyLogItemModel extends DailyLogItem {
   Map<String, dynamic> toUpdateData() {
     return <String, dynamic>{
       'completed_count': completedCount,
+      'updated_at': updatedAt.toUtc().toIso8601String(),
     };
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/widgets/app_states.dart';
 import 'package:stay_alive/shared/widgets/app_scaffold.dart';
 
 class CategoriesPage extends StatelessWidget {
@@ -7,9 +8,10 @@ class CategoriesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const AppScaffold(
-      title: 'Categories',
-      body: Center(
-        child: Text('Category definitions will appear here.'),
+      title: 'Категории',
+      body: AppEmptyState(
+        title: 'Пока пусто',
+        message: 'Здесь появятся полезные категории продуктов.',
       ),
     );
   }

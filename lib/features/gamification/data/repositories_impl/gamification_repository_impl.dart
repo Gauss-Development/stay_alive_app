@@ -17,8 +17,8 @@ class GamificationRepositoryImpl implements GamificationRepository {
     required bool isPremium,
   }) async {
     try {
-      final GamificationOverview overview =
-          await _remoteDataSource.reconcileOverview(isPremium: isPremium);
+      final GamificationOverview overview = await _remoteDataSource
+          .reconcileOverview(isPremium: isPremium);
       return Right<Failure, GamificationOverview>(overview);
     } catch (exception) {
       return Left<Failure, GamificationOverview>(
@@ -33,11 +33,8 @@ class GamificationRepositoryImpl implements GamificationRepository {
     required bool isPremium,
   }) async {
     try {
-      final GamificationOverview overview =
-          await _remoteDataSource.reconcileTodayOverview(
-        todayLog: todayLog,
-        isPremium: isPremium,
-      );
+      final GamificationOverview overview = await _remoteDataSource
+          .reconcileTodayOverview(todayLog: todayLog, isPremium: isPremium);
       return Right<Failure, GamificationOverview>(overview);
     } catch (exception) {
       return Left<Failure, GamificationOverview>(

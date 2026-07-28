@@ -30,10 +30,10 @@ class GameLevel extends Equatable {
 
 abstract final class GameLevelTable {
   static const List<GameLevel> levels = <GameLevel>[
-    GameLevel(level: 1, title: 'Seedling', xpRequired: 0,    xpForNext: 500),
-    GameLevel(level: 2, title: 'Sprout',   xpRequired: 500,  xpForNext: 1500),
-    GameLevel(level: 3, title: 'Grower',   xpRequired: 1500, xpForNext: 3500),
-    GameLevel(level: 4, title: 'Thriver',  xpRequired: 3500, xpForNext: 7000),
+    GameLevel(level: 1, title: 'Seedling', xpRequired: 0, xpForNext: 500),
+    GameLevel(level: 2, title: 'Sprout', xpRequired: 500, xpForNext: 1500),
+    GameLevel(level: 3, title: 'Grower', xpRequired: 1500, xpForNext: 3500),
+    GameLevel(level: 4, title: 'Thriver', xpRequired: 3500, xpForNext: 7000),
     GameLevel(level: 5, title: 'Vitalist', xpRequired: 7000, xpForNext: 0),
   ];
 

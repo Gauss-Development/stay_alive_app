@@ -28,10 +28,7 @@ class AuthTextField extends StatelessWidget {
       textInputAction: textInputAction,
       obscureText: obscureText,
       validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hintText,
-      ),
+      decoration: InputDecoration(labelText: label, hintText: hintText),
     );
   }
 }

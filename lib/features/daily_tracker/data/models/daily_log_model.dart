@@ -22,9 +22,7 @@ class DailyLogModel extends DailyLog {
       userId: entity.userId,
       logDate: entity.logDate,
       items: entity.items
-          .map(
-            (DailyLogItem item) => DailyLogItemModel.fromEntity(item),
-          )
+          .map((DailyLogItem item) => DailyLogItemModel.fromEntity(item))
           .toList(growable: false),
       completionPercentage: entity.completionPercentage,
       totalCompleted: entity.totalCompleted,
@@ -40,11 +38,11 @@ class DailyLogModel extends DailyLog {
     final Map<String, dynamic> data = document.data;
     final String? dateKey =
         DailyLogDocumentIds.dateKeyFromLogDocumentId(document.$id) ??
-            data['log_date']?.toString();
+        data['log_date']?.toString();
     final String userId =
         DailyLogDocumentIds.userIdFromLogDocumentId(document.$id) ??
-            data['user_id']?.toString() ??
-            '';
+        data['user_id']?.toString() ??
+        '';
 
     return DailyLogModel(
       id: document.$id,
@@ -82,13 +80,16 @@ class DailyLogModel extends DailyLog {
     );
   }
 
-  /// Payload for the deployed `daily_logs` collection (no `log_date` / `log_id`).
+  /// Payload for the `stay_alive_v1` `daily_logs` collection.
   Map<String, dynamic> toCreateData() {
     return <String, dynamic>{
+      'log_date': dateKey,
       'completion_percentage': completionPercentage,
       'total_completed': totalCompleted,
       'total_target': totalTarget,
       'is_fully_completed': isFullyCompleted,
+      'created_at': logDate.toUtc().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
 
@@ -98,6 +99,7 @@ class DailyLogModel extends DailyLog {
       'total_completed': totalCompleted,
       'total_target': totalTarget,
       'is_fully_completed': isFullyCompleted,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
 }

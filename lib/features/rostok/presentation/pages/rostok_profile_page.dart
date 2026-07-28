@@ -15,7 +15,15 @@ import 'package:stay_alive/features/subscription/presentation/cubit/subscription
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_state.dart';
 
-const List<String> _weekLabels = <String>['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+const List<String> _weekLabels = <String>[
+  'Пн',
+  'Вт',
+  'Ср',
+  'Чт',
+  'Пт',
+  'Сб',
+  'Вс',
+];
 const List<Color> _achieveTints = <Color>[
   RostokColors.accent,
   Color(0xFFE6DCF5),
@@ -45,8 +53,10 @@ class _RostokProfilePageState extends State<RostokProfilePage> {
         context.read<UserProfileCubit>().load();
       }
       if (context.read<GamificationCubit>().state is! GamificationLoaded) {
-        final bool isPremium =
-            context.read<SubscriptionCubit>().state.isPremiumActive;
+        final bool isPremium = context
+            .read<SubscriptionCubit>()
+            .state
+            .isPremiumActive;
         context.read<GamificationCubit>().load(isPremium: isPremium);
       }
     });
@@ -65,8 +75,9 @@ class _RostokProfilePageState extends State<RostokProfilePage> {
     return RostokScaffold(
       child: BlocBuilder<GamificationCubit, GamificationState>(
         builder: (BuildContext context, GamificationState state) {
-          final GamificationOverview? overview =
-              state is GamificationLoaded ? state.overview : null;
+          final GamificationOverview? overview = state is GamificationLoaded
+              ? state.overview
+              : null;
           final UserGameProfile profile =
               overview?.profile ?? const UserGameProfile.empty();
           return ListView(
@@ -131,7 +142,10 @@ class _RostokProfilePageState extends State<RostokProfilePage> {
                     ),
                     child: Text(
                       '${profile.currentLevel.level}',
-                      style: RostokText.display(size: 13, weight: FontWeight.w700),
+                      style: RostokText.display(
+                        size: 13,
+                        weight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
@@ -142,8 +156,9 @@ class _RostokProfilePageState extends State<RostokProfilePage> {
         const SizedBox(height: 14),
         BlocBuilder<UserProfileCubit, UserProfileState>(
           builder: (BuildContext context, UserProfileState state) {
-            final String name =
-                state is UserProfileLoaded ? state.profile.displayName : 'Игрок';
+            final String name = state is UserProfileLoaded
+                ? state.profile.displayName
+                : 'Игрок';
             return Text(name, style: RostokText.display(size: 24));
           },
         ),
@@ -250,8 +265,9 @@ class _RostokProfilePageState extends State<RostokProfilePage> {
       );
     }
     final List<BadgeGalleryItem> gallery = overview.badgeGallery;
-    final int unlocked =
-        gallery.where((BadgeGalleryItem g) => g.isUnlocked).length;
+    final int unlocked = gallery
+        .where((BadgeGalleryItem g) => g.isUnlocked)
+        .length;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -352,7 +368,11 @@ class _RostokProfilePageState extends State<RostokProfilePage> {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.value, required this.label, this.dark = false});
+  const _StatCard({
+    required this.value,
+    required this.label,
+    this.dark = false,
+  });
 
   final String value;
   final String label;
@@ -385,7 +405,9 @@ class _StatCard extends StatelessWidget {
             textAlign: TextAlign.center,
             style: RostokText.body(
               size: 11,
-              color: dark ? RostokColors.textOnDarkMuted : RostokColors.textFaint,
+              color: dark
+                  ? RostokColors.textOnDarkMuted
+                  : RostokColors.textFaint,
             ),
           ),
         ],
@@ -430,8 +452,9 @@ class _AchieveTile extends StatelessWidget {
               style: RostokText.body(
                 size: 9,
                 weight: FontWeight.w700,
-                color:
-                    unlocked ? RostokColors.chipText : RostokColors.textOnDarkMuted,
+                color: unlocked
+                    ? RostokColors.chipText
+                    : RostokColors.textOnDarkMuted,
               ),
             ),
           ),
@@ -474,7 +497,9 @@ class _WeekDot extends StatelessWidget {
               ? Icon(
                   Icons.check_rounded,
                   size: 14,
-                  color: day.isToday ? RostokColors.accent : RostokColors.inkText,
+                  color: day.isToday
+                      ? RostokColors.accent
+                      : RostokColors.inkText,
                 )
               : const SizedBox.shrink(),
         ),
@@ -484,7 +509,9 @@ class _WeekDot extends StatelessWidget {
           style: RostokText.body(
             size: 11,
             weight: FontWeight.w600,
-            color: day.isToday ? RostokColors.inkText : RostokColors.textOnDarkMuted,
+            color: day.isToday
+                ? RostokColors.inkText
+                : RostokColors.textOnDarkMuted,
           ),
         ),
       ],

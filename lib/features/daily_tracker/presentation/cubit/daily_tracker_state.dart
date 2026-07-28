@@ -2,12 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/completion_summary.dart';
 
-enum DailyTrackerStatus {
-  initial,
-  loading,
-  loaded,
-  error,
-}
+enum DailyTrackerStatus { initial, loading, loaded, error }
 
 class DailyTrackerState extends Equatable {
   const DailyTrackerState({
@@ -18,10 +13,10 @@ class DailyTrackerState extends Equatable {
   });
 
   const DailyTrackerState.initial()
-      : status = DailyTrackerStatus.initial,
-        log = null,
-        summary = null,
-        errorMessage = null;
+    : status = DailyTrackerStatus.initial,
+      log = null,
+      summary = null,
+      errorMessage = null;
 
   final DailyTrackerStatus status;
   final DailyLog? log;

@@ -52,8 +52,10 @@ class _RostokHomePageState extends State<RostokHomePage> {
       if (!mounted) {
         return;
       }
-      final bool isPremium =
-          context.read<SubscriptionCubit>().state.isPremiumActive;
+      final bool isPremium = context
+          .read<SubscriptionCubit>()
+          .state
+          .isPremiumActive;
       context.read<DailyTrackerCubit>().loadToday();
       context.read<GamificationCubit>().load(isPremium: isPremium);
       if (context.read<UserProfileCubit>().state is UserProfileInitial) {
@@ -115,8 +117,7 @@ class _RostokHomePageState extends State<RostokHomePage> {
       _FoodFilter.done =>
         log.items.where((DailyLogItem i) => i.isCompleted).toList(),
     };
-    final int eaten =
-        log.items.where((DailyLogItem i) => i.isCompleted).length;
+    final int eaten = log.items.where((DailyLogItem i) => i.isCompleted).length;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
@@ -178,10 +179,7 @@ class _RostokHomePageState extends State<RostokHomePage> {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    'Привет, $name 👋',
-                    style: RostokText.body(size: 15),
-                  ),
+                  Text('Привет, $name 👋', style: RostokText.body(size: 15)),
                   const SizedBox(height: 2),
                   Text(
                     'Что съедим\nполезного?',
@@ -338,11 +336,7 @@ class _RostokHomePageState extends State<RostokHomePage> {
 }
 
 class _FoodRow extends StatelessWidget {
-  const _FoodRow({
-    required this.item,
-    required this.tint,
-    required this.onTap,
-  });
+  const _FoodRow({required this.item, required this.tint, required this.onTap});
 
   final DailyLogItem item;
   final Color tint;
@@ -396,7 +390,9 @@ class _FoodRow extends StatelessWidget {
                     style: RostokText.body(
                       size: 15,
                       weight: FontWeight.w700,
-                      color: done ? RostokColors.textFaint : RostokColors.inkText,
+                      color: done
+                          ? RostokColors.textFaint
+                          : RostokColors.inkText,
                       decoration: done
                           ? TextDecoration.lineThrough
                           : TextDecoration.none,
@@ -524,8 +520,10 @@ class _HomeBottomBar extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     '${log.totalCompleted} порций',
-                    style:
-                        RostokText.display(size: 17, weight: FontWeight.w700),
+                    style: RostokText.display(
+                      size: 17,
+                      weight: FontWeight.w700,
+                    ),
                   ),
                   Text(
                     'отмечено сегодня',
@@ -549,8 +547,10 @@ class _HomeBottomBar extends StatelessWidget {
                 borderRadius: const BorderRadius.all(Radius.circular(18)),
                 onTap: onAdd,
                 child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 14,
+                  ),
                   child: Text(
                     'Добавить',
                     style: RostokText.display(

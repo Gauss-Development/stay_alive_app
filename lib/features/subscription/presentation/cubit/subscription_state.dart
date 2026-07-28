@@ -22,11 +22,11 @@ class SubscriptionState extends Equatable {
   });
 
   const SubscriptionState.initial()
-      : status = SubscriptionViewStatus.initial,
-        info = const SubscriptionInfo.free(),
-        offering = const SubscriptionOffering.empty(),
-        errorMessage = null,
-        selectedPackageId = null;
+    : status = SubscriptionViewStatus.initial,
+      info = const SubscriptionInfo.free(),
+      offering = const SubscriptionOffering.empty(),
+      errorMessage = null,
+      selectedPackageId = null;
 
   final SubscriptionViewStatus status;
   final SubscriptionInfo info;
@@ -59,10 +59,10 @@ class SubscriptionState extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        status,
-        info,
-        offering,
-        errorMessage,
-        selectedPackageId,
-      ];
+    status,
+    info,
+    offering,
+    errorMessage,
+    selectedPackageId,
+  ];
 }

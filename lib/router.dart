@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/motion/app_curves.dart';
 import 'package:stay_alive/features/analytics/presentation/pages/analytics_page.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_state.dart';
@@ -20,6 +21,67 @@ import 'package:stay_alive/features/rostok/presentation/pages/rostok_profile_pag
 import 'package:stay_alive/features/rostok/presentation/pages/rostok_reward_page.dart';
 import 'package:stay_alive/shared/widgets/main_shell_page.dart';
 
+/// Soft default transition: fade + slight upward slide.
+CustomTransitionPage<void> _fadeSlidePage(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 320),
+    reverseTransitionDuration: const Duration(milliseconds: 260),
+    transitionsBuilder:
+        (
+          BuildContext context,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+          Widget child,
+        ) {
+          final CurvedAnimation curved = CurvedAnimation(
+            parent: animation,
+            curve: AppCurves.soft,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.02),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+  );
+}
+
+/// Expressive transition for celebration screens: fade + subtle scale.
+CustomTransitionPage<void> _rewardPage(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 450),
+    reverseTransitionDuration: const Duration(milliseconds: 300),
+    transitionsBuilder:
+        (
+          BuildContext context,
+          Animation<double> animation,
+          Animation<double> secondaryAnimation,
+          Widget child,
+        ) {
+          final CurvedAnimation curved = CurvedAnimation(
+            parent: animation,
+            curve: AppCurves.standard,
+          );
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1).animate(curved),
+              child: child,
+            ),
+          );
+        },
+  );
+}
+
 class AppRouter {
   AppRouter(this._authCubit);
 
@@ -35,6 +97,10 @@ class AppRouter {
       }
 
       final AuthState authState = _authCubit.state;
+      if (authState is AuthLoading) {
+        return null;
+      }
+
       final bool isAuthenticated = authState is AuthAuthenticated;
       final bool requiresOnboarding =
           authState is AuthAuthenticated && !authState.user.onboardingCompleted;
@@ -68,91 +134,97 @@ class AppRouter {
     routes: <RouteBase>[
       GoRoute(
         path: AppRoutes.splash,
-        builder: (BuildContext context, GoRouterState state) =>
-            const SplashPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const SplashPage()),
       ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokAuthPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const RostokAuthPage()),
       ),
       GoRoute(
         path: AppRoutes.signUp,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokAuthPage(initialMode: RostokAuthMode.register),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(
+              state,
+              const RostokAuthPage(initialMode: RostokAuthMode.register),
+            ),
       ),
       GoRoute(
         path: AppRoutes.onboarding,
-        builder: (BuildContext context, GoRouterState state) =>
-            const OnboardingPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const OnboardingPage()),
       ),
       GoRoute(
         path: AppRoutes.home,
-        builder: (BuildContext context, GoRouterState state) =>
-            const MainShellPage(initialIndex: 0),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const MainShellPage(initialIndex: 0)),
       ),
       GoRoute(
         path: AppRoutes.history,
-        builder: (BuildContext context, GoRouterState state) =>
-            const MainShellPage(initialIndex: 1),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const MainShellPage(initialIndex: 1)),
       ),
       GoRoute(
         path: AppRoutes.profile,
-        builder: (BuildContext context, GoRouterState state) =>
-            const MainShellPage(initialIndex: 2),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const MainShellPage(initialIndex: 2)),
       ),
       GoRoute(
         path: AppRoutes.progress,
-        builder: (BuildContext context, GoRouterState state) =>
-            const ProgressPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const ProgressPage()),
       ),
       GoRoute(
         path: AppRoutes.premium,
-        builder: (BuildContext context, GoRouterState state) =>
-            const PremiumPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const PremiumPage()),
       ),
       GoRoute(
         path: AppRoutes.analytics,
-        builder: (BuildContext context, GoRouterState state) =>
-            const AnalyticsPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const AnalyticsPage()),
       ),
       GoRoute(
         path: AppRoutes.categories,
-        builder: (BuildContext context, GoRouterState state) =>
-            const CategoriesPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const CategoriesPage()),
       ),
       GoRoute(
         path: AppRoutes.education,
-        builder: (BuildContext context, GoRouterState state) {
+        pageBuilder: (BuildContext context, GoRouterState state) {
           final String? categoryId = state.pathParameters['categoryId'];
-          return EducationPage(categoryId: categoryId ?? '');
+          return _fadeSlidePage(
+            state,
+            EducationPage(categoryId: categoryId ?? ''),
+          );
         },
       ),
       // Росток (Sprout) redesign — new screens alongside the current UI.
       GoRoute(
         path: AppRoutes.rostok,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokGalleryPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const RostokGalleryPage()),
       ),
       GoRoute(
         path: AppRoutes.rostokHome,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokHomePage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const RostokHomePage()),
       ),
       GoRoute(
         path: AppRoutes.rostokProfile,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokProfilePage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const RostokProfilePage()),
       ),
       GoRoute(
         path: AppRoutes.rostokChallenges,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokChallengesPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const RostokChallengesPage()),
       ),
       GoRoute(
         path: AppRoutes.rostokReward,
-        builder: (BuildContext context, GoRouterState state) =>
-            const RostokRewardPage(),
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _rewardPage(state, const RostokRewardPage()),
       ),
     ],
   );

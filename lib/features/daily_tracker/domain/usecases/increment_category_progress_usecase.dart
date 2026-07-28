@@ -12,16 +12,12 @@ class IncrementCategoryProgressUseCase
 
   @override
   Future<Result<DailyLog>> call(IncrementCategoryProgressParams params) {
-    return _repository.incrementCategoryProgress(
-      categoryId: params.categoryId,
-    );
+    return _repository.incrementCategoryProgress(categoryId: params.categoryId);
   }
 }
 
 class IncrementCategoryProgressParams extends Equatable {
-  const IncrementCategoryProgressParams({
-    required this.categoryId,
-  });
+  const IncrementCategoryProgressParams({required this.categoryId});
 
   final String categoryId;
 

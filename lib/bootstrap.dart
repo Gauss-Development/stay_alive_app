@@ -20,13 +20,10 @@ Future<void> bootstrap(AppFlavor flavor) async {
     return;
   }
 
-  await SentryFlutter.init(
-    (SentryFlutterOptions options) {
-      options.dsn = env.sentryDsn;
-      options.environment = env.sentryEnvironment;
-      options.tracesSampleRate = flavor.isProduction ? 0.2 : 1.0;
-      options.sendDefaultPii = false;
-    },
-    appRunner: () => runApp(DailyDozenApp(flavor: flavor)),
-  );
+  await SentryFlutter.init((SentryFlutterOptions options) {
+    options.dsn = env.sentryDsn;
+    options.environment = env.sentryEnvironment;
+    options.tracesSampleRate = flavor.isProduction ? 0.2 : 1.0;
+    options.sendDefaultPii = false;
+  }, appRunner: () => runApp(DailyDozenApp(flavor: flavor)));
 }

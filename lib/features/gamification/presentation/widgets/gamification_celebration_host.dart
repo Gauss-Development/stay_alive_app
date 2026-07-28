@@ -6,10 +6,7 @@ import 'package:stay_alive/features/gamification/presentation/cubit/gamification
 import 'package:stay_alive/features/gamification/presentation/widgets/level_up_overlay.dart';
 
 class GamificationCelebrationHost extends StatefulWidget {
-  const GamificationCelebrationHost({
-    required this.child,
-    super.key,
-  });
+  const GamificationCelebrationHost({required this.child, super.key});
 
   final Widget child;
 
@@ -69,7 +66,7 @@ class _GamificationCelebrationHostState
 
     if (effect is ChallengeCompletedEffect) {
       _showChallengeSnackBar(
-        'Daily challenge complete: ${effect.challenge.title} (+${effect.challenge.xpReward} XP)',
+        'Квест дня выполнен: ${effect.challenge.title} (+${effect.challenge.xpReward} очков)',
       );
       context.read<GamificationCubit>().dismissEffect(effect);
       return;
@@ -77,7 +74,7 @@ class _GamificationCelebrationHostState
 
     if (effect is WeeklyChallengeCompletedEffect) {
       _showChallengeSnackBar(
-        'Weekly challenge complete: ${effect.challenge.title} (+${effect.challenge.xpReward} XP)',
+        'Челлендж недели выполнен: ${effect.challenge.title} (+${effect.challenge.xpReward} очков)',
       );
       context.read<GamificationCubit>().dismissEffect(effect);
       return;
@@ -94,7 +91,7 @@ class _GamificationCelebrationHostState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${badge.emoji} Badge unlocked: ${badge.name}'),
+          content: Text('${badge.emoji} Новая награда: ${badge.name}'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -104,10 +101,7 @@ class _GamificationCelebrationHostState
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(
-          content: Text(message),
-          behavior: SnackBarBehavior.floating,
-        ),
+        SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
       );
   }
 

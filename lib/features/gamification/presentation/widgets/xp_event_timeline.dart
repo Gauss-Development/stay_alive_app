@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
 
 class XpEventTimeline extends StatelessWidget {
-  const XpEventTimeline({
-    required this.events,
-    super.key,
-  });
+  const XpEventTimeline({required this.events, super.key});
 
   final List<GamificationXpEvent> events;
 
@@ -14,12 +14,10 @@ class XpEventTimeline extends StatelessWidget {
   Widget build(BuildContext context) {
     if (events.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         child: Text(
-          'XP events will appear here as you progress.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+          'Здесь появится история твоих очков.',
+          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
         ),
       );
     }
@@ -32,18 +30,36 @@ class XpEventTimeline extends StatelessWidget {
           const Divider(height: 1),
       itemBuilder: (BuildContext context, int index) {
         final GamificationXpEvent event = events[index];
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(event.label),
-          subtitle: Text(
-            DateFormat('MMM d, yyyy · HH:mm').format(event.createdAt.toLocal()),
-          ),
-          trailing: Text(
-            event.xpDelta > 0 ? '+${event.xpDelta} XP' : '—',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      event.label,
+                      style: AppTextStyles.bodyLarge.copyWith(fontSize: 14),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      DateFormat(
+                        'd.MM.yyyy · HH:mm',
+                      ).format(event.createdAt.toLocal()),
+                      style: AppTextStyles.labelSmall,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Text(
+                event.xpDelta > 0 ? '+${event.xpDelta}' : '—',
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: AppColors.green,
+                ),
+              ),
+            ],
           ),
         );
       },

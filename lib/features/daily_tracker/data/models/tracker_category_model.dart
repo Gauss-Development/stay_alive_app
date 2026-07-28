@@ -34,9 +34,7 @@ class TrackerCategoryModel extends TrackerCategory {
     );
   }
 
-  factory TrackerCategoryModel.fromDocument(
-    appwrite_models.Document document,
-  ) {
+  factory TrackerCategoryModel.fromDocument(appwrite_models.Document document) {
     return TrackerCategoryModel.fromJson(<String, dynamic>{
       ...document.data,
       'category_id': document.data['category_id'] ?? document.$id,

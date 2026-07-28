@@ -10,7 +10,7 @@ import 'package:stay_alive/features/gamification/domain/services/gamification_en
 
 class GamificationOverviewBuilder {
   const GamificationOverviewBuilder({GamificationEngine? engine})
-      : _engine = engine ?? const GamificationEngine();
+    : _engine = engine ?? const GamificationEngine();
 
   final GamificationEngine _engine;
 
@@ -53,8 +53,7 @@ class GamificationOverviewBuilder {
 
     final bool dailyChallengeRewarded = persistedEvents.any(
       (GamificationXpEvent event) =>
-          event.eventType == 'challenge_completed' &&
-          event.logDate == todayKey,
+          event.eventType == 'challenge_completed' && event.logDate == todayKey,
     );
     if (dailyChallenge.isCompleted && !dailyChallengeRewarded) {
       profile = _applyBonusXp(profile, dailyChallenge.xpReward);
@@ -72,8 +71,9 @@ class GamificationOverviewBuilder {
     }
 
     final List<CategoryMastery> mastery = buildCategoryMastery(logs);
-    final List<GamificationXpEvent> recentXpEvents =
-        _mergeRecentEvents(persistedEvents);
+    final List<GamificationXpEvent> recentXpEvents = _mergeRecentEvents(
+      persistedEvents,
+    );
 
     return GamificationOverview(
       profile: profile,
@@ -82,8 +82,7 @@ class GamificationOverviewBuilder {
       categoryMastery: mastery,
       recentXpEvents: recentXpEvents,
       isPremium: isPremium,
-      xpMultiplier:
-          isPremium ? GamificationEngine.premiumXpMultiplier : 1,
+      xpMultiplier: isPremium ? GamificationEngine.premiumXpMultiplier : 1,
     );
   }
 
@@ -98,54 +97,55 @@ class GamificationOverviewBuilder {
 
     return switch (template.type) {
       ChallengeType.closeCategories => GamificationChallenge(
-          id: 'daily_$dateKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: template.target,
-          progress: _completedCategories(todayLog),
-          xpReward: template.xpReward,
-          dateKey: dateKey,
-        ),
+        id: 'daily_$dateKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: template.target,
+        progress: _completedCategories(todayLog),
+        xpReward: template.xpReward,
+        dateKey: dateKey,
+      ),
       ChallengeType.logServings => GamificationChallenge(
-          id: 'daily_$dateKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: template.target,
-          progress: todayLog?.totalCompleted ?? 0,
-          xpReward: template.xpReward,
-          dateKey: dateKey,
-        ),
+        id: 'daily_$dateKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: template.target,
+        progress: todayLog?.totalCompleted ?? 0,
+        xpReward: template.xpReward,
+        dateKey: dateKey,
+      ),
       ChallengeType.earlyLog => GamificationChallenge(
-          id: 'daily_$dateKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: 1,
-          progress: _hasEarlyLog(todayLog) ? 1 : 0,
-          xpReward: template.xpReward,
-          dateKey: dateKey,
-        ),
+        id: 'daily_$dateKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: 1,
+        progress: _hasEarlyLog(todayLog) ? 1 : 0,
+        xpReward: template.xpReward,
+        dateKey: dateKey,
+      ),
       ChallengeType.completeCategory => _categoryChallenge(
-          userId: userId,
-          dateKey: dateKey,
-          todayLog: todayLog,
-          template: template,
-        ),
+        userId: userId,
+        dateKey: dateKey,
+        todayLog: todayLog,
+        template: template,
+      ),
       ChallengeType.perfectDay => GamificationChallenge(
-          id: 'daily_$dateKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: 1,
-          progress: todayLog != null && todayLog.isFullyCompleted ? 1 : 0,
-          xpReward: template.xpReward,
-          dateKey: dateKey,
-        ),
+        id: 'daily_$dateKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: 1,
+        progress: todayLog != null && todayLog.isFullyCompleted ? 1 : 0,
+        xpReward: template.xpReward,
+        dateKey: dateKey,
+      ),
       ChallengeType.perfectDaysInWeek ||
-      ChallengeType.activeDaysInWeek =>
-        throw StateError('Weekly templates cannot be used for daily challenges.'),
+      ChallengeType.activeDaysInWeek => throw StateError(
+        'Weekly templates cannot be used for daily challenges.',
+      ),
     };
   }
 
@@ -161,46 +161,47 @@ class GamificationOverviewBuilder {
 
     return switch (template.type) {
       ChallengeType.perfectDaysInWeek => GamificationChallenge(
-          id: 'weekly_$weekKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: template.target,
-          progress: _perfectDaysInWeek(weekLogs),
-          xpReward: template.xpReward,
-          dateKey: weekKey,
-          period: ChallengePeriod.weekly,
-          isPremiumOnly: template.isPremiumOnly,
-        ),
+        id: 'weekly_$weekKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: template.target,
+        progress: _perfectDaysInWeek(weekLogs),
+        xpReward: template.xpReward,
+        dateKey: weekKey,
+        period: ChallengePeriod.weekly,
+        isPremiumOnly: template.isPremiumOnly,
+      ),
       ChallengeType.logServings => GamificationChallenge(
-          id: 'weekly_$weekKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: template.target,
-          progress: _servingsInWeek(weekLogs),
-          xpReward: template.xpReward,
-          dateKey: weekKey,
-          period: ChallengePeriod.weekly,
-          isPremiumOnly: template.isPremiumOnly,
-        ),
+        id: 'weekly_$weekKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: template.target,
+        progress: _servingsInWeek(weekLogs),
+        xpReward: template.xpReward,
+        dateKey: weekKey,
+        period: ChallengePeriod.weekly,
+        isPremiumOnly: template.isPremiumOnly,
+      ),
       ChallengeType.activeDaysInWeek => GamificationChallenge(
-          id: 'weekly_$weekKey',
-          type: template.type,
-          title: template.title,
-          description: template.description,
-          target: template.target,
-          progress: _activeDaysInWeek(weekLogs),
-          xpReward: template.xpReward,
-          dateKey: weekKey,
-          period: ChallengePeriod.weekly,
-          isPremiumOnly: template.isPremiumOnly,
-        ),
+        id: 'weekly_$weekKey',
+        type: template.type,
+        title: template.title,
+        description: template.description,
+        target: template.target,
+        progress: _activeDaysInWeek(weekLogs),
+        xpReward: template.xpReward,
+        dateKey: weekKey,
+        period: ChallengePeriod.weekly,
+        isPremiumOnly: template.isPremiumOnly,
+      ),
       ChallengeType.closeCategories ||
       ChallengeType.earlyLog ||
       ChallengeType.completeCategory ||
-      ChallengeType.perfectDay =>
-        throw StateError('Daily templates cannot be used for weekly challenges.'),
+      ChallengeType.perfectDay => throw StateError(
+        'Daily templates cannot be used for weekly challenges.',
+      ),
     };
   }
 
@@ -262,25 +263,28 @@ class GamificationOverviewBuilder {
       }
     }
 
-    final List<CategoryMastery> mastery = totals.values
-        .map((_MasteryAccumulator value) {
-          final MasteryTier tier =
-              CategoryMastery.tierForServings(value.servings);
-          return CategoryMastery(
-            categoryId: value.categoryId,
-            title: value.title,
-            iconKey: value.iconKey,
-            totalServings: value.servings,
-            tier: tier,
-            nextTierThreshold:
-                CategoryMastery.nextThresholdForServings(value.servings),
+    final List<CategoryMastery> mastery =
+        totals.values
+            .map((_MasteryAccumulator value) {
+              final MasteryTier tier = CategoryMastery.tierForServings(
+                value.servings,
+              );
+              return CategoryMastery(
+                categoryId: value.categoryId,
+                title: value.title,
+                iconKey: value.iconKey,
+                totalServings: value.servings,
+                tier: tier,
+                nextTierThreshold: CategoryMastery.nextThresholdForServings(
+                  value.servings,
+                ),
+              );
+            })
+            .toList(growable: false)
+          ..sort(
+            (CategoryMastery a, CategoryMastery b) =>
+                b.totalServings.compareTo(a.totalServings),
           );
-        })
-        .toList(growable: false)
-      ..sort(
-        (CategoryMastery a, CategoryMastery b) =>
-            b.totalServings.compareTo(a.totalServings),
-      );
 
     return mastery;
   }
@@ -297,11 +301,10 @@ class GamificationOverviewBuilder {
     List<GamificationXpEvent> persistedEvents,
   ) {
     final List<GamificationXpEvent> sorted =
-        List<GamificationXpEvent>.of(persistedEvents)
-          ..sort(
-            (GamificationXpEvent a, GamificationXpEvent b) =>
-                b.createdAt.compareTo(a.createdAt),
-          );
+        List<GamificationXpEvent>.of(persistedEvents)..sort(
+          (GamificationXpEvent a, GamificationXpEvent b) =>
+              b.createdAt.compareTo(a.createdAt),
+        );
     return sorted.take(30).toList(growable: false);
   }
 

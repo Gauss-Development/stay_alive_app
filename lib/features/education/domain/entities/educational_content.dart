@@ -21,12 +21,12 @@ class EducationalContent extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        categoryId,
-        title,
-        shortDescription,
-        body,
-        languageCode,
-        isPublished,
-      ];
+    id,
+    categoryId,
+    title,
+    shortDescription,
+    body,
+    languageCode,
+    isPublished,
+  ];
 }

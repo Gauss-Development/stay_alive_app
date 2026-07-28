@@ -13,11 +13,11 @@ class RostokGalleryPage extends StatelessWidget {
 
   static const List<(String, String, String)> _entries =
       <(String, String, String)>[
-    ('Главный', 'Трекер дня и очки', AppRoutes.rostokHome),
-    ('Профиль', 'Уровень и достижения', AppRoutes.rostokProfile),
-    ('Челленджи', 'Квесты недели и дня', AppRoutes.rostokChallenges),
-    ('Награда', 'Экран нового уровня', AppRoutes.rostokReward),
-  ];
+        ('Главный', 'Трекер дня и очки', AppRoutes.rostokHome),
+        ('Профиль', 'Уровень и достижения', AppRoutes.rostokProfile),
+        ('Челленджи', 'Квесты недели и дня', AppRoutes.rostokChallenges),
+        ('Награда', 'Экран нового уровня', AppRoutes.rostokReward),
+      ];
 
   @override
   Widget build(BuildContext context) {

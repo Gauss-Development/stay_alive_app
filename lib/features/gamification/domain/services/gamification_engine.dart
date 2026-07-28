@@ -38,9 +38,7 @@ class GamificationEngine {
   }) {
     final DateTime reference = _dateOnly(referenceDate ?? DateTime.now());
     final List<DailyLog> sortedLogs = List<DailyLog>.of(logs)
-      ..sort(
-        (DailyLog a, DailyLog b) => a.dateKey.compareTo(b.dateKey),
-      );
+      ..sort((DailyLog a, DailyLog b) => a.dateKey.compareTo(b.dateKey));
 
     int xp = 0;
     int perfectRun = 0;
@@ -196,8 +194,7 @@ class GamificationEngine {
       xp = (xp * premiumXpMultiplier).round();
     }
 
-    final List<String> freezeUsedDates =
-        List<String>.of(streakFreezeUsedDates);
+    final List<String> freezeUsedDates = List<String>.of(streakFreezeUsedDates);
     int freezesRemaining = isPremium
         ? _premiumFreezeAllowance(streakFreezesRemaining)
         : streakFreezesRemaining;
@@ -211,8 +208,10 @@ class GamificationEngine {
     freezesRemaining = freezeResult.freezesRemaining;
     final List<String> effectiveCompletedDates = freezeResult.completedDates;
 
-    final int longestPerfectStreak =
-        _longestConsecutiveStreak(effectiveCompletedDates, freezeUsedDates);
+    final int longestPerfectStreak = _longestConsecutiveStreak(
+      effectiveCompletedDates,
+      freezeUsedDates,
+    );
     final int perfectStreak = _currentConsecutiveStreak(
       dates: effectiveCompletedDates,
       reference: reference,
@@ -224,18 +223,16 @@ class GamificationEngine {
     );
 
     final GameLevel currentLevel = GameLevelTable.forXp(xp);
-    final List<EarnedBadge> badges = earnedBadges.entries
-        .map(
-          (MapEntry<BadgeId, DateTime> entry) => EarnedBadge(
-            id: entry.key,
-            earnedAt: entry.value,
-          ),
-        )
-        .toList(growable: false)
-      ..sort(
-        (EarnedBadge a, EarnedBadge b) =>
-            a.earnedAt.compareTo(b.earnedAt),
-      );
+    final List<EarnedBadge> badges =
+        earnedBadges.entries
+            .map(
+              (MapEntry<BadgeId, DateTime> entry) =>
+                  EarnedBadge(id: entry.key, earnedAt: entry.value),
+            )
+            .toList(growable: false)
+          ..sort(
+            (EarnedBadge a, EarnedBadge b) => a.earnedAt.compareTo(b.earnedAt),
+          );
 
     return UserGameProfile(
       userId: userId,
@@ -308,7 +305,9 @@ class GamificationEngine {
       );
     }
 
-    final DateTime? lastPerfect = DateTime.tryParse('${lastPerfectDate}T00:00:00');
+    final DateTime? lastPerfect = DateTime.tryParse(
+      '${lastPerfectDate}T00:00:00',
+    );
     if (lastPerfect == null) {
       return _StreakFreezeResult(
         completedDates: completedDates,
@@ -316,8 +315,9 @@ class GamificationEngine {
       );
     }
 
-    final int daysSince =
-        _dateOnly(reference).difference(_dateOnly(lastPerfect)).inDays;
+    final int daysSince = _dateOnly(
+      reference,
+    ).difference(_dateOnly(lastPerfect)).inDays;
     if (daysSince != 2) {
       return _StreakFreezeResult(
         completedDates: completedDates,
@@ -380,11 +380,7 @@ class GamificationEngine {
 
     int streak = 1;
     for (int index = dates.length - 2; index >= 0; index -= 1) {
-      if (_isConnectedDay(
-        dates[index],
-        dates[index + 1],
-        freezeUsedDates,
-      )) {
+      if (_isConnectedDay(dates[index], dates[index + 1], freezeUsedDates)) {
         streak += 1;
       } else {
         break;
@@ -436,8 +432,9 @@ class GamificationEngine {
       return false;
     }
 
-    final int gap =
-        _dateOnly(currentDate).difference(_dateOnly(previousDate)).inDays;
+    final int gap = _dateOnly(
+      currentDate,
+    ).difference(_dateOnly(previousDate)).inDays;
     if (gap != 2) {
       return false;
     }
@@ -490,8 +487,9 @@ class GamificationEngine {
     if (parsed == null) {
       return false;
     }
-    final int daysSince =
-        _dateOnly(reference).difference(_dateOnly(parsed)).inDays;
+    final int daysSince = _dateOnly(
+      reference,
+    ).difference(_dateOnly(parsed)).inDays;
     return daysSince == 0 || daysSince == 1;
   }
 

@@ -48,8 +48,7 @@ class UserProfileModel extends UserProfile {
       heightCm: _readOptionalInt(data['height_cm'] ?? data['heightCm']),
       weightKg: _readOptionalDouble(data['weight_kg'] ?? data['weightKg']),
       onboardingCompleted:
-          (data['onboarding_completed'] ?? data['onboardingCompleted']) ==
-              true,
+          (data['onboarding_completed'] ?? data['onboardingCompleted']) == true,
       unitsPreference: _readOptionalString(
         data['units_preference'] ?? data['unitsPreference'],
       ),

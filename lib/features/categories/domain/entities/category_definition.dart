@@ -21,12 +21,12 @@ class CategoryDefinition extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        title,
-        description,
-        iconKey,
-        targetCount,
-        displayOrder,
-        isActive,
-      ];
+    id,
+    title,
+    description,
+    iconKey,
+    targetCount,
+    displayOrder,
+    isActive,
+  ];
 }

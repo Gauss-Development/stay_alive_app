@@ -47,10 +47,10 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     required Databases databases,
     required EnvConfig envConfig,
     required AppLogger logger,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig,
-        _logger = logger;
+  }) : _account = account,
+       _databases = databases,
+       _envConfig = envConfig,
+       _logger = logger;
 
   final Account _account;
   final Databases _databases;
@@ -64,10 +64,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   }) async {
     await _deleteCurrentSessionIfActive();
     final appwrite_models.Session session = await _account
-        .createEmailPasswordSession(
-      email: email,
-      password: password,
-    );
+        .createEmailPasswordSession(email: email, password: password);
     _logger.info(
       'Logged in with email',
       data: <String, Object?>{'email': email},
@@ -95,10 +92,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       data: <String, Object?>{'email': email},
     );
 
-    await _createEmailPasswordSessionIfNeeded(
-      email: email,
-      password: password,
-    );
+    await _createEmailPasswordSessionIfNeeded(email: email, password: password);
 
     final appwrite_models.User user = await _account.get();
     final AuthUserModel authUser = AuthUserModel.fromAppwrite(user);
@@ -136,8 +130,16 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<AuthUserModel> getCurrentUser() async {
     final appwrite_models.User user = await _account.get();
-    await _ensureUserDocument(AuthUserModel.fromAppwrite(user));
-    return AuthUserModel.fromAppwrite(user);
+    final AuthUserModel authUser = AuthUserModel.fromAppwrite(user);
+    try {
+      await _ensureUserDocument(authUser);
+    } on AppwriteException catch (exception) {
+      _logger.warning(
+        'Continuing without users collection profile document',
+        data: <String, Object?>{'reason': exception.message},
+      );
+    }
+    return authUser;
   }
 
   @override
@@ -218,7 +220,10 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       _envConfig.gamificationEventsCollectionId,
     ];
     for (final String collectionId in collectionsByUserId) {
-      await _deleteDocumentsByUserId(collectionId: collectionId, userId: userId);
+      await _deleteDocumentsByUserId(
+        collectionId: collectionId,
+        userId: userId,
+      );
     }
 
     await _deleteDocumentIfExists(
@@ -237,9 +242,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       final appwrite_models.DocumentList page = await _databases.listDocuments(
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: collectionId,
-        queries: <String>[
-        Query.limit(100),
-      ],
+        queries: <String>[Query.limit(100)],
       );
       if (page.documents.isEmpty) {
         return;
@@ -310,16 +313,19 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     );
   }
 
-  /// Payload for the deployed Stay Alive `users` collection.
+  /// Payload for the `stay_alive_v1` `users` collection.
   ///
-  /// The live Appwrite schema uses the Auth user id as the document id and
-  /// stores `name` + `email` only. Extra fields from
-  /// [scripts/appwrite_provision.py] (e.g. `user_id`, `display_name`) are not
-  /// present on the console-provisioned collection.
+  /// Document id is the Auth user id; no redundant `user_id` attribute.
   Map<String, dynamic> _userDocumentDataForCreate(AuthUserModel user) {
+    final String now = DateTime.now().toUtc().toIso8601String();
     return <String, dynamic>{
       'email': _emailForUserDocument(user),
       'name': _displayNameFor(user),
+      'onboarding_completed': false,
+      'units_preference': 'metric',
+      'locale': 'en',
+      'created_at': now,
+      'updated_at': now,
     };
   }
 
@@ -355,12 +361,9 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     Map<String, dynamic> preferences,
   ) async {
     try {
-      await _updateUserDocument(
-        user,
-        <String, dynamic>{
-          'onboarding_completed': preferences['onboardingCompleted'] == true,
-        },
-      );
+      await _updateUserDocument(user, <String, dynamic>{
+        'onboarding_completed': preferences['onboardingCompleted'] == true,
+      });
     } on AppwriteException catch (exception) {
       _logger.warning(
         'Skipped onboarding sync to users collection',
@@ -387,10 +390,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   }) async {
     try {
       final appwrite_models.Session session = await _account
-          .createEmailPasswordSession(
-        email: email,
-        password: password,
-      );
+          .createEmailPasswordSession(email: email, password: password);
       _logger.info(
         'Signed in after account creation',
         data: <String, Object?>{'sessionId': session.$id},

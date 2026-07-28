@@ -13,11 +13,11 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
     required GetSubscriptionOfferingUseCase getSubscriptionOfferingUseCase,
     required PurchaseSubscriptionUseCase purchaseSubscriptionUseCase,
     required RestorePurchasesUseCase restorePurchasesUseCase,
-  })  : _getSubscriptionStatusUseCase = getSubscriptionStatusUseCase,
-        _getSubscriptionOfferingUseCase = getSubscriptionOfferingUseCase,
-        _purchaseSubscriptionUseCase = purchaseSubscriptionUseCase,
-        _restorePurchasesUseCase = restorePurchasesUseCase,
-        super(const SubscriptionState.initial());
+  }) : _getSubscriptionStatusUseCase = getSubscriptionStatusUseCase,
+       _getSubscriptionOfferingUseCase = getSubscriptionOfferingUseCase,
+       _purchaseSubscriptionUseCase = purchaseSubscriptionUseCase,
+       _restorePurchasesUseCase = restorePurchasesUseCase,
+       super(const SubscriptionState.initial());
 
   final GetSubscriptionStatusUseCase _getSubscriptionStatusUseCase;
   final GetSubscriptionOfferingUseCase _getSubscriptionOfferingUseCase;
@@ -25,7 +25,9 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
   final RestorePurchasesUseCase _restorePurchasesUseCase;
 
   Future<void> load() async {
-    emit(state.copyWith(status: SubscriptionViewStatus.loading, clearError: true));
+    emit(
+      state.copyWith(status: SubscriptionViewStatus.loading, clearError: true),
+    );
 
     final statusResult = await _getSubscriptionStatusUseCase(const NoParams());
     await statusResult.fold(
@@ -117,7 +119,12 @@ class SubscriptionCubit extends Cubit<SubscriptionState> {
       return;
     }
 
-    emit(state.copyWith(status: SubscriptionViewStatus.restoring, clearError: true));
+    emit(
+      state.copyWith(
+        status: SubscriptionViewStatus.restoring,
+        clearError: true,
+      ),
+    );
     final result = await _restorePurchasesUseCase(const NoParams());
     result.fold(
       (failure) => emit(

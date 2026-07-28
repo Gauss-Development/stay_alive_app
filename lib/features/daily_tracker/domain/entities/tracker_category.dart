@@ -21,12 +21,12 @@ class TrackerCategory extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        title,
-        description,
-        targetCount,
-        displayOrder,
-        iconKey,
-        isActive,
-      ];
+    id,
+    title,
+    description,
+    targetCount,
+    displayOrder,
+    iconKey,
+    isActive,
+  ];
 }

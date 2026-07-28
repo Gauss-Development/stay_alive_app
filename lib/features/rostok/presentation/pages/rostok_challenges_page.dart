@@ -35,8 +35,10 @@ class _RostokChallengesPageState extends State<RostokChallengesPage> {
         return;
       }
       if (context.read<GamificationCubit>().state is! GamificationLoaded) {
-        final bool isPremium =
-            context.read<SubscriptionCubit>().state.isPremiumActive;
+        final bool isPremium = context
+            .read<SubscriptionCubit>()
+            .state
+            .isPremiumActive;
         context.read<GamificationCubit>().load(isPremium: isPremium);
       }
     });
@@ -86,7 +88,8 @@ class _RostokChallengesPageState extends State<RostokChallengesPage> {
                         style: RostokText.display(size: 18),
                       ),
                       const SizedBox(height: 12),
-                      for (final CategoryMastery mastery in overview.categoryMastery)
+                      for (final CategoryMastery mastery
+                          in overview.categoryMastery)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 12),
                           child: _QuestCard(
@@ -245,7 +248,10 @@ class _QuestCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 11,
+                  vertical: 5,
+                ),
                 decoration: const BoxDecoration(
                   color: RostokColors.chipBg,
                   borderRadius: BorderRadius.all(Radius.circular(12)),
@@ -264,7 +270,9 @@ class _QuestCard extends StatelessWidget {
           const SizedBox(height: 12),
           Row(
             children: <Widget>[
-              Expanded(child: RostokProgressBar(fraction: fraction, height: 10)),
+              Expanded(
+                child: RostokProgressBar(fraction: fraction, height: 10),
+              ),
               const SizedBox(width: 12),
               Text(
                 progressLabel,

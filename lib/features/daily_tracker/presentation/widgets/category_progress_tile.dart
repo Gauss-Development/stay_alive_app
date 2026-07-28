@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:stay_alive/core/constants/category_assets.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/animations/animated_check_button.dart';
+import 'package:stay_alive/core/widgets/animations/pressable_scale.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
 
+/// White rounded row for a Daily-Dozen category with serving controls.
 class CategoryProgressTile extends StatelessWidget {
   const CategoryProgressTile({
     required this.item,
     required this.onIncrement,
     required this.onDecrement,
+    this.tintIndex = 0,
     super.key,
   });
 
@@ -14,74 +22,77 @@ class CategoryProgressTile extends StatelessWidget {
   final VoidCallback onIncrement;
   final VoidCallback onDecrement;
 
+  /// Index used to pick a soft icon tint from [AppColors.foodTints].
+  final int tintIndex;
+
   @override
   Widget build(BuildContext context) {
     final bool isCompleted = item.isCompleted;
 
-    final ColorScheme colors = Theme.of(context).colorScheme;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isCompleted
-              ? colors.primary.withValues(alpha: 0.3)
-              : colors.outlineVariant.withValues(alpha: 0.4),
-        ),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: isCompleted
-                ? colors.primary.withValues(alpha: 0.08)
-                : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        child: Row(
-          children: <Widget>[
-            _CategoryIcon(
-              iconKey: item.category.iconKey,
-              isCompleted: isCompleted,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    item.title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isCompleted
-                          ? colors.onSurface
-                          : colors.onSurface.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _CategoryProgress(
-                    completed: item.completedCount,
-                    total: item.targetCount,
-                    isCompleted: isCompleted,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            _TileControls(
-              completedCount: item.completedCount,
-              isCompleted: isCompleted,
-              onIncrement: onIncrement,
-              onDecrement: onDecrement,
-              categoryTitle: item.title,
-              totalTarget: item.targetCount,
+    return PressableScale(
+      pressedScale: 0.98,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          boxShadow: <BoxShadow>[
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
             ),
           ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: <Widget>[
+              _CategoryIcon(
+                iconKey: item.category.iconKey,
+                isCompleted: isCompleted,
+                tint:
+                    AppColors.foodTints[tintIndex % AppColors.foodTints.length],
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.bodyLarge.copyWith(
+                        fontSize: 15,
+                        color: isCompleted
+                            ? AppColors.textMuted
+                            : AppColors.textPrimary,
+                        decoration: isCompleted
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                        decorationColor: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _CategoryProgress(
+                      completed: item.completedCount,
+                      total: item.targetCount,
+                      isCompleted: isCompleted,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              _TileControls(
+                completedCount: item.completedCount,
+                isCompleted: isCompleted,
+                onIncrement: onIncrement,
+                onDecrement: onDecrement,
+                categoryTitle: item.title,
+                totalTarget: item.targetCount,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -89,10 +100,15 @@ class CategoryProgressTile extends StatelessWidget {
 }
 
 class _CategoryIcon extends StatelessWidget {
-  const _CategoryIcon({required this.iconKey, required this.isCompleted});
+  const _CategoryIcon({
+    required this.iconKey,
+    required this.isCompleted,
+    required this.tint,
+  });
 
   final String iconKey;
   final bool isCompleted;
+  final Color tint;
 
   static const Map<String, IconData> _icons = <String, IconData>{
     'beans': Icons.grain_rounded,
@@ -113,25 +129,65 @@ class _CategoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
+    final String? assetPath = CategoryAssets.pathFor(iconKey);
+
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      width: 42,
-      height: 42,
+      duration: const Duration(milliseconds: 200),
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
-        color: isCompleted
-            ? colors.primary.withValues(alpha: 0.1)
-            : colors.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        color: assetPath != null
+            ? AppColors.white
+            : (isCompleted ? AppColors.mutedGreen : tint),
+        shape: BoxShape.circle,
+        border: assetPath != null
+            ? Border.all(
+                color: isCompleted ? AppColors.mutedGreen : tint,
+                width: 2,
+              )
+            : null,
       ),
-      child: Icon(
-        _icons[iconKey.toLowerCase()] ??
-            Icons.check_circle_outline_rounded,
-        color: isCompleted
-            ? colors.primary
-            : colors.onSurface.withValues(alpha: 0.35),
-        size: 20,
-      ),
+      child: assetPath != null
+          ? _CategoryAssetIcon(
+              assetPath: assetPath,
+              isCompleted: isCompleted,
+            )
+          : Icon(
+              _icons[iconKey.toLowerCase()] ?? Icons.eco_rounded,
+              color: AppColors.textPrimary.withValues(
+                alpha: isCompleted ? 0.7 : 0.55,
+              ),
+              size: 20,
+            ),
+    );
+  }
+}
+
+class _CategoryAssetIcon extends StatelessWidget {
+  const _CategoryAssetIcon({
+    required this.assetPath,
+    required this.isCompleted,
+  });
+
+  final String assetPath;
+  final bool isCompleted;
+
+  static const double _imageSize = 34;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget image = Image.asset(
+      assetPath,
+      width: _imageSize,
+      height: _imageSize,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+    );
+
+    return Center(
+      child: isCompleted
+          ? Opacity(opacity: 0.45, child: image)
+          : image,
     );
   }
 }
@@ -149,16 +205,11 @@ class _CategoryProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-
     if (total <= 1) {
       return Text(
-        isCompleted ? 'Done' : 'Tap to complete',
-        style: TextStyle(
-          fontSize: 12,
-          color: isCompleted
-              ? colors.primary
-              : colors.onSurface.withValues(alpha: 0.35),
+        isCompleted ? 'Готово · +очки' : 'Нажми, чтобы отметить',
+        style: AppTextStyles.labelMedium.copyWith(
+          color: isCompleted ? AppColors.green : AppColors.textMuted,
         ),
       );
     }
@@ -174,10 +225,8 @@ class _CategoryProgress extends StatelessWidget {
               width: filled ? 10 : 8,
               height: filled ? 10 : 8,
               decoration: BoxDecoration(
-                color: filled
-                    ? colors.primary
-                    : colors.outlineVariant.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(5),
+                color: filled ? AppColors.lime : AppColors.border,
+                shape: BoxShape.circle,
               ),
             ),
           );
@@ -187,12 +236,8 @@ class _CategoryProgress extends StatelessWidget {
 
     return Text(
       '$completed / $total',
-      style: TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.w600,
-        color: isCompleted
-            ? colors.primary
-            : colors.onSurface.withValues(alpha: 0.35),
+      style: AppTextStyles.labelMedium.copyWith(
+        color: isCompleted ? AppColors.green : AppColors.textMuted,
       ),
     );
   }
@@ -233,70 +278,53 @@ class _TileControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (completedCount > 0) ...<Widget>[
           Semantics(
-            label: 'Decrease $categoryTitle',
+            label: 'Убрать порцию: $categoryTitle',
             button: true,
             child: GestureDetector(
               onTap: _handleDecrement,
               behavior: HitTestBehavior.opaque,
               child: SizedBox(
-                width: 44,
+                width: 40,
                 height: 44,
                 child: Center(
                   child: Container(
                     width: 30,
                     height: 30,
-                    decoration: BoxDecoration(
-                      color: colors.surfaceContainerHighest.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(8),
+                    decoration: const BoxDecoration(
+                      color: AppColors.surface,
+                      shape: BoxShape.circle,
                     ),
-                    child: Icon(
-                      Icons.remove,
-                      size: 15,
-                      color: colors.onSurface.withValues(alpha: 0.4),
+                    child: const Icon(
+                      Icons.remove_rounded,
+                      size: 16,
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 2),
         ],
         Semantics(
           label: isCompleted
-              ? '$categoryTitle completed'
-              : 'Add $categoryTitle serving ($completedCount of $totalTarget)',
+              ? '$categoryTitle — выполнено'
+              : 'Добавить порцию: $categoryTitle '
+                    '($completedCount из $totalTarget)',
           button: true,
           enabled: !isCompleted,
           child: GestureDetector(
             onTap: isCompleted ? null : _handleIncrement,
             behavior: HitTestBehavior.opaque,
             child: SizedBox(
-              width: 44,
-              height: 44,
-              child: Center(
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: isCompleted
-                        ? colors.primary
-                        : colors.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Icon(
-                    isCompleted ? Icons.check_rounded : Icons.add,
-                    size: 18,
-                    color: isCompleted ? colors.onPrimary : colors.primary,
-                  ),
-                ),
-              ),
+              width: 48,
+              height: 48,
+              child: Center(child: AnimatedCheckButton(completed: isCompleted)),
             ),
           ),
         ),

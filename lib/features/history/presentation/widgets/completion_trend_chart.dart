@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/features/history/domain/entities/daily_history_point.dart';
 
 class CompletionTrendChart extends StatelessWidget {
@@ -37,7 +38,7 @@ class CompletionTrendChart extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Completion percentage by day',
+              'Процент выполнения по дням',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -90,7 +91,8 @@ class CompletionTrendChart extends StatelessWidget {
                           if (index < 0 || index >= points.length) {
                             return const SizedBox.shrink();
                           }
-                          final bool showLabel = points.length <= 7 ||
+                          final bool showLabel =
+                              points.length <= 7 ||
                               index == 0 ||
                               index == points.length - 1 ||
                               index % 5 == 0;
@@ -110,30 +112,29 @@ class CompletionTrendChart extends StatelessWidget {
                       ),
                     ),
                   ),
-                  barGroups: List<BarChartGroupData>.generate(
-                    points.length,
-                    (int index) {
-                      final DailyHistoryPoint point = points[index];
-                      final Color barColor = !point.hasLog
-                          ? colors.outlineVariant.withValues(alpha: 0.35)
-                          : point.isFullyCompleted
-                              ? colors.primary
-                              : colors.tertiary;
-                      return BarChartGroupData(
-                        x: index,
-                        barRods: <BarChartRodData>[
-                          BarChartRodData(
-                            toY: point.completionPercentage.clamp(0, 100),
-                            color: barColor,
-                            width: points.length > 14 ? 8 : 14,
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(6),
-                            ),
+                  barGroups: List<BarChartGroupData>.generate(points.length, (
+                    int index,
+                  ) {
+                    final DailyHistoryPoint point = points[index];
+                    final Color barColor = !point.hasLog
+                        ? colors.outlineVariant.withValues(alpha: 0.35)
+                        : point.isFullyCompleted
+                        ? AppColors.green
+                        : AppColors.lime;
+                    return BarChartGroupData(
+                      x: index,
+                      barRods: <BarChartRodData>[
+                        BarChartRodData(
+                          toY: point.completionPercentage.clamp(0, 100),
+                          color: barColor,
+                          width: points.length > 14 ? 8 : 14,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(6),
                           ),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ],
+                    );
+                  }),
                 ),
               ),
             ),

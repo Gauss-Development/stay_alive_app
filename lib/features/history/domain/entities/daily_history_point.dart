@@ -25,11 +25,11 @@ class DailyHistoryPoint extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        date,
-        completionPercentage,
-        totalCompleted,
-        totalTarget,
-        isFullyCompleted,
-        hasLog,
-      ];
+    date,
+    completionPercentage,
+    totalCompleted,
+    totalTarget,
+    isFullyCompleted,
+    hasLog,
+  ];
 }

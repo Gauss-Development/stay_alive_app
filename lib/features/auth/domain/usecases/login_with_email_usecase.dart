@@ -4,7 +4,8 @@ import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_session.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
 
-class LoginWithEmailUseCase implements UseCase<AuthSession, LoginWithEmailParams> {
+class LoginWithEmailUseCase
+    implements UseCase<AuthSession, LoginWithEmailParams> {
   LoginWithEmailUseCase(this._repository);
 
   final AuthRepository _repository;
@@ -19,10 +20,7 @@ class LoginWithEmailUseCase implements UseCase<AuthSession, LoginWithEmailParams
 }
 
 class LoginWithEmailParams extends Equatable {
-  const LoginWithEmailParams({
-    required this.email,
-    required this.password,
-  });
+  const LoginWithEmailParams({required this.email, required this.password});
 
   final String email;
   final String password;

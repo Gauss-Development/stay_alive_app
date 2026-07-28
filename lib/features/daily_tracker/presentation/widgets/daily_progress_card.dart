@@ -1,133 +1,179 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/motion/app_curves.dart';
+import 'package:stay_alive/core/motion/app_durations.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/animations/animated_points_counter.dart';
+import 'package:stay_alive/core/widgets/app_badge.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 
+/// Dark hero card of the home screen: daily ring, level and remaining goal.
 class DailyProgressCard extends StatelessWidget {
-  const DailyProgressCard({required this.log, super.key});
+  const DailyProgressCard({
+    required this.log,
+    this.level,
+    this.levelTitle,
+    this.streak,
+    super.key,
+  });
 
   final DailyLog log;
+  final int? level;
+  final String? levelTitle;
+  final int? streak;
 
   @override
   Widget build(BuildContext context) {
-    final double progress = log.totalTarget == 0
-        ? 0.0
-        : (log.totalCompleted / log.totalTarget).clamp(0.0, 1.0);
+    final int done = log.totalCompleted;
+    final int goal = log.totalTarget;
+    final int remaining = (goal - done).clamp(0, goal);
+    final double fraction = goal > 0 ? (done / goal).clamp(0.0, 1.0) : 0;
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0, end: progress),
-      duration: const Duration(milliseconds: 1100),
-      curve: Curves.easeOutCubic,
-      builder: (BuildContext context, double value, Widget? _) {
-        return SizedBox(
-          width: 190,
-          height: 190,
-          child: CustomPaint(
-            painter: _RingPainter(progress: value),
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    '${(value * 100).round()}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 44,
-                      fontWeight: FontWeight.w800,
-                      height: 1,
-                      letterSpacing: -1,
-                    ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.dark,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      child: Row(
+        children: <Widget>[
+          _ProgressRing(
+            fraction: fraction,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                AnimatedPointsCounter(
+                  value: done,
+                  style: AppTextStyles.headlineMedium.copyWith(
+                    color: AppColors.white,
+                    height: 1,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${log.totalCompleted} of ${log.totalTarget}',
-                    style: const TextStyle(
-                      color: Colors.white60,
-                      fontSize: 13,
-                    ),
+                ),
+                Text(
+                  'из $goal',
+                  style: AppTextStyles.labelSmall.copyWith(height: 1.1),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                if (level != null)
+                  AppBadge(
+                    label: 'Уровень $level · ${levelTitle ?? ''}',
+                    onDark: true,
                   ),
-                  const SizedBox(height: 2),
-                  const Text(
-                    'DAILY DOZEN',
-                    style: TextStyle(
-                      color: Colors.white38,
-                      fontSize: 12,
-                      letterSpacing: 1.4,
-                      fontWeight: FontWeight.w600,
+                const SizedBox(height: AppSpacing.md),
+                Text.rich(
+                  TextSpan(
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      color: AppColors.white,
+                      height: 1.3,
+                    ),
+                    children: <InlineSpan>[
+                      const TextSpan(text: 'Осталось '),
+                      TextSpan(
+                        text: '$remaining',
+                        style: AppTextStyles.bodyLarge.copyWith(
+                          color: AppColors.lime,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      TextSpan(
+                        text: remaining == 0
+                            ? ' — цель дня выполнена!'
+                            : ' порций до цели дня',
+                      ),
+                    ],
+                  ),
+                ),
+                if (streak != null && streak! > 0) ...<Widget>[
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '🔥 $streak дней подряд',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textMuted,
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
           ),
-        );
-      },
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressRing extends StatelessWidget {
+  const _ProgressRing({required this.fraction, this.child});
+
+  final double fraction;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 104,
+      height: 104,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween<double>(begin: 0, end: fraction),
+        duration: AppDurations.slow,
+        curve: AppCurves.standard,
+        builder: (BuildContext context, double value, Widget? _) {
+          return CustomPaint(
+            painter: _RingPainter(fraction: value),
+            child: Center(child: child),
+          );
+        },
+      ),
     );
   }
 }
 
 class _RingPainter extends CustomPainter {
-  const _RingPainter({required this.progress});
+  const _RingPainter({required this.fraction});
 
-  final double progress;
+  final double fraction;
+
+  static const double _thickness = 12;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final Offset center = Offset(size.width / 2, size.height / 2);
-    final double radius = size.width / 2 - 14;
-    const double strokeWidth = 14.0;
-    const double startAngle = -math.pi / 2;
-
-    // Background track
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      0,
-      2 * math.pi,
-      false,
-      Paint()
-        ..color = Colors.white.withValues(alpha: 0.13)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round,
-    );
-
-    if (progress <= 0.01) return;
-
-    final double sweepAngle = 2 * math.pi * progress;
-
-    // Progress arc
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      startAngle,
-      sweepAngle,
-      false,
-      Paint()
-        ..color = const Color(0xFF8CBF93)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = strokeWidth
-        ..strokeCap = StrokeCap.round,
-    );
-
-    // Glowing tip dot
-    final double endAngle = startAngle + sweepAngle;
-    final double tipX = center.dx + radius * math.cos(endAngle);
-    final double tipY = center.dy + radius * math.sin(endAngle);
+    final Offset center = size.center(Offset.zero);
+    final double radius = (size.shortestSide - _thickness) / 2;
 
     canvas.drawCircle(
-      Offset(tipX, tipY),
-      10,
+      center,
+      radius,
       Paint()
-        ..color = Colors.white.withValues(alpha: 0.5)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+        ..color = AppColors.darkChip
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = _thickness,
     );
-    canvas.drawCircle(
-      Offset(tipX, tipY),
-      4,
-      Paint()..color = Colors.white,
-    );
+
+    if (fraction > 0) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -math.pi / 2,
+        2 * math.pi * fraction,
+        false,
+        Paint()
+          ..color = AppColors.lime
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = _thickness
+          ..strokeCap = StrokeCap.round,
+      );
+    }
   }
 
   @override
   bool shouldRepaint(_RingPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+      oldDelegate.fraction != fraction;
 }

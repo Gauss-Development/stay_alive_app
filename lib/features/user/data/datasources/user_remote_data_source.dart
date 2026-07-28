@@ -13,10 +13,10 @@ class AppwriteUserRemoteDataSource implements UserRemoteDataSource {
     required Databases databases,
     required EnvConfig envConfig,
     required AppLogger logger,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig,
-        _logger = logger;
+  }) : _account = account,
+       _databases = databases,
+       _envConfig = envConfig,
+       _logger = logger;
 
   final Account _account;
   final Databases _databases;
