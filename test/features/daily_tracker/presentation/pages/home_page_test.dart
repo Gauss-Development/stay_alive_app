@@ -59,6 +59,7 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
           educationalContentCollectionId: '',
           gamificationProfilesCollectionId: '',
           gamificationEventsCollectionId: '',
+          deleteUserFunctionId: '',
           widgetAppGroupId: '',
           revenueCatAndroidApiKey: '',
           revenueCatIosApiKey: '',

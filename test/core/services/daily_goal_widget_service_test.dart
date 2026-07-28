@@ -93,6 +93,7 @@ const EnvConfig _envConfig = EnvConfig(
   educationalContentCollectionId: '',
   gamificationProfilesCollectionId: '',
   gamificationEventsCollectionId: '',
+  deleteUserFunctionId: '',
   widgetAppGroupId: 'group.test.stayAlive',
   revenueCatAndroidApiKey: '',
   revenueCatIosApiKey: '',

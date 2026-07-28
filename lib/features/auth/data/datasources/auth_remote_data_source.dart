@@ -45,15 +45,18 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   AppwriteAuthRemoteDataSource({
     required Account account,
     required Databases databases,
+    required Functions functions,
     required EnvConfig envConfig,
     required AppLogger logger,
   }) : _account = account,
        _databases = databases,
+       _functions = functions,
        _envConfig = envConfig,
        _logger = logger;
 
   final Account _account;
   final Databases _databases;
+  final Functions _functions;
   final EnvConfig _envConfig;
   final AppLogger _logger;
 
@@ -231,7 +234,64 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       documentId: userId,
     );
 
-    await _account.deleteSessions();
+    // Delete the Appwrite auth record itself. The client SDK cannot delete its
+    // own user, so this runs a server-side Function that reads the caller id
+    // from the authenticated execution context. Must happen while the session
+    // is still active, otherwise the execution has no identity.
+    await _deleteAuthRecord(userId);
+
+    // Clear local session state. The auth record (and its sessions) may already
+    // be gone from the server function, so a 401 here is expected and harmless.
+    try {
+      await _account.deleteSessions();
+    } on AppwriteException catch (exception) {
+      if (exception.code != 401) {
+        rethrow;
+      }
+    }
+  }
+
+  /// Runs the `delete_user` Appwrite Function to remove the caller's auth
+  /// record. The function derives the user id from the session context, so a
+  /// session can only ever delete its own account.
+  Future<void> _deleteAuthRecord(String userId) async {
+    final String functionId = _envConfig.deleteUserFunctionId;
+    if (functionId.isEmpty) {
+      _logger.warning(
+        'APPWRITE_DELETE_USER_FUNCTION_ID not set — auth record NOT deleted; '
+        'only documents and sessions were cleared. Deploy functions/delete_user '
+        'and set the id before store release (account-deletion compliance).',
+        data: <String, Object?>{'userId': userId},
+      );
+      return;
+    }
+
+    final appwrite_models.Execution execution = await _functions.createExecution(
+      functionId: functionId,
+      xasync: false,
+    );
+    final bool ok =
+        execution.status == 'completed' &&
+        execution.responseStatusCode >= 200 &&
+        execution.responseStatusCode < 300;
+    if (!ok) {
+      _logger.error(
+        'Server-side auth-record deletion failed',
+        error:
+            'status=${execution.status} code=${execution.responseStatusCode} '
+            'errors=${execution.errors}',
+        data: <String, Object?>{'userId': userId},
+      );
+      throw AppwriteException(
+        'Your data was removed, but the login could not be fully deleted. '
+        'Please try again.',
+        execution.responseStatusCode == 0 ? 500 : execution.responseStatusCode,
+      );
+    }
+    _logger.info(
+      'Deleted server-side auth record',
+      data: <String, Object?>{'userId': userId},
+    );
   }
 
   Future<void> _deleteDocumentsByUserId({

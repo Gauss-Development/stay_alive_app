@@ -25,6 +25,7 @@ class EnvConfig extends Equatable {
     required this.educationalContentCollectionId,
     required this.gamificationProfilesCollectionId,
     required this.gamificationEventsCollectionId,
+    required this.deleteUserFunctionId,
     required this.widgetAppGroupId,
     required this.revenueCatAndroidApiKey,
     required this.revenueCatIosApiKey,
@@ -54,6 +55,11 @@ class EnvConfig extends Equatable {
   final String educationalContentCollectionId;
   final String gamificationProfilesCollectionId;
   final String gamificationEventsCollectionId;
+
+  /// Appwrite Function id that deletes the caller's auth record server-side
+  /// (`functions/delete_user`). Empty in dev/local → auth record is not removed
+  /// on account deletion; must be set for store-compliant deletion.
+  final String deleteUserFunctionId;
   final String widgetAppGroupId;
   final String revenueCatAndroidApiKey;
   final String revenueCatIosApiKey;
@@ -112,6 +118,7 @@ class EnvConfig extends Equatable {
         'APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID',
         'gamification_events',
       ),
+      deleteUserFunctionId: _str('APPWRITE_DELETE_USER_FUNCTION_ID', ''),
       widgetAppGroupId: _str(
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.gaussdev.stayalive',
@@ -190,6 +197,7 @@ class EnvConfig extends Equatable {
     educationalContentCollectionId,
     gamificationProfilesCollectionId,
     gamificationEventsCollectionId,
+    deleteUserFunctionId,
     widgetAppGroupId,
     revenueCatAndroidApiKey,
     revenueCatIosApiKey,

@@ -86,6 +86,7 @@ void _registerCore() {
     )
     ..registerLazySingleton<Account>(() => Account(sl<Client>()))
     ..registerLazySingleton<Databases>(() => Databases(sl<Client>()))
+    ..registerLazySingleton<Functions>(() => Functions(sl<Client>()))
     ..registerLazySingleton<HomeWidgetGateway>(
       () => const HomeWidgetPluginGateway(),
     )
@@ -103,6 +104,7 @@ void _registerAuthFeature() {
       () => AppwriteAuthRemoteDataSource(
         account: sl<Account>(),
         databases: sl<Databases>(),
+        functions: sl<Functions>(),
         envConfig: sl<EnvConfig>(),
         logger: sl<AppLogger>(),
       ),
