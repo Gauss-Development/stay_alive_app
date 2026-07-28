@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/constants/legal_urls.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -24,6 +25,7 @@ import 'package:stay_alive/features/gamification/presentation/widgets/badge_gall
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 const List<String> _weekLabels = <String>[
   'Пн',
@@ -191,6 +193,8 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                         const SizedBox(height: AppSpacing.lg),
+                        const _LegalLinks(),
+                        const SizedBox(height: AppSpacing.sm),
                         const _DeleteAccountButton(),
                       ],
                     );
@@ -580,6 +584,60 @@ class _WeekDot extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _LegalLinks extends StatelessWidget {
+  const _LegalLinks();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: AppSpacing.lg,
+        children: <Widget>[
+          _LegalLink(
+            label: 'Политика конфиденциальности',
+            url: LegalUrls.privacyPolicy,
+          ),
+          _LegalLink(
+            label: 'Условия использования',
+            url: LegalUrls.termsOfService,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LegalLink extends StatelessWidget {
+  const _LegalLink({required this.label, required this.url});
+
+  final String label;
+  final String url;
+
+  Future<void> _open(BuildContext context) async {
+    final bool launched = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+    if (!launched && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Не удалось открыть ссылку')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton(
+      onPressed: () => _open(context),
+      child: Text(
+        label,
+        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
+      ),
     );
   }
 }
