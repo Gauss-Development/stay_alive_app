@@ -17,12 +17,14 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
+from appwrite_credentials import require_api_key, unauthorized_help
+
 
 APPWRITE_ENDPOINT = os.environ.get("APPWRITE_ENDPOINT", "https://sfo.cloud.appwrite.io/v1").rstrip("/")
 APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "69de16de001dfb5c1e5d")
 APPWRITE_API_KEY = os.environ.get("APPWRITE_API_KEY", "")
 
-DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "69de1ac5002830be7040")
+DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "stay_alive_v1")
 
 COLLECTION_IDS = {
     "users": os.environ.get("APPWRITE_USERS_COLLECTION_ID", "users"),
@@ -216,13 +218,12 @@ DEFAULT_CATEGORIES = [
 
 
 def main() -> int:
-    if not APPWRITE_PROJECT_ID or not APPWRITE_API_KEY:
-        print(
-            "Missing required Appwrite credentials. Set APPWRITE_PROJECT_ID and APPWRITE_API_KEY.",
-            file=sys.stderr,
-        )
+    require_api_key()
+    if not APPWRITE_PROJECT_ID:
+        print("Missing APPWRITE_PROJECT_ID.", file=sys.stderr)
         return 2
 
+    verify_credentials()
     create_database()
     create_collections()
     create_attributes()
@@ -267,6 +268,31 @@ def request(
         raise AppwriteRequestError(error.code, payload_data) from error
 
 
+def verify_credentials() -> None:
+    """Fail fast with a helpful message when the API key cannot access the project."""
+    try:
+        project = request("GET", f"/projects/{APPWRITE_PROJECT_ID}")
+        print(f"Authenticated to project: {project.get('name', APPWRITE_PROJECT_ID)}")
+    except AppwriteRequestError as error:
+        if error.status == 401:
+            print(
+                "Appwrite rejected the API key (401 Unauthorized)."
+                + unauthorized_help(401),
+                file=sys.stderr,
+            )
+            raise SystemExit(1) from error
+        raise
+
+    try:
+        request("GET", f"/databases/{DATABASE_ID}")
+        print(f"Using existing database {DATABASE_ID}.")
+    except AppwriteRequestError as error:
+        if error.status == 404:
+            print(f"Database {DATABASE_ID} will be created.")
+            return
+        raise
+
+
 def create_database() -> None:
     create_or_skip(
         "database",
@@ -274,7 +300,7 @@ def create_database() -> None:
         lambda: request(
             "POST",
             "/databases",
-            {"databaseId": DATABASE_ID, "name": "Daily Dozen DB", "enabled": True},
+            {"databaseId": DATABASE_ID, "name": "Stay Alive DB", "enabled": True},
         ),
     )
 
@@ -443,11 +469,11 @@ def create_or_skip(label: str, identifier: str, callback: Any) -> None:
 
 
 def attribute_specs() -> list[AttributeSpec]:
+    """Canonical Stay Alive schema (document id = natural key where possible)."""
     s = AttributeSpec
     return [
-        s("users", "string", "user_id", True, 64),
+        # users — document id is Auth user id
         s("users", "email", "email", True),
-        s("users", "string", "display_name", True, 128),
         s("users", "string", "name", True, 128),
         s("users", "url", "avatar_url", False),
         s("users", "boolean", "onboarding_completed", False, default=False),
@@ -469,8 +495,7 @@ def attribute_specs() -> list[AttributeSpec]:
         s("category_definitions", "boolean", "is_active", False, default=True),
         s("category_definitions", "datetime", "created_at"),
         s("category_definitions", "datetime", "updated_at"),
-        s("daily_logs", "string", "log_id", True, 96),
-        s("daily_logs", "string", "user_id", True, 64),
+        # daily_logs — document id is {userId}_{yyyy-MM-dd}
         s("daily_logs", "string", "log_date", True, 16),
         s("daily_logs", "float", "completion_percentage", False, default=0),
         s("daily_logs", "integer", "total_completed", False, default=0),
@@ -478,15 +503,19 @@ def attribute_specs() -> list[AttributeSpec]:
         s("daily_logs", "boolean", "is_fully_completed", False, default=False),
         s("daily_logs", "datetime", "created_at"),
         s("daily_logs", "datetime", "updated_at"),
-        s("daily_log_items", "string", "item_id", True, 128),
-        s("daily_log_items", "string", "log_id", True, 96),
-        s("daily_log_items", "string", "user_id", True, 64),
+        # daily_log_items — document id is {logDocId}_{categoryId}
+        s("daily_log_items", "string", "log_document_id", True, 36),
         s("daily_log_items", "string", "category_id", True, 64),
-        s("daily_log_items", "integer", "completed_count", False, default=0),
+        s("daily_log_items", "string", "category_title", True, 128),
+        s("daily_log_items", "string", "description", False, 512),
+        s("daily_log_items", "string", "icon_key", False, 64),
         s("daily_log_items", "integer", "target_count", False, default=0),
+        s("daily_log_items", "integer", "display_order", False, default=0),
+        s("daily_log_items", "boolean", "is_active", False, default=True),
+        s("daily_log_items", "integer", "completed_count", False, default=0),
         s("daily_log_items", "datetime", "created_at"),
         s("daily_log_items", "datetime", "updated_at"),
-        s("gamification_profiles", "string", "user_id", True, 64),
+        # gamification_profiles — document id is user id
         s("gamification_profiles", "integer", "xp", False, default=0),
         s("gamification_profiles", "integer", "level", False, default=1),
         s("gamification_profiles", "integer", "current_streak", False, default=0),
@@ -502,23 +531,17 @@ def attribute_specs() -> list[AttributeSpec]:
         s("gamification_profiles", "string", "early_log_dates_json", False, 16, array=True),
         s("gamification_profiles", "datetime", "created_at"),
         s("gamification_profiles", "datetime", "updated_at"),
-        s("gamification_events", "string", "event_id", True, 128),
-        s("gamification_events", "string", "user_id", True, 64),
         s("gamification_events", "string", "event_type", True, 64),
         s("gamification_events", "integer", "xp_delta", False, default=0),
         s("gamification_events", "string", "log_date", False, 16),
         s("gamification_events", "string", "metadata_json", False, 4096),
         s("gamification_events", "datetime", "created_at"),
-        s("subscriptions", "string", "subscription_id", True, 96),
-        s("subscriptions", "string", "user_id", True, 64),
         s("subscriptions", "string", "plan", True, 64),
         s("subscriptions", "string", "status", True, 64),
         s("subscriptions", "datetime", "expires_at"),
         s("subscriptions", "string", "provider", True, 64),
         s("subscriptions", "datetime", "created_at"),
         s("subscriptions", "datetime", "updated_at"),
-        s("analytics_events", "string", "event_id", True, 128),
-        s("analytics_events", "string", "user_id", False, 64),
         s("analytics_events", "string", "event_name", True, 128),
         s("analytics_events", "string", "screen_name", False, 128),
         s("analytics_events", "string", "metadata_json", False, 4096),
@@ -538,29 +561,17 @@ def attribute_specs() -> list[AttributeSpec]:
 def index_specs() -> list[IndexSpec]:
     i = IndexSpec
     return [
-        i("users", "user_id_unique", "unique", ("user_id",)),
         i("users", "email_index", "key", ("email",)),
         i("category_definitions", "category_id_unique", "unique", ("category_id",)),
         i("category_definitions", "active_order_index", "key", ("is_active", "display_order")),
-        i("daily_logs", "log_id_unique", "unique", ("log_id",)),
-        i("daily_logs", "user_date_unique", "unique", ("user_id", "log_date")),
-        i("daily_logs", "user_id_index", "key", ("user_id",)),
         i("daily_logs", "log_date_index", "key", ("log_date",)),
         i("daily_logs", "completed_index", "key", ("is_fully_completed",)),
-        i("daily_log_items", "item_id_unique", "unique", ("item_id",)),
-        i("daily_log_items", "log_category_unique", "unique", ("log_id", "category_id")),
-        i("daily_log_items", "log_id_index", "key", ("log_id",)),
-        i("daily_log_items", "user_id_index", "key", ("user_id",)),
+        i("daily_log_items", "log_document_id_index", "key", ("log_document_id",)),
         i("daily_log_items", "category_id_index", "key", ("category_id",)),
-        i("gamification_profiles", "gamification_user_unique", "unique", ("user_id",)),
-        i("gamification_events", "gamification_event_unique", "unique", ("event_id",)),
-        i("gamification_events", "gamification_user_index", "key", ("user_id",)),
         i("gamification_events", "gamification_type_index", "key", ("event_type",)),
         i("gamification_events", "gamification_date_index", "key", ("log_date",)),
-        i("subscriptions", "subscription_id_unique", "unique", ("subscription_id",)),
-        i("subscriptions", "subscription_user_index", "key", ("user_id",)),
-        i("analytics_events", "analytics_event_id_unique", "unique", ("event_id",)),
-        i("analytics_events", "analytics_user_index", "key", ("user_id",)),
+        i("gamification_events", "gamification_type_date_index", "key", ("event_type", "log_date")),
+        i("subscriptions", "subscription_status_index", "key", ("status",)),
         i("analytics_events", "analytics_name_index", "key", ("event_name",)),
         i("analytics_events", "analytics_screen_index", "key", ("screen_name",)),
         i("analytics_events", "analytics_created_index", "key", ("created_at",)),

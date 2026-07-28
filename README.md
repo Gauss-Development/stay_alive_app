@@ -23,10 +23,11 @@ Provision a project with:
 ```bash
 APPWRITE_ENDPOINT=https://sfo.cloud.appwrite.io/v1 \
 APPWRITE_PROJECT_ID=69de16de001dfb5c1e5d \
+APPWRITE_DATABASE_ID=stay_alive_v1 \
 APPWRITE_API_KEY=<server-api-key> \
-python3 scripts/appwrite_provision.py
+./scripts/provision_fresh_db.sh
 
-APPWRITE_API_KEY=<server-api-key> python3 scripts/appwrite_auth_setup.py
+APPWRITE_API_KEY=<server-api-key> python3 scripts/appwrite_verify.py
 ```
 
 The script is idempotent and creates the database, collections, indexes,
