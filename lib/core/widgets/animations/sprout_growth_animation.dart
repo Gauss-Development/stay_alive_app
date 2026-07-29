@@ -3,8 +3,8 @@ import 'dart:ui' show PathMetric;
 
 import 'package:flutter/material.dart';
 import 'package:stay_alive/core/motion/app_curves.dart';
-import 'package:stay_alive/core/motion/motion_config.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/widgets/animations/entrance_animation.dart';
 
 /// The signature «росток» growth animation: a seed appears, the stem grows
 /// upward, then two soft leaves unfold.
@@ -32,45 +32,24 @@ class SproutGrowthAnimation extends StatefulWidget {
 }
 
 class _SproutGrowthAnimationState extends State<SproutGrowthAnimation>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    with
+        SingleTickerProviderStateMixin,
+        EntranceAnimation<SproutGrowthAnimation> {
   late final Animation<double> _progress;
-  bool _started = false;
+
+  @override
+  Duration get entranceDelay => widget.delay;
+  @override
+  Duration get entranceDuration => widget.duration;
 
   @override
   void initState() {
     super.initState();
-    final int total =
-        widget.delay.inMilliseconds + widget.duration.inMilliseconds;
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: total),
-    );
-    final double start = total == 0 ? 0 : widget.delay.inMilliseconds / total;
+    initEntrance();
     _progress = CurvedAnimation(
-      parent: _controller,
-      curve: Interval(start, 1, curve: AppCurves.standard),
+      parent: entranceController,
+      curve: Interval(intervalStart, 1, curve: AppCurves.standard),
     );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_started) {
-      return;
-    }
-    _started = true;
-    if (MotionConfig.reduceMotionOf(context)) {
-      _controller.value = 1;
-    } else {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override

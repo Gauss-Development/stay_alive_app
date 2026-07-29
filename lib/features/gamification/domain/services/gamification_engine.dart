@@ -64,7 +64,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.firstStep,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -89,7 +89,7 @@ class GamificationEngine {
           _awardBadgeIfAvailable(
             earnedBadges,
             BadgeId.earlyBird,
-            _dateAtMidnight(log.logDate),
+            _dateOnly(log.logDate),
             reference,
             isPremium: isPremium,
           );
@@ -105,7 +105,7 @@ class GamificationEngine {
       _awardBadgeIfAvailable(
         earnedBadges,
         BadgeId.perfectDay,
-        _dateAtMidnight(log.logDate),
+        _dateOnly(log.logDate),
         reference,
         isPremium: isPremium,
       );
@@ -116,7 +116,7 @@ class GamificationEngine {
           _awardBadgeIfAvailable(
             earnedBadges,
             BadgeId.winterWellness,
-            _dateAtMidnight(log.logDate),
+            _dateOnly(log.logDate),
             reference,
             isPremium: isPremium,
           );
@@ -138,7 +138,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.weekStreak,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -147,7 +147,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.secretKeeper,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -156,7 +156,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.ironWill,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -165,7 +165,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.centurion,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -510,10 +510,6 @@ class GamificationEngine {
   }
 
   DateTime _dateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
-  }
-
-  DateTime _dateAtMidnight(DateTime value) {
     return DateTime(value.year, value.month, value.day);
   }
 }

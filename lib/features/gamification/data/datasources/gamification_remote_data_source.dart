@@ -56,23 +56,19 @@ class AppwriteGamificationRemoteDataSource
     required bool isPremium,
   }) async {
     final appwrite_models.User user = await _account.get();
-    final UserGameProfileModel? persistedProfile = await _loadPersistedProfile(
-      user.$id,
-    );
-    final List<DailyLogModel> logs = await _loadLogsWithItems(
-      user.$id,
-      dayWindow: _fullReconcileDayWindow,
-    );
-    final List<GamificationXpEventModel> persistedEvents = await _fetchXpEvents(
-      user.$id,
-    );
+    // Independent reads run concurrently — reconcile is on the home-screen path.
+    final List<Object?> reads = await Future.wait(<Future<Object?>>[
+      _loadPersistedProfile(user.$id),
+      _loadLogsWithItems(user.$id, dayWindow: _fullReconcileDayWindow),
+      _fetchXpEvents(user.$id),
+    ]);
 
     return _buildAndPersist(
       userId: user.$id,
-      logs: logs,
-      persistedEvents: persistedEvents,
+      logs: reads[1]! as List<DailyLogModel>,
+      persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
-      persistedProfile: persistedProfile,
+      persistedProfile: reads[0] as UserGameProfileModel?,
     );
   }
 
@@ -82,24 +78,23 @@ class AppwriteGamificationRemoteDataSource
     required bool isPremium,
   }) async {
     final appwrite_models.User user = await _account.get();
-    final UserGameProfileModel? persistedProfile = await _loadPersistedProfile(
-      user.$id,
-    );
-    final List<DailyLogModel> logs = await _loadLogsWithItems(
-      user.$id,
-      dayWindow: _todayReconcileDayWindow,
-    );
-    final List<DailyLogModel> mergedLogs = _mergeTodayLog(logs, todayLog);
-    final List<GamificationXpEventModel> persistedEvents = await _fetchXpEvents(
-      user.$id,
+    // Independent reads run concurrently — reconcile is on the home-screen path.
+    final List<Object?> reads = await Future.wait(<Future<Object?>>[
+      _loadPersistedProfile(user.$id),
+      _loadLogsWithItems(user.$id, dayWindow: _todayReconcileDayWindow),
+      _fetchXpEvents(user.$id),
+    ]);
+    final List<DailyLogModel> mergedLogs = _mergeTodayLog(
+      reads[1]! as List<DailyLogModel>,
+      todayLog,
     );
 
     return _buildAndPersist(
       userId: user.$id,
       logs: mergedLogs,
-      persistedEvents: persistedEvents,
+      persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
-      persistedProfile: persistedProfile,
+      persistedProfile: reads[0] as UserGameProfileModel?,
     );
   }
 
@@ -123,29 +118,34 @@ class AppwriteGamificationRemoteDataSource
     final UserGameProfileModel profileModel = UserGameProfileModel.fromProfile(
       overview.profile,
     );
-    await _upsertProfile(profileModel);
-    await _upsertBadgeEvents(profileModel);
-    await _upsertChallengeEvent(
-      userId: userId,
-      challenge: overview.dailyChallenge,
-      profile: overview.profile,
-      persistedEvents: persistedEvents,
-      eventType: 'challenge_completed',
-      isPremium: isPremium,
-    );
-    await _upsertChallengeEvent(
-      userId: userId,
-      challenge: overview.weeklyChallenge,
-      profile: overview.profile,
-      persistedEvents: persistedEvents,
-      eventType: 'weekly_challenge_completed',
-      isPremium: isPremium,
-    );
-    await _upsertStreakFreezeEvents(
-      userId: userId,
-      previousProfile: persistedProfile,
-      nextProfile: overview.profile,
-    );
+    // These writes target distinct documents and don't read each other's
+    // results (dedup uses the pre-write persistedEvents snapshot), so they run
+    // concurrently; all complete before the event re-fetch below.
+    await Future.wait(<Future<void>>[
+      _upsertProfile(profileModel),
+      _upsertBadgeEvents(profileModel),
+      _upsertChallengeEvent(
+        userId: userId,
+        challenge: overview.dailyChallenge,
+        profile: overview.profile,
+        persistedEvents: persistedEvents,
+        eventType: 'challenge_completed',
+        isPremium: isPremium,
+      ),
+      _upsertChallengeEvent(
+        userId: userId,
+        challenge: overview.weeklyChallenge,
+        profile: overview.profile,
+        persistedEvents: persistedEvents,
+        eventType: 'weekly_challenge_completed',
+        isPremium: isPremium,
+      ),
+      _upsertStreakFreezeEvents(
+        userId: userId,
+        previousProfile: persistedProfile,
+        nextProfile: overview.profile,
+      ),
+    ]);
 
     final List<GamificationXpEventModel> refreshedEvents = await _fetchXpEvents(
       userId,

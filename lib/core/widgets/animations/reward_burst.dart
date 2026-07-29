@@ -2,8 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:stay_alive/core/motion/app_curves.dart';
-import 'package:stay_alive/core/motion/motion_config.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/widgets/animations/entrance_animation.dart';
 
 /// One-shot radial burst of small dots — a short, premium reward accent
 /// (used around the sprout when points appear, or inside a purchased card).
@@ -34,25 +34,22 @@ class RewardBurst extends StatefulWidget {
 }
 
 class _RewardBurstState extends State<RewardBurst>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    with SingleTickerProviderStateMixin, EntranceAnimation<RewardBurst> {
   late final Animation<double> _progress;
   late final List<_BurstDot> _dots;
-  bool _started = false;
+
+  @override
+  Duration get entranceDelay => widget.delay;
+  @override
+  Duration get entranceDuration => widget.duration;
 
   @override
   void initState() {
     super.initState();
-    final int total =
-        widget.delay.inMilliseconds + widget.duration.inMilliseconds;
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: total),
-    );
-    final double start = total == 0 ? 0 : widget.delay.inMilliseconds / total;
+    initEntrance();
     _progress = CurvedAnimation(
-      parent: _controller,
-      curve: Interval(start, 1, curve: AppCurves.standard),
+      parent: entranceController,
+      curve: Interval(intervalStart, 1, curve: AppCurves.standard),
     );
 
     final math.Random rng = math.Random(3);
@@ -65,24 +62,6 @@ class _RewardBurstState extends State<RewardBurst>
         color: widget.colors[i % widget.colors.length],
       );
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_started) {
-      return;
-    }
-    _started = true;
-    if (!MotionConfig.reduceMotionOf(context)) {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override

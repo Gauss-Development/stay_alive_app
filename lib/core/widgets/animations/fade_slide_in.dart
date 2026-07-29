@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stay_alive/core/motion/app_curves.dart';
 import 'package:stay_alive/core/motion/app_durations.dart';
-import 'package:stay_alive/core/motion/motion_config.dart';
+import 'package:stay_alive/core/widgets/animations/entrance_animation.dart';
 
 /// One-shot entrance: fades in while sliding up from [offset] pixels.
 ///
@@ -30,45 +30,22 @@ class FadeSlideIn extends StatefulWidget {
 }
 
 class _FadeSlideInState extends State<FadeSlideIn>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+    with SingleTickerProviderStateMixin, EntranceAnimation<FadeSlideIn> {
   late final Animation<double> _animation;
-  bool _started = false;
+
+  @override
+  Duration get entranceDelay => widget.delay;
+  @override
+  Duration get entranceDuration => widget.duration;
 
   @override
   void initState() {
     super.initState();
-    final int total =
-        widget.delay.inMilliseconds + widget.duration.inMilliseconds;
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: total),
-    );
-    final double start = total == 0 ? 0 : widget.delay.inMilliseconds / total;
+    initEntrance();
     _animation = CurvedAnimation(
-      parent: _controller,
-      curve: Interval(start, 1, curve: widget.curve),
+      parent: entranceController,
+      curve: Interval(intervalStart, 1, curve: widget.curve),
     );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_started) {
-      return;
-    }
-    _started = true;
-    if (MotionConfig.reduceMotionOf(context)) {
-      _controller.value = 1;
-    } else {
-      _controller.forward();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
