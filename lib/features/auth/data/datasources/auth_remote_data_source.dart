@@ -254,6 +254,12 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   /// Runs the `delete_user` Appwrite Function to remove the caller's auth
   /// record. The function derives the user id from the session context, so a
   /// session can only ever delete its own account.
+  ///
+  /// Best-effort: the user's documents are already deleted by the time this
+  /// runs, so a failure here must NOT abort account deletion — that would leave
+  /// the user signed in with their data gone. Failures are logged (→ Sentry) so
+  /// a stale auth record can be reconciled server-side; the caller still clears
+  /// the session and signs the user out.
   Future<void> _deleteAuthRecord(String userId) async {
     final String functionId = _envConfig.deleteUserFunctionId;
     if (functionId.isEmpty) {
@@ -275,18 +281,16 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
         execution.responseStatusCode >= 200 &&
         execution.responseStatusCode < 300;
     if (!ok) {
+      // Do not throw: documents are already gone, so we must still clear the
+      // session and sign the user out. Log for server-side reconciliation.
       _logger.error(
-        'Server-side auth-record deletion failed',
+        'Server-side auth-record deletion failed; auth record may be orphaned',
         error:
             'status=${execution.status} code=${execution.responseStatusCode} '
             'errors=${execution.errors}',
         data: <String, Object?>{'userId': userId},
       );
-      throw AppwriteException(
-        'Your data was removed, but the login could not be fully deleted. '
-        'Please try again.',
-        execution.responseStatusCode == 0 ? 500 : execution.responseStatusCode,
-      );
+      return;
     }
     _logger.info(
       'Deleted server-side auth record',

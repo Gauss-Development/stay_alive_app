@@ -220,7 +220,9 @@ class AppwriteGamificationRemoteDataSource
           queries: <String>[
             Query.greaterThanEqual('log_date', cutoffKey),
             Query.orderAsc('log_date'),
-            Query.limit(dayWindow),
+            // Range is inclusive of both ends → dayWindow + 1 distinct dates;
+            // limit(dayWindow) would drop the newest (today) at saturation.
+            Query.limit(dayWindow + 1),
           ],
         );
 
