@@ -32,7 +32,7 @@ All references live in:
    - Purchase History — collected, linked to user, not used for tracking, purpose: App Functionality
    - Product Interaction — collected, linked to user, not used for tracking, purpose: Analytics
    These match `ios/Runner/PrivacyInfo.xcprivacy`.
-5. Fill **Privacy Policy URL** and **Terms of Use URL** (see ticket GAU-315 for hosting plan).
+5. Fill **Privacy Policy URL** and **Terms of Use URL**. Draft documents live in `docs/legal/`; host them over HTTPS, then put the live URLs into `lib/core/constants/legal_urls.dart` (currently placeholder `stay-alive.app`, which 404s) and into both store listings (ticket GAU-315).
 6. **Export compliance:** `ITSAppUsesNonExemptEncryption` is set to `false` in `Info.plist`, so no export-compliance prompt should appear.
 
 ## 3. Google Play Console
@@ -74,7 +74,32 @@ The app code's plan resolver (`SubscriptionPlan.fromRevenueCatIdentifier`) match
 3. Add to `scripts/release.env` as `SENTRY_DSN=...`.
 4. App-side wiring already done in `lib/bootstrap.dart`. When DSN is empty, Sentry is skipped (used for local dev).
 
-## 6. Android signing
+## 6. Appwrite account-deletion function (store requirement)
+
+Both stores require full account deletion. The client deletes the user's
+documents and sessions, but the Appwrite auth record itself must be removed
+server-side by the `functions/delete_user` function (ticket GAU-316).
+
+1. Deploy it (needs an Appwrite API key with `users.write`):
+
+   ```sh
+   appwrite functions create \
+     --function-id delete_user --name "delete_user" \
+     --runtime node-22 --execute '["users"]'
+
+   appwrite functions create-deployment \
+     --function-id delete_user --entrypoint "src/main.js" \
+     --code functions/delete_user --activate true
+   ```
+
+2. Enable a **dynamic API key** with scope `users.write` on the function.
+3. Set the id in `scripts/release.env`: `APPWRITE_DELETE_USER_FUNCTION_ID=delete_user`.
+
+When this id is empty, the app clears documents/sessions and signs the user out
+but skips the auth-record deletion (dev fallback — **not** store-compliant).
+Details: `functions/delete_user/README.md`.
+
+## 7. Android signing
 
 Production builds need an upload keystore (debug keys would be rejected by Play Console). One-time setup:
 
@@ -87,7 +112,7 @@ Copy `android/key.properties.example` to `android/key.properties` and fill in th
 
 `android/app/build.gradle.kts` already auto-detects the keystore; if `key.properties` is missing it falls back to debug signing (so local `flutter run --release` still works).
 
-## 7. Build and ship
+## 8. Build and ship
 
 Copy the secrets template:
 
@@ -105,12 +130,14 @@ Build artifacts:
 
 For iOS, sign with your Apple Developer team in Xcode (manual or automatic signing) and validate via Product → Archive → Distribute App → Validate before App Store Connect upload.
 
-## 8. Pre-flight checklist
+## 9. Pre-flight checklist
 
 Before every release:
 
 - [ ] `flutter analyze` returns no issues
 - [ ] `flutter test` passes
+- [ ] `scripts/release.env` has real RevenueCat keys + `APPWRITE_DELETE_USER_FUNCTION_ID=delete_user`
+- [ ] `lib/core/constants/legal_urls.dart` points at the live hosted legal URLs
 - [ ] `./scripts/build-prod.sh apk` succeeds and the APK installs on a real Android device
 - [ ] Manual smoke: sign up → log a day → open paywall → see Monthly + Annual → sandbox purchase → entitlement activates
 - [ ] Manual smoke: settings → Delete account → confirm → all data gone, fresh signup with same email works
