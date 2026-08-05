@@ -110,6 +110,8 @@ class UserGameProfileModel extends UserGameProfile {
       'winterWellness' => BadgeId.winterWellness,
       'secretKeeper' => BadgeId.secretKeeper,
       'patron' => BadgeId.patron,
+      'firstBloom' => BadgeId.firstBloom,
+      'streakGardener' => BadgeId.streakGardener,
       'first_log' => BadgeId.firstStep,
       'perfect_day' => BadgeId.perfectDay,
       'three_day_streak' => null,

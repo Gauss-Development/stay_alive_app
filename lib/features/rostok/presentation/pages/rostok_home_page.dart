@@ -6,8 +6,11 @@ import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
+import 'package:stay_alive/features/gamification/domain/entities/garden_state.dart';
+import 'package:stay_alive/features/gamification/domain/services/garden_state_builder.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/garden_sprout.dart';
 import 'package:stay_alive/features/rostok/presentation/theme/rostok_colors.dart';
 import 'package:stay_alive/features/rostok/presentation/theme/rostok_text.dart';
 import 'package:stay_alive/features/rostok/presentation/widgets/points_ring.dart';
@@ -123,7 +126,24 @@ class _RostokHomePageState extends State<RostokHomePage> {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
       children: <Widget>[
         _buildGreeting(context),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
+        BlocBuilder<GamificationCubit, GamificationState>(
+          builder: (BuildContext context, GamificationState state) {
+            if (state is! GamificationLoaded) {
+              return const SizedBox.shrink();
+            }
+            final GardenState garden = const GardenStateBuilder().build(
+              profile: state.overview.profile,
+              recentLogs: <DailyLog>[log],
+              todayLog: log,
+            );
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: GardenSprout(state: garden, size: 110),
+            );
+          },
+        ),
+        const SizedBox(height: 4),
         _buildPointsCard(log),
         const SizedBox(height: 20),
         _buildFilters(),

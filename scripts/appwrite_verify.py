@@ -13,9 +13,9 @@ import urllib.request
 from appwrite_credentials import require_api_key, unauthorized_help
 
 APPWRITE_ENDPOINT = os.environ.get(
-    "APPWRITE_ENDPOINT", "https://sfo.cloud.appwrite.io/v1"
+    "APPWRITE_ENDPOINT", "https://nyc.cloud.appwrite.io/v1"
 ).rstrip("/")
-APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "69de16de001dfb5c1e5d")
+APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "6a53570100147968d1f6")
 APPWRITE_API_KEY = os.environ.get("APPWRITE_API_KEY", "")
 DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "stay_alive_v1")
 

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_effect.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
@@ -18,6 +20,7 @@ class GamificationCelebrationHost extends StatefulWidget {
 class _GamificationCelebrationHostState
     extends State<GamificationCelebrationHost> {
   GamificationEffect? _activeEffect;
+  bool _navigatingToReward = false;
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +57,20 @@ class _GamificationCelebrationHostState
   }
 
   void _showNextEffect(GamificationEffect effect) {
-    if (_activeEffect != null) {
+    if (_activeEffect != null || _navigatingToReward) {
       return;
+    }
+
+    if (effect is LevelUpEffect) {
+      final String location = GoRouterState.of(context).uri.toString();
+      if (location.startsWith('/rostok')) {
+        _navigatingToReward = true;
+        context.read<GamificationCubit>().dismissEffect(effect);
+        context.push(AppRoutes.rostokReward).whenComplete(() {
+          _navigatingToReward = false;
+        });
+        return;
+      }
     }
 
     if (effect is BadgeUnlockedEffect) {

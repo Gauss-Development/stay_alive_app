@@ -19,8 +19,16 @@ import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_track
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/widgets/category_progress_tile.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/widgets/daily_progress_card.dart';
+import 'package:stay_alive/features/coach/domain/services/coach_context_builder.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/widgets/coach_nudge_banner.dart';
+import 'package:stay_alive/features/gamification/domain/entities/garden_state.dart';
+import 'package:stay_alive/features/gamification/domain/services/garden_state_builder.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
+import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/daily_challenge_card.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
@@ -39,6 +47,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   _CategoryFilter _filter = _CategoryFilter.all;
+  int? _lastNudgedCompleted;
 
   @override
   void initState() {
@@ -87,6 +96,7 @@ class _HomePageState extends State<HomePage> {
                   isPremium: isPremium,
                 ),
               );
+              unawaited(_maybeRequestNudge(context, state.log!, isPremium));
             }
           },
           builder: (BuildContext context, DailyTrackerState state) {
@@ -127,7 +137,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                     );
                   },
-              child: RefreshIndicator(
+                child: RefreshIndicator(
                 color: AppColors.green,
                 onRefresh: () async {
                   await context.read<DailyTrackerCubit>().loadToday();
@@ -148,6 +158,50 @@ class _HomePageState extends State<HomePage> {
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _maybeRequestNudge(
+    BuildContext context,
+    DailyLog log,
+    bool isPremium,
+  ) async {
+    final GamificationState gState = context.read<GamificationCubit>().state;
+    if (gState is! GamificationLoaded) {
+      return;
+    }
+    final GardenState garden = const GardenStateBuilder().build(
+      profile: gState.overview.profile,
+      recentLogs: <DailyLog>[log],
+      todayLog: log,
+    );
+    // Only auto-nudge when the plant is wilting — not on every serving.
+    if (!garden.wilting || log.isFullyCompleted) {
+      return;
+    }
+    if (_lastNudgedCompleted == log.totalCompleted) {
+      return;
+    }
+    _lastNudgedCompleted = log.totalCompleted;
+    await context.read<CoachCubit>().requestNudge(
+          context: CoachContextBuilder.build(
+            overview: gState.overview,
+            todayLog: log,
+          ),
+          isPremium: isPremium,
+        );
+    if (!context.mounted) {
+      return;
+    }
+    unawaited(
+      context.read<AnalyticsCubit>().track(
+            eventName: 'coach_nudge_shown',
+            screenName: 'home',
+            metadata: <String, dynamic>{
+              'wilting': true,
+              'premium': isPremium,
+            },
+          ),
     );
   }
 
@@ -177,6 +231,13 @@ class _HomePageState extends State<HomePage> {
           child: BlocBuilder<GamificationCubit, GamificationState>(
             builder: (BuildContext context, GamificationState state) {
               final bool loaded = state is GamificationLoaded;
+              final GardenState? garden = loaded
+                  ? const GardenStateBuilder().build(
+                      profile: state.overview.profile,
+                      recentLogs: <DailyLog>[log],
+                      todayLog: log,
+                    )
+                  : null;
               return DailyProgressCard(
                 log: log,
                 level: loaded
@@ -186,11 +247,17 @@ class _HomePageState extends State<HomePage> {
                     ? state.overview.profile.currentLevel.title
                     : null,
                 streak: loaded ? state.overview.profile.currentStreak : null,
+                garden: garden,
               );
             },
           ),
         ),
         const SizedBox(height: AppSpacing.lg),
+        const FadeSlideIn(
+          delay: Duration(milliseconds: 120),
+          child: CoachNudgeBanner(),
+        ),
+        const SizedBox(height: AppSpacing.sm),
         FadeSlideIn(
           delay: const Duration(milliseconds: 160),
           child: BlocBuilder<GamificationCubit, GamificationState>(
@@ -205,9 +272,22 @@ class _HomePageState extends State<HomePage> {
               if (state is GamificationLoaded) {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-                  child: DailyChallengeCard(
-                    challenge: state.overview.dailyChallenge,
-                    isPremium: state.overview.isPremium,
+                  child: Column(
+                    children: <Widget>[
+                      DailyChallengeCard(
+                        challenge: state.overview.dailyChallenge,
+                        isPremium: state.overview.isPremium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          onPressed: () => context.push(AppRoutes.coach),
+                          icon: const Icon(Icons.spa_rounded, size: 18),
+                          label: const Text('AI-коуч'),
+                        ),
+                      ),
+                    ],
                   ),
                 );
               }

@@ -9,6 +9,7 @@ import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/gamification_celebration_host.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
@@ -51,6 +52,7 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
         BlocProvider<AppStartupCubit>.value(value: _startupCubit),
         BlocProvider<DailyTrackerCubit>(create: (_) => sl<DailyTrackerCubit>()),
         BlocProvider<GamificationCubit>(create: (_) => sl<GamificationCubit>()),
+        BlocProvider<CoachCubit>(create: (_) => sl<CoachCubit>()),
         BlocProvider<UserProfileCubit>(create: (_) => sl<UserProfileCubit>()),
         BlocProvider<HistoryCubit>(create: (_) => sl<HistoryCubit>()),
         BlocProvider<AnalyticsCubit>(create: (_) => sl<AnalyticsCubit>()),

@@ -9,14 +9,17 @@ import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/animations/animated_points_counter.dart';
 import 'package:stay_alive/core/widgets/app_badge.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
+import 'package:stay_alive/features/gamification/domain/entities/garden_state.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/garden_sprout.dart';
 
-/// Dark hero card of the home screen: daily ring, level and remaining goal.
+/// Dark hero card of the home screen: garden sprout, daily ring, level and remaining goal.
 class DailyProgressCard extends StatelessWidget {
   const DailyProgressCard({
     required this.log,
     this.level,
     this.levelTitle,
     this.streak,
+    this.garden,
     super.key,
   });
 
@@ -24,6 +27,7 @@ class DailyProgressCard extends StatelessWidget {
   final int? level;
   final String? levelTitle;
   final int? streak;
+  final GardenState? garden;
 
   @override
   Widget build(BuildContext context) {
@@ -38,72 +42,84 @@ class DailyProgressCard extends StatelessWidget {
         color: AppColors.dark,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
-      child: Row(
+      child: Column(
         children: <Widget>[
-          _ProgressRing(
-            fraction: fraction,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                AnimatedPointsCounter(
-                  value: done,
-                  style: AppTextStyles.headlineMedium.copyWith(
-                    color: AppColors.white,
-                    height: 1,
-                  ),
-                ),
-                Text(
-                  'из $goal',
-                  style: AppTextStyles.labelSmall.copyWith(height: 1.1),
-                ),
-              ],
+          if (garden != null) ...<Widget>[
+            GardenSprout(
+              state: garden!,
+              size: 88,
+              showWiltingHint: garden!.wilting,
             ),
-          ),
-          const SizedBox(width: AppSpacing.lg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                if (level != null)
-                  AppBadge(
-                    label: 'Уровень $level · ${levelTitle ?? ''}',
-                    onDark: true,
-                  ),
-                const SizedBox(height: AppSpacing.md),
-                Text.rich(
-                  TextSpan(
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      color: AppColors.white,
-                      height: 1.3,
+            const SizedBox(height: AppSpacing.md),
+          ],
+          Row(
+            children: <Widget>[
+              _ProgressRing(
+                fraction: fraction,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    AnimatedPointsCounter(
+                      value: done,
+                      style: AppTextStyles.headlineMedium.copyWith(
+                        color: AppColors.white,
+                        height: 1,
+                      ),
                     ),
-                    children: <InlineSpan>[
-                      const TextSpan(text: 'Осталось '),
+                    Text(
+                      'из $goal',
+                      style: AppTextStyles.labelSmall.copyWith(height: 1.1),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSpacing.lg),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    if (level != null)
+                      AppBadge(
+                        label: 'Уровень $level · ${levelTitle ?? ''}',
+                        onDark: true,
+                      ),
+                    const SizedBox(height: AppSpacing.md),
+                    Text.rich(
                       TextSpan(
-                        text: '$remaining',
                         style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.lime,
-                          fontWeight: FontWeight.w800,
+                          color: AppColors.white,
+                          height: 1.3,
+                        ),
+                        children: <InlineSpan>[
+                          const TextSpan(text: 'Осталось '),
+                          TextSpan(
+                            text: '$remaining',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: AppColors.lime,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          TextSpan(
+                            text: remaining == 0
+                                ? ' — цель дня выполнена!'
+                                : ' порций до цели дня',
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (streak != null && streak! > 0) ...<Widget>[
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        '🔥 $streak дней подряд',
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textMuted,
                         ),
                       ),
-                      TextSpan(
-                        text: remaining == 0
-                            ? ' — цель дня выполнена!'
-                            : ' порций до цели дня',
-                      ),
                     ],
-                  ),
+                  ],
                 ),
-                if (streak != null && streak! > 0) ...<Widget>[
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    '🔥 $streak дней подряд',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textMuted,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),

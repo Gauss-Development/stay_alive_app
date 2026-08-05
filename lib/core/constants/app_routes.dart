@@ -13,6 +13,7 @@ abstract final class AppRoutes {
   static const String premium = '/premium';
   static const String analytics = '/analytics';
   static const String education = '/education/:categoryId';
+  static const String coach = '/coach';
 
   // Росток (Sprout) redesign — new screens built alongside the current UI.
   static const String rostok = '/rostok';

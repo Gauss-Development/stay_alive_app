@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${APPWRITE_ENDPOINT:=https://sfo.cloud.appwrite.io/v1}"
-: "${APPWRITE_PROJECT_ID:=69de16de001dfb5c1e5d}"
+: "${APPWRITE_ENDPOINT:=https://nyc.cloud.appwrite.io/v1}"
+: "${APPWRITE_PROJECT_ID:=6a53570100147968d1f6}"
 : "${APPWRITE_DATABASE_ID:=stay_alive_v1}"
 
 if [[ -z "${APPWRITE_API_KEY:-}" ]]; then

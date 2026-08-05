@@ -28,8 +28,8 @@ Run the idempotent auth setup script after creating a project API key with
 `project.write` scope:
 
 ```bash
-export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
-export APPWRITE_PROJECT_ID="69de16de001dfb5c1e5d"
+export APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="6a53570100147968d1f6"
 export APPWRITE_API_KEY="<API_KEY_WITH_PROJECT_WRITE_SCOPE>"
 python3 scripts/appwrite_auth_setup.py
 ```
@@ -56,8 +56,8 @@ Project-level config: [`.cursor/mcp.json`](.cursor/mcp.json) uses hosted OAuth:
 
 Alternatively, use stdio + API key in **Cursor Settings → MCP** (remove legacy `--users` flag):
 
-- `APPWRITE_ENDPOINT=https://sfo.cloud.appwrite.io/v1`
-- `APPWRITE_PROJECT_ID=69de16de001dfb5c1e5d`
+- `APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1`
+- `APPWRITE_PROJECT_ID=6a53570100147968d1f6`
 - `APPWRITE_API_KEY=<your project API key>`
 
 Flutter client uses:
@@ -91,7 +91,7 @@ the app and require an active RevenueCat `premium` entitlement.
 
 ## 3) Database Plan
 
-Database ID: `stay_alive_v1` (canonical Stay Alive database in project `69de16de001dfb5c1e5d`)
+Database ID: `stay_alive_v1` (canonical Stay Alive database in project `6a53570100147968d1f6`)
 
 Design: document id is the natural key where possible; row-level permissions enforce ownership (no redundant `user_id` on user-owned collections).
 
@@ -134,6 +134,9 @@ Collections:
 9. `gamification_events` — document id = auto-generated
    - `event_type`, `xp_delta`, `log_date`, `metadata_json`, `created_at`
 
+10. `ai_interactions` — document id = auto-generated (AI coach audit)
+   - `user_id`, `mode`, `from_fallback`, `created_at`
+
 Legacy database `69de1ac5002830be7040` is deprecated; do not point the app at it.
 
 ## 4) Permissions Plan
@@ -160,14 +163,15 @@ Legacy database `69de1ac5002830be7040` is deprecated; do not point the app at it
 - `subscription_sync` for provider webhook handling
 - `analytics_normalizer` for event normalization/enrichment
 - `daily_rollup` for streak/summary denormalization
+- `ai_coach` for LLM coach proxy (`functions/ai_coach`) — set `APPWRITE_AI_COACH_FUNCTION_ID` and optional `OPENAI_API_KEY`
 
 ## 7) Reproducible Setup Script
 
 The repository includes an idempotent provisioning script that uses the Appwrite REST API directly. The Appwrite CLI is not required.
 
 ```bash
-export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
-export APPWRITE_PROJECT_ID="69de16de001dfb5c1e5d"
+export APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="6a53570100147968d1f6"
 export APPWRITE_DATABASE_ID="stay_alive_v1"
 export APPWRITE_API_KEY="<API_KEY_WITH_DATABASE_AND_STORAGE_SCOPES>"
 ./scripts/provision_fresh_db.sh

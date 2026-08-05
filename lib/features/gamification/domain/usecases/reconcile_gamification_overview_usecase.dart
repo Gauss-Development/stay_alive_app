@@ -14,6 +14,9 @@ class ReconcileGamificationOverviewUseCase
   Future<Result<GamificationOverview>> call(
     ReconcileGamificationParams params,
   ) {
-    return _repository.reconcileOverview(isPremium: params.isPremium);
+    return _repository.reconcileOverview(
+      isPremium: params.isPremium,
+      personalizedDailyDraft: params.personalizedDailyDraft,
+    );
   }
 }

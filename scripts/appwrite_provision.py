@@ -20,8 +20,8 @@ from typing import Any
 from appwrite_credentials import require_api_key, unauthorized_help
 
 
-APPWRITE_ENDPOINT = os.environ.get("APPWRITE_ENDPOINT", "https://sfo.cloud.appwrite.io/v1").rstrip("/")
-APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "69de16de001dfb5c1e5d")
+APPWRITE_ENDPOINT = os.environ.get("APPWRITE_ENDPOINT", "https://nyc.cloud.appwrite.io/v1").rstrip("/")
+APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "6a53570100147968d1f6")
 APPWRITE_API_KEY = os.environ.get("APPWRITE_API_KEY", "")
 
 DATABASE_ID = os.environ.get("APPWRITE_DATABASE_ID", "stay_alive_v1")
@@ -53,6 +53,10 @@ COLLECTION_IDS = {
     "gamification_events": os.environ.get(
         "APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID",
         "gamification_events",
+    ),
+    "ai_interactions": os.environ.get(
+        "APPWRITE_AI_INTERACTIONS_COLLECTION_ID",
+        "ai_interactions",
     ),
 }
 
@@ -313,6 +317,7 @@ def create_collections() -> None:
         ("daily_log_items", "Daily Log Items", True, [ROLE_USERS_CREATE]),
         ("gamification_profiles", "Gamification Profiles", True, [ROLE_USERS_CREATE]),
         ("gamification_events", "Gamification Events", True, [ROLE_USERS_CREATE]),
+        ("ai_interactions", "AI Interactions", True, []),
         ("subscriptions", "Subscriptions", True, []),
         ("analytics_events", "Analytics Events", True, [ROLE_USERS_CREATE]),
         ("educational_content", "Educational Content", False, [ROLE_ANY]),
@@ -465,6 +470,17 @@ def create_or_skip(label: str, identifier: str, callback: Any) -> None:
         if error.status == 409:
             print(f"skipped existing {label}: {identifier}")
             return
+        # Free/starter plans may allow only one storage bucket.
+        if (
+            error.status == 403
+            and isinstance(error.payload, dict)
+            and error.payload.get("type") == "additional_resource_not_allowed"
+        ):
+            print(
+                f"skipped {label} (plan limit): {identifier} — "
+                f"{error.payload.get('message', 'upgrade plan to create more')}"
+            )
+            return
         raise
 
 
@@ -536,6 +552,10 @@ def attribute_specs() -> list[AttributeSpec]:
         s("gamification_events", "string", "log_date", False, 16),
         s("gamification_events", "string", "metadata_json", False, 4096),
         s("gamification_events", "datetime", "created_at"),
+        s("ai_interactions", "string", "user_id", True, 64),
+        s("ai_interactions", "string", "mode", True, 64),
+        s("ai_interactions", "boolean", "from_fallback", False, default=False),
+        s("ai_interactions", "datetime", "created_at"),
         s("subscriptions", "string", "plan", True, 64),
         s("subscriptions", "string", "status", True, 64),
         s("subscriptions", "datetime", "expires_at"),
@@ -571,6 +591,7 @@ def index_specs() -> list[IndexSpec]:
         i("gamification_events", "gamification_type_index", "key", ("event_type",)),
         i("gamification_events", "gamification_date_index", "key", ("log_date",)),
         i("gamification_events", "gamification_type_date_index", "key", ("event_type", "log_date")),
+        i("ai_interactions", "ai_user_created_index", "key", ("user_id", "created_at")),
         i("subscriptions", "subscription_status_index", "key", ("status",)),
         i("analytics_events", "analytics_name_index", "key", ("event_name",)),
         i("analytics_events", "analytics_screen_index", "key", ("screen_name",)),

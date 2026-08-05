@@ -11,13 +11,19 @@ const String _kGreenSproutArtboard = 'GreenSprout';
 const String _kGreenSproutAnimation = 'grow';
 
 /// Rive runtime for the green sprout asset (`green_sprout.riv`).
+///
+/// [replayKey] bumps force a fresh grow animation (e.g. after logging).
 class GreenSproutRive extends StatefulWidget {
   const GreenSproutRive({
     this.size = 80,
+    this.replayKey = 0,
+    this.wilting = false,
     super.key,
   });
 
   final double size;
+  final int replayKey;
+  final bool wilting;
 
   @override
   State<GreenSproutRive> createState() => _GreenSproutRiveState();
@@ -30,6 +36,23 @@ class _GreenSproutRiveState extends State<GreenSproutRive> {
   bool _useFallback = false;
   bool _loading = true;
   bool _started = false;
+
+  @override
+  void didUpdateWidget(covariant GreenSproutRive oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.replayKey != widget.replayKey) {
+      _painter?.dispose();
+      _artboard?.dispose();
+      _file?.dispose();
+      _file = null;
+      _artboard = null;
+      _painter = null;
+      _started = false;
+      _loading = true;
+      _useFallback = false;
+      _load();
+    }
+  }
 
   @override
   void didChangeDependencies() {
@@ -151,11 +174,15 @@ class GreenSproutRiveEmblem extends StatelessWidget {
   const GreenSproutRiveEmblem({
     this.size = 120,
     this.glowColor = AppColors.lime,
+    this.replayKey = 0,
+    this.wilting = false,
     super.key,
   });
 
   final double size;
   final Color glowColor;
+  final int replayKey;
+  final bool wilting;
 
   @override
   Widget build(BuildContext context) {
@@ -192,7 +219,11 @@ class GreenSproutRiveEmblem extends StatelessWidget {
             ),
           ],
         ),
-        child: GreenSproutRive(size: size * 0.52),
+        child: GreenSproutRive(
+          size: size * 0.52,
+          replayKey: replayKey,
+          wilting: wilting,
+        ),
       ),
     );
   }

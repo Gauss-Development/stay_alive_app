@@ -21,8 +21,8 @@ The app follows feature-first Clean Architecture:
 Provision a project with:
 
 ```bash
-APPWRITE_ENDPOINT=https://sfo.cloud.appwrite.io/v1 \
-APPWRITE_PROJECT_ID=69de16de001dfb5c1e5d \
+APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1 \
+APPWRITE_PROJECT_ID=6a53570100147968d1f6 \
 APPWRITE_DATABASE_ID=stay_alive_v1 \
 APPWRITE_API_KEY=<server-api-key> \
 ./scripts/provision_fresh_db.sh

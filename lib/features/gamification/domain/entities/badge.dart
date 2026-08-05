@@ -10,6 +10,8 @@ enum BadgeId {
   winterWellness,
   secretKeeper,
   patron,
+  firstBloom,
+  streakGardener,
 }
 
 class BadgeDefinition {
@@ -113,6 +115,18 @@ class BadgeDefinition {
       description: 'Support the app with an active premium membership.',
       emoji: '💎',
       requiresPremium: true,
+    ),
+    BadgeId.firstBloom: BadgeDefinition(
+      id: BadgeId.firstBloom,
+      name: 'First Bloom',
+      description: 'Grow your sprout to Vitalist (bloom stage).',
+      emoji: '🌸',
+    ),
+    BadgeId.streakGardener: BadgeDefinition(
+      id: BadgeId.streakGardener,
+      name: 'Streak Gardener',
+      description: 'Keep an activity streak of 7 days.',
+      emoji: '🪴',
     ),
   };
 }

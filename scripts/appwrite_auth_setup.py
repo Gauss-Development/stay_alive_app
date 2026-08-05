@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Configure Stay Alive Appwrite auth settings for project 69de16de001dfb5c1e5d.
+"""Configure Stay Alive Appwrite auth settings for project 6a53570100147968d1f6.
 
 Idempotently enables auth methods, registers mobile platforms, and reports OAuth
 provider status. Uses the Appwrite REST API (stdlib only).
 
 Required env:
-  APPWRITE_ENDPOINT   (default: https://sfo.cloud.appwrite.io/v1)
-  APPWRITE_PROJECT_ID (default: 69de16de001dfb5c1e5d)
+  APPWRITE_ENDPOINT   (default: https://nyc.cloud.appwrite.io/v1)
+  APPWRITE_PROJECT_ID (default: 6a53570100147968d1f6)
   APPWRITE_API_KEY    (project API key with project.write scope)
 
 Example:
@@ -24,9 +24,9 @@ import urllib.request
 from typing import Any
 
 APPWRITE_ENDPOINT = os.environ.get(
-    "APPWRITE_ENDPOINT", "https://sfo.cloud.appwrite.io/v1"
+    "APPWRITE_ENDPOINT", "https://nyc.cloud.appwrite.io/v1"
 ).rstrip("/")
-APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "69de16de001dfb5c1e5d")
+APPWRITE_PROJECT_ID = os.environ.get("APPWRITE_PROJECT_ID", "6a53570100147968d1f6")
 APPWRITE_API_KEY = os.environ.get("APPWRITE_API_KEY", "")
 
 AUTH_METHODS_TO_ENABLE = (

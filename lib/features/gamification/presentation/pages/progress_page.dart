@@ -7,10 +7,17 @@ import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
 import 'package:stay_alive/core/widgets/animations/scale_pop.dart';
+import 'package:stay_alive/core/widgets/app_button.dart';
 import 'package:stay_alive/core/widgets/app_card.dart';
 import 'package:stay_alive/core/widgets/app_icon_button.dart';
 import 'package:stay_alive/core/widgets/app_section_header.dart';
 import 'package:stay_alive/core/widgets/app_states.dart';
+import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
+import 'package:stay_alive/features/coach/domain/services/coach_context_builder.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_state.dart';
+import 'package:stay_alive/features/coach/presentation/widgets/weekly_insight_section.dart';
+import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/badge_gallery.dart';
@@ -140,6 +147,20 @@ class _ProgressPageState extends State<ProgressPage> {
                       isPremium: overview.isPremium,
                     ),
                   ),
+                  if (overview.isPremium) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 260),
+                      child: _PersonalizedQuestBlock(),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 280),
+                    child: WeeklyInsightSection(
+                      onRequestInsights: () => _requestWeeklyInsights(context),
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   FadeSlideIn(
                     delay: const Duration(milliseconds: 320),
@@ -219,6 +240,86 @@ class _ProgressPageState extends State<ProgressPage> {
           },
         ),
       ),
+    );
+  }
+
+  Future<void> _requestWeeklyInsights(BuildContext context) async {
+    final bool isPremium =
+        context.read<SubscriptionCubit>().state.isPremiumActive;
+    final gState = context.read<GamificationCubit>().state;
+    await context.read<CoachCubit>().loadWeeklyInsights(
+          context: CoachContextBuilder.build(
+            overview: gState is GamificationLoaded ? gState.overview : null,
+            todayLog: context.read<DailyTrackerCubit>().state.log,
+          ),
+          isPremium: isPremium,
+        );
+    if (!context.mounted) {
+      return;
+    }
+    await context.read<AnalyticsCubit>().track(
+          eventName: 'coach_weekly_insight',
+          screenName: 'progress',
+        );
+  }
+}
+
+class _PersonalizedQuestBlock extends StatelessWidget {
+  const _PersonalizedQuestBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasAiDaily = context
+            .watch<GamificationCubit>()
+            .aiDailyDraft !=
+        null;
+    if (hasAiDaily) {
+      final overview = context.watch<GamificationCubit>().state;
+      if (overview is GamificationLoaded) {
+        return DailyChallengeCard(
+          challenge: overview.overview.dailyChallenge,
+          isPremium: true,
+        );
+      }
+    }
+
+    return AppButton(
+      text: 'Сгенерировать квест сада',
+      onPressed: () async {
+        final bool isPremium =
+            context.read<SubscriptionCubit>().state.isPremiumActive;
+        final gState = context.read<GamificationCubit>().state;
+        final log = context.read<DailyTrackerCubit>().state.log;
+        await context.read<CoachCubit>().personalizeChallenge(
+              context: CoachContextBuilder.build(
+                overview: gState is GamificationLoaded ? gState.overview : null,
+                todayLog: log,
+              ),
+              isPremium: isPremium,
+            );
+        if (!context.mounted) {
+          return;
+        }
+        final coachState = context.read<CoachCubit>().state;
+        final draft =
+            coachState is CoachLoaded ? coachState.challengeDraft : null;
+        if (draft == null) {
+          return;
+        }
+        context.read<GamificationCubit>().setAiDailyDraft(draft);
+        if (log != null) {
+          await context.read<GamificationCubit>().refreshToday(
+                todayLog: log,
+                isPremium: isPremium,
+              );
+        }
+        if (context.mounted) {
+          await context.read<AnalyticsCubit>().track(
+                eventName: 'coach_personalize_challenge',
+                screenName: 'progress',
+              );
+        }
+      },
     );
   }
 }

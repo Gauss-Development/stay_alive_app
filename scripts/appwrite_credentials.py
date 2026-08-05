@@ -63,7 +63,7 @@ def unauthorized_help(status: int) -> str:
         "  3. The key is missing scopes. For provisioning, enable at least:\n"
         f"     {', '.join(REQUIRED_PROVISION_SCOPES)}\n"
         "  4. For auth setup, also enable projects.write.\n"
-        "\nCreate a key: Appwrite Console → Project 69de16de001dfb5c1e5d "
+        "\nCreate a key: Appwrite Console → Project 6a53570100147968d1f6 "
         "→ Settings → API Keys → Create API Key."
     )
 

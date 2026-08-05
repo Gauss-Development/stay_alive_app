@@ -14,6 +14,7 @@ import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_challenge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
+import 'package:stay_alive/features/gamification/domain/entities/personalized_challenge_draft.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_overview_builder.dart';
@@ -21,11 +22,13 @@ import 'package:stay_alive/features/gamification/domain/services/gamification_ov
 abstract class GamificationRemoteDataSource {
   Future<GamificationOverviewModel> reconcileOverview({
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   });
 
   Future<GamificationOverviewModel> reconcileTodayOverview({
     required DailyLog todayLog,
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   });
 }
 
@@ -54,6 +57,7 @@ class AppwriteGamificationRemoteDataSource
   @override
   Future<GamificationOverviewModel> reconcileOverview({
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
     final appwrite_models.User user = await _account.get();
     // Independent reads run concurrently — reconcile is on the home-screen path.
@@ -69,6 +73,7 @@ class AppwriteGamificationRemoteDataSource
       persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
       persistedProfile: reads[0] as UserGameProfileModel?,
+      personalizedDailyDraft: personalizedDailyDraft,
     );
   }
 
@@ -76,6 +81,7 @@ class AppwriteGamificationRemoteDataSource
   Future<GamificationOverviewModel> reconcileTodayOverview({
     required DailyLog todayLog,
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
     final appwrite_models.User user = await _account.get();
     // Independent reads run concurrently — reconcile is on the home-screen path.
@@ -95,6 +101,7 @@ class AppwriteGamificationRemoteDataSource
       persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
       persistedProfile: reads[0] as UserGameProfileModel?,
+      personalizedDailyDraft: personalizedDailyDraft,
     );
   }
 
@@ -104,6 +111,7 @@ class AppwriteGamificationRemoteDataSource
     required List<GamificationXpEventModel> persistedEvents,
     required bool isPremium,
     required UserGameProfileModel? persistedProfile,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
     final GamificationOverview overview = _overviewBuilder.build(
       userId: userId,
@@ -113,6 +121,7 @@ class AppwriteGamificationRemoteDataSource
       streakFreezesRemaining: persistedProfile?.streakFreezesRemaining ?? 0,
       streakFreezeUsedDates:
           persistedProfile?.streakFreezeUsedDates ?? const <String>[],
+      personalizedDailyDraft: personalizedDailyDraft,
     );
 
     final UserGameProfileModel profileModel = UserGameProfileModel.fromProfile(

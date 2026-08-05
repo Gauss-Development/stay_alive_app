@@ -13,6 +13,9 @@ class GamificationEngine {
   static const int xpStreakDay = 15;
   static const int xpFirstLogOfDay = 10;
   static const int xpEarlyBirdDay = 5;
+
+  /// Shared cutoff for early-bird XP, badge, and Morning Momentum challenge.
+  static const int earlyBirdHourCutoff = 9;
   static const double premiumXpMultiplier = 1.25;
   static const int premiumStreakFreezeAllowance = 2;
 
@@ -26,6 +29,8 @@ class GamificationEngine {
     BadgeId.winterWellness: 120,
     BadgeId.secretKeeper: 200,
     BadgeId.patron: 150,
+    BadgeId.firstBloom: 200,
+    BadgeId.streakGardener: 100,
   };
 
   UserGameProfile reconcile({
@@ -223,6 +228,25 @@ class GamificationEngine {
     );
 
     final GameLevel currentLevel = GameLevelTable.forXp(xp);
+    if (currentLevel.level >= 5) {
+      _awardBadgeIfAvailable(
+        earnedBadges,
+        BadgeId.firstBloom,
+        reference,
+        reference,
+        isPremium: isPremium,
+      );
+    }
+    if (activityStreak >= 7) {
+      _awardBadgeIfAvailable(
+        earnedBadges,
+        BadgeId.streakGardener,
+        reference,
+        reference,
+        isPremium: isPremium,
+      );
+    }
+
     final List<EarnedBadge> badges =
         earnedBadges.entries
             .map(
@@ -451,7 +475,7 @@ class GamificationEngine {
         continue;
       }
       final DateTime local = item.updatedAt.toLocal();
-      if (local.hour < 9) {
+      if (local.hour < earlyBirdHourCutoff) {
         return true;
       }
     }

@@ -91,9 +91,9 @@ class _PremiumPageState extends State<PremiumPage> {
                   child: _BenefitTile(
                     icon: Icons.query_stats_rounded,
                     tint: AppColors.blue,
-                    title: 'Вся история твоего прогресса',
+                    title: 'Вся история и недельные инсайты',
                     description:
-                        'Графики за неделю, месяц и год — каждый полезный '
+                        'Графики и AI-разбор недели — каждый полезный '
                         'выбор становится заметным.',
                   ),
                 ),
@@ -102,12 +102,12 @@ class _PremiumPageState extends State<PremiumPage> {
                   index: 1,
                   baseDelay: Duration(milliseconds: 200),
                   child: _BenefitTile(
-                    icon: Icons.local_fire_department_rounded,
-                    tint: AppColors.softYellow,
-                    title: 'Серии, которые не обрываются',
+                    icon: Icons.spa_rounded,
+                    tint: AppColors.green,
+                    title: 'AI-коуч Ростка',
                     description:
-                        'Инсайты помогают понять, что держит привычку, '
-                        'плюс заморозки для сложных дней.',
+                        'Чат с коучем, персональные квесты сада и подсказки '
+                        'в момент логирования привычки.',
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -115,12 +115,25 @@ class _PremiumPageState extends State<PremiumPage> {
                   index: 2,
                   baseDelay: Duration(milliseconds: 200),
                   child: _BenefitTile(
+                    icon: Icons.local_fire_department_rounded,
+                    tint: AppColors.softYellow,
+                    title: 'Серии, которые не обрываются',
+                    description:
+                        'Заморозки серии для сложных дней и бонусный '
+                        'множитель очков.',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                const StaggeredFadeSlide(
+                  index: 3,
+                  baseDelay: Duration(milliseconds: 200),
+                  child: _BenefitTile(
                     icon: Icons.workspace_premium_rounded,
                     tint: AppColors.purple,
                     title: 'Больше очков за каждый день',
                     description:
                         'Бонусный множитель очков, эксклюзивные челленджи '
-                        'и награды.',
+                        'и награды сада.',
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),

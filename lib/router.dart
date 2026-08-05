@@ -11,6 +11,7 @@ import 'package:stay_alive/features/auth/presentation/pages/onboarding_page.dart
 import 'package:stay_alive/features/auth/presentation/pages/splash_page.dart';
 import 'package:stay_alive/features/categories/presentation/pages/categories_page.dart';
 import 'package:stay_alive/features/education/presentation/pages/education_page.dart';
+import 'package:stay_alive/features/coach/presentation/pages/coach_chat_page.dart';
 import 'package:stay_alive/features/gamification/presentation/pages/progress_page.dart';
 import 'package:stay_alive/features/subscription/presentation/pages/premium_page.dart';
 import 'package:stay_alive/features/rostok/presentation/pages/rostok_auth_page.dart';
@@ -199,6 +200,11 @@ class AppRouter {
             EducationPage(categoryId: categoryId ?? ''),
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.coach,
+        pageBuilder: (BuildContext context, GoRouterState state) =>
+            _fadeSlidePage(state, const CoachChatPage()),
       ),
       // Росток (Sprout) redesign — new screens alongside the current UI.
       GoRoute(

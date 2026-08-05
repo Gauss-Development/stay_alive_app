@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_effect.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
+import 'package:stay_alive/features/gamification/domain/entities/personalized_challenge_draft.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
 import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_overview_usecase.dart';
 import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_params.dart';
@@ -25,6 +26,15 @@ class GamificationCubit extends Cubit<GamificationState> {
   _reconcileGamificationOverviewUseCase;
   final ReconcileGamificationTodayUseCase _reconcileGamificationTodayUseCase;
   final GamificationEngine _engine;
+
+  PersonalizedChallengeDraft? _aiDailyDraft;
+
+  PersonalizedChallengeDraft? get aiDailyDraft => _aiDailyDraft;
+
+  /// Applies a premium AI daily quest; next reconcile uses it for XP.
+  void setAiDailyDraft(PersonalizedChallengeDraft? draft) {
+    _aiDailyDraft = draft?.validated();
+  }
 
   Future<void> load({required bool isPremium}) async {
     emit(const GamificationLoading());
@@ -89,15 +99,22 @@ class GamificationCubit extends Cubit<GamificationState> {
       _ => null,
     };
 
+    final PersonalizedChallengeDraft? draft =
+        isPremium ? _aiDailyDraft : null;
+
     final result = useTodayPath && todayLog != null
         ? await _reconcileGamificationTodayUseCase(
             ReconcileGamificationTodayParams(
               todayLog: todayLog,
               isPremium: isPremium,
+              personalizedDailyDraft: draft,
             ),
           )
         : await _reconcileGamificationOverviewUseCase(
-            ReconcileGamificationParams(isPremium: isPremium),
+            ReconcileGamificationParams(
+              isPremium: isPremium,
+              personalizedDailyDraft: draft,
+            ),
           );
 
     result.fold((failure) => emit(GamificationError(failure.message)), (

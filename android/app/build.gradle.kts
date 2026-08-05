@@ -37,7 +37,7 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         manifestPlaceholders["appwriteCallbackScheme"] =
-            "appwrite-callback-69de16de001dfb5c1e5d"
+            "appwrite-callback-6a53570100147968d1f6"
     }
 
     flavorDimensions += "environment"
@@ -48,13 +48,13 @@ android {
             versionNameSuffix = "-dev"
             resValue("string", "app_name", "Stay Alive Dev")
             manifestPlaceholders["appwriteCallbackScheme"] =
-                "appwrite-callback-69de16de001dfb5c1e5d"
+                "appwrite-callback-6a53570100147968d1f6"
         }
         create("prod") {
             dimension = "environment"
             resValue("string", "app_name", "Stay Alive")
             manifestPlaceholders["appwriteCallbackScheme"] =
-                "appwrite-callback-69de16de001dfb5c1e5d"
+                "appwrite-callback-6a53570100147968d1f6"
         }
     }
 

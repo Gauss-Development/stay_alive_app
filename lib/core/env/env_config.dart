@@ -26,6 +26,8 @@ class EnvConfig extends Equatable {
     required this.gamificationProfilesCollectionId,
     required this.gamificationEventsCollectionId,
     required this.deleteUserFunctionId,
+    required this.aiCoachFunctionId,
+    required this.aiInteractionsCollectionId,
     required this.widgetAppGroupId,
     required this.revenueCatAndroidApiKey,
     required this.revenueCatIosApiKey,
@@ -60,6 +62,13 @@ class EnvConfig extends Equatable {
   /// (`functions/delete_user`). Empty in dev/local → auth record is not removed
   /// on account deletion; must be set for store-compliant deletion.
   final String deleteUserFunctionId;
+
+  /// Appwrite Function id for AI coach (`functions/ai_coach`). Empty → local
+  /// heuristic fallback in the Flutter client.
+  final String aiCoachFunctionId;
+
+  /// Optional audit collection for AI coach invocations.
+  final String aiInteractionsCollectionId;
   final String widgetAppGroupId;
   final String revenueCatAndroidApiKey;
   final String revenueCatIosApiKey;
@@ -80,9 +89,9 @@ class EnvConfig extends Equatable {
       appFlavor: flavor,
       appwriteEndpoint: _str(
         'APPWRITE_ENDPOINT',
-        'https://sfo.cloud.appwrite.io/v1',
+        'https://nyc.cloud.appwrite.io/v1',
       ),
-      appwriteProjectId: _str('APPWRITE_PROJECT_ID', '69de16de001dfb5c1e5d'),
+      appwriteProjectId: _str('APPWRITE_PROJECT_ID', '6a53570100147968d1f6'),
       appwriteProjectName: _str('APPWRITE_PROJECT_NAME', 'Stay Alive'),
       appwriteDatabaseId: _str('APPWRITE_DATABASE_ID', 'stay_alive_v1'),
       usersCollectionId: _str('APPWRITE_USERS_COLLECTION_ID', 'users'),
@@ -119,6 +128,11 @@ class EnvConfig extends Equatable {
         'gamification_events',
       ),
       deleteUserFunctionId: _str('APPWRITE_DELETE_USER_FUNCTION_ID', ''),
+      aiCoachFunctionId: _str('APPWRITE_AI_COACH_FUNCTION_ID', ''),
+      aiInteractionsCollectionId: _str(
+        'APPWRITE_AI_INTERACTIONS_COLLECTION_ID',
+        'ai_interactions',
+      ),
       widgetAppGroupId: _str(
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.gaussdev.stayalive',
@@ -198,6 +212,8 @@ class EnvConfig extends Equatable {
     gamificationProfilesCollectionId,
     gamificationEventsCollectionId,
     deleteUserFunctionId,
+    aiCoachFunctionId,
+    aiInteractionsCollectionId,
     widgetAppGroupId,
     revenueCatAndroidApiKey,
     revenueCatIosApiKey,

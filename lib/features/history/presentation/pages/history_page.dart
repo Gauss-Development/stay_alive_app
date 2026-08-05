@@ -9,6 +9,12 @@ import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
 import 'package:stay_alive/core/widgets/animations/green_sprout_rive.dart';
 import 'package:stay_alive/core/widgets/app_button.dart';
 import 'package:stay_alive/core/widgets/app_states.dart';
+import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
+import 'package:stay_alive/features/coach/domain/services/coach_context_builder.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/widgets/weekly_insight_section.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_state.dart';
 import 'package:stay_alive/features/history/presentation/widgets/completion_trend_chart.dart';
@@ -135,6 +141,32 @@ class _HistoryBodyState extends State<_HistoryBody> {
               FadeSlideIn(
                 delay: const Duration(milliseconds: 160),
                 child: HistoryStatsGrid(summary: summary),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 180),
+                child: WeeklyInsightSection(
+                  onRequestInsights: () {
+                    final bool isPremium = context
+                        .read<SubscriptionCubit>()
+                        .state
+                        .isPremiumActive;
+                    final gState = context.read<GamificationCubit>().state;
+                    context.read<CoachCubit>().loadWeeklyInsights(
+                          context: CoachContextBuilder.build(
+                            overview: gState is GamificationLoaded
+                                ? gState.overview
+                                : null,
+                            weekSummary: summary.periodLabel,
+                          ),
+                          isPremium: isPremium,
+                        );
+                    context.read<AnalyticsCubit>().track(
+                          eventName: 'coach_weekly_insight',
+                          screenName: 'history',
+                        );
+                  },
+                ),
               ),
               const SizedBox(height: AppSpacing.lg),
               CompletionTrendChart(

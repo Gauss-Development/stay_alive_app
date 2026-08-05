@@ -5,8 +5,10 @@ import 'package:stay_alive/features/gamification/domain/entities/game_level.dart
 import 'package:stay_alive/features/gamification/domain/entities/gamification_challenge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
+import 'package:stay_alive/features/gamification/domain/entities/personalized_challenge_draft.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
+import 'package:stay_alive/features/gamification/domain/services/personalized_challenge_mapper.dart';
 
 class GamificationOverviewBuilder {
   const GamificationOverviewBuilder({GamificationEngine? engine})
@@ -22,6 +24,7 @@ class GamificationOverviewBuilder {
     bool isPremium = false,
     int streakFreezesRemaining = 0,
     List<String> streakFreezeUsedDates = const <String>[],
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) {
     final DateTime reference = referenceDate ?? DateTime.now();
     final String todayKey = _dateKey(reference);
@@ -38,11 +41,19 @@ class GamificationOverviewBuilder {
       streakFreezeUsedDates: streakFreezeUsedDates,
     );
 
-    final GamificationChallenge dailyChallenge = buildDailyChallenge(
-      userId: userId,
-      dateKey: todayKey,
-      todayLog: todayLog,
-    );
+    // Premium AI draft replaces the seeded daily challenge (same XP event path).
+    final GamificationChallenge dailyChallenge =
+        isPremium && personalizedDailyDraft != null
+        ? PersonalizedChallengeMapper.toChallenge(
+            draft: personalizedDailyDraft,
+            dateKey: todayKey,
+            todayLog: todayLog,
+          )
+        : buildDailyChallenge(
+            userId: userId,
+            dateKey: todayKey,
+            todayLog: todayLog,
+          );
 
     final GamificationChallenge weeklyChallenge = buildWeeklyChallenge(
       userId: userId,
@@ -363,7 +374,8 @@ class GamificationOverviewBuilder {
       if (item.completedCount <= 0) {
         continue;
       }
-      if (item.updatedAt.toLocal().hour < 12) {
+      if (item.updatedAt.toLocal().hour <
+          GamificationEngine.earlyBirdHourCutoff) {
         return true;
       }
     }
@@ -418,7 +430,7 @@ class GamificationOverviewBuilder {
     _ChallengeTemplate(
       type: ChallengeType.earlyLog,
       title: 'Morning Momentum',
-      description: 'Log a serving before noon.',
+      description: 'Log a serving before 9 AM.',
       target: 1,
       xpReward: 30,
     ),

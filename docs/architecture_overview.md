@@ -42,6 +42,7 @@ lib/
     ├── analytics/
     ├── categories/
     ├── gamification/
+    ├── coach/
     ├── subscription/
     └── education/
 ```
@@ -84,8 +85,8 @@ Example:
 
 ```bash
 flutter run \
-  --dart-define=APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 \
-  --dart-define=APPWRITE_PROJECT_ID=<PROJECT_ID> \
+  --dart-define=APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1 \
+  --dart-define=APPWRITE_PROJECT_ID=6a53570100147968d1f6 \
   --dart-define=APPWRITE_DATABASE_ID=daily_dozen_db
 ```
 
