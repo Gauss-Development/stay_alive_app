@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Flutter declares INTERNET only in the debug and profile manifests, so
+         release builds ship without it unless it is declared here. Appwrite,
+         RevenueCat and Sentry all fail at runtime without it, while debug
+         builds keep working — see GAU-378. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="@string/app_name"
         android:name="${applicationName}"

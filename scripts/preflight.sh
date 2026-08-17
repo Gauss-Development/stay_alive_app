@@ -93,6 +93,25 @@ else
   pass "dev and prod use separate Appwrite projects"
 fi
 
+# --- Network permission (GAU-378) ---------------------------------------
+# Flutter injects INTERNET into the debug and profile manifests only. If it is
+# missing from main/, debug builds work and the release build has no network.
+if grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xml; then
+  pass "INTERNET permission declared for release builds"
+else
+  fail "Release builds have no INTERNET permission" \
+       "android/app/src/main/AndroidManifest.xml lacks uses-permission INTERNET — Appwrite, RevenueCat and Sentry all fail in release while debug works."
+fi
+
+# --- Date locale ---------------------------------------------------------
+# The UI is Russian; an uninitialised intl locale renders English month names.
+if grep -q "initializeDateFormatting" lib/bootstrap.dart; then
+  pass "Date formatting locale initialised"
+else
+  fail "Date locale not initialised" \
+       "lib/bootstrap.dart does not call initializeDateFormatting — DateFormat falls back to en_US inside the Russian UI."
+fi
+
 # --- Splash art (GAU-313) -----------------------------------------------
 if grep -q 'Placeholder logo' pubspec.yaml; then
   fail "Splash logo is still the placeholder" \
