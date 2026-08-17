@@ -286,7 +286,13 @@ class AppwriteGamificationRemoteDataSource
       if (page.documents.length < _pageSize) {
         return all;
       }
-      cursor = page.documents.last.$id;
+      final String nextCursor = page.documents.last.$id;
+      // A cursor that does not advance means the server returned the same page
+      // again; continuing would loop forever and grow `all` without bound.
+      if (nextCursor == cursor) {
+        return all;
+      }
+      cursor = nextCursor;
     }
   }
 

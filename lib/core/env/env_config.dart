@@ -111,13 +111,15 @@ class EnvConfig extends Equatable {
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.gaussdev.stayalive',
       ),
-      revenueCatAndroidApiKey: _str(
+      revenueCatAndroidApiKey: _secret(
         'REVENUECAT_ANDROID_API_KEY',
         'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
+        flavor,
       ),
-      revenueCatIosApiKey: _str(
+      revenueCatIosApiKey: _secret(
         'REVENUECAT_IOS_API_KEY',
         'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
+        flavor,
       ),
       revenueCatEntitlementId: _str(
         'REVENUECAT_ENTITLEMENT_ID',
@@ -142,6 +144,22 @@ class EnvConfig extends Equatable {
       }
     }
     return fallback;
+  }
+
+  /// Resolves a credential, refusing sandbox placeholders in production.
+  ///
+  /// RevenueCat sandbox keys are prefixed `test_`, and the committed fallbacks
+  /// are exactly that. Being non-empty, they slip past the data source's
+  /// `apiKey.isEmpty` guard, so a production build with no injected secret
+  /// would configure RevenueCat against the sandbox and mis-report entitlements
+  /// while looking like working code. Returning empty makes it fail closed:
+  /// subscriptions stay inactive and the data source logs why.
+  static String _secret(String key, String fallback, AppFlavor flavor) {
+    final String value = _str(key, fallback);
+    if (flavor.isProduction && value.startsWith('test_')) {
+      return '';
+    }
+    return value;
   }
 
   static bool _bool(String key, bool fallback) {
