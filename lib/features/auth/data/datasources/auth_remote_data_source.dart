@@ -302,6 +302,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     required String collectionId,
     required String userId,
   }) async {
+    Set<String>? previousPageIds;
     while (true) {
       final appwrite_models.DocumentList page = await _databases.listDocuments(
         databaseId: _envConfig.appwriteDatabaseId,
@@ -311,6 +312,30 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       if (page.documents.isEmpty) {
         return;
       }
+
+      // A document can be listable but not deletable (read-only permissions),
+      // and Appwrite answers 404 rather than leaking existence — which the
+      // catch below swallows. Without this guard the identical page would be
+      // re-listed forever and account deletion would hang with no way out.
+      final Set<String> pageIds = page.documents
+          .map((appwrite_models.Document document) => document.$id)
+          .toSet();
+      if (previousPageIds != null &&
+          pageIds.length == previousPageIds.length &&
+          pageIds.containsAll(previousPageIds)) {
+        _logger.error(
+          'Account deletion made no progress on a page; leaving orphaned '
+          'documents for server-side cleanup',
+          data: <String, Object?>{
+            'collectionId': collectionId,
+            'userId': userId,
+            'remaining': pageIds.length,
+          },
+        );
+        return;
+      }
+      previousPageIds = pageIds;
+
       for (final appwrite_models.Document document in page.documents) {
         try {
           await _databases.deleteDocument(

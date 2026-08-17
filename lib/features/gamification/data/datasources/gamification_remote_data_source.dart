@@ -496,7 +496,14 @@ class AppwriteGamificationRemoteDataSource
           'metadata_json': jsonEncode(metadata),
           'created_at': createdAt.toIso8601String(),
         },
-        permissions: <String>[Permission.read(Role.user(userId))],
+        // Delete permission is required: account deletion iterates this
+        // collection, and a read-only document is listable but not deletable,
+        // which stalls the deletion flow. Matches every other collection.
+        permissions: <String>[
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId)),
+        ],
       );
     } on AppwriteException catch (exception) {
       if (exception.code != 409) {
