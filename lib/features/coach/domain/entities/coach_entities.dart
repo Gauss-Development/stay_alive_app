@@ -66,16 +66,14 @@ class CoachMessage extends Equatable {
     required this.role,
     required this.text,
     required this.createdAt,
-    this.suggestedActions = const <String>[],
   });
 
   final String role;
   final String text;
   final DateTime createdAt;
-  final List<String> suggestedActions;
 
   @override
-  List<Object?> get props => <Object?>[role, text, createdAt, suggestedActions];
+  List<Object?> get props => <Object?>[role, text, createdAt];
 }
 
 class WeeklyInsightCard extends Equatable {
@@ -104,14 +102,12 @@ class WeeklyInsightCard extends Equatable {
 class CoachResponse extends Equatable {
   const CoachResponse({
     required this.message,
-    this.suggestedActions = const <String>[],
     this.insightCards = const <WeeklyInsightCard>[],
     this.challengeDraft,
     this.fromFallback = false,
   });
 
   final String message;
-  final List<String> suggestedActions;
   final List<WeeklyInsightCard> insightCards;
   final PersonalizedChallengeDraft? challengeDraft;
   final bool fromFallback;
@@ -141,19 +137,8 @@ class CoachResponse extends Equatable {
       ).validated();
     }
 
-    final List<String> actions = <String>[];
-    final Object? rawActions = json['suggestedActions'];
-    if (rawActions is List<dynamic>) {
-      for (final Object? a in rawActions) {
-        if (a != null) {
-          actions.add(a.toString());
-        }
-      }
-    }
-
     return CoachResponse(
       message: json['message']?.toString() ?? '',
-      suggestedActions: actions,
       insightCards: cards,
       challengeDraft: draft,
       fromFallback: json['fromFallback'] == true,
@@ -163,7 +148,6 @@ class CoachResponse extends Equatable {
   @override
   List<Object?> get props => <Object?>[
         message,
-        suggestedActions,
         insightCards,
         challengeDraft,
         fromFallback,

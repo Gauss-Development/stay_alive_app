@@ -14,7 +14,6 @@ class EnvConfig extends Equatable {
     required this.appFlavor,
     required this.appwriteEndpoint,
     required this.appwriteProjectId,
-    required this.appwriteProjectName,
     required this.appwriteDatabaseId,
     required this.usersCollectionId,
     required this.categoryDefinitionsCollectionId,
@@ -22,23 +21,16 @@ class EnvConfig extends Equatable {
     required this.dailyLogItemsCollectionId,
     required this.subscriptionsCollectionId,
     required this.analyticsEventsCollectionId,
-    required this.educationalContentCollectionId,
     required this.gamificationProfilesCollectionId,
     required this.gamificationEventsCollectionId,
     required this.deleteUserFunctionId,
     required this.aiCoachFunctionId,
-    required this.aiInteractionsCollectionId,
     required this.widgetAppGroupId,
     required this.revenueCatAndroidApiKey,
     required this.revenueCatIosApiKey,
     required this.revenueCatEntitlementId,
     required this.revenueCatOfferingId,
-    required this.avatarsBucketId,
-    required this.userUploadsBucketId,
-    required this.contentAssetsBucketId,
     required this.allowSelfSigned,
-    required this.revenueCatApiKeyIos,
-    required this.revenueCatApiKeyAndroid,
     required this.sentryDsn,
     required this.sentryEnvironment,
   });
@@ -46,7 +38,6 @@ class EnvConfig extends Equatable {
   final AppFlavor appFlavor;
   final String appwriteEndpoint;
   final String appwriteProjectId;
-  final String appwriteProjectName;
   final String appwriteDatabaseId;
   final String usersCollectionId;
   final String categoryDefinitionsCollectionId;
@@ -54,7 +45,6 @@ class EnvConfig extends Equatable {
   final String dailyLogItemsCollectionId;
   final String subscriptionsCollectionId;
   final String analyticsEventsCollectionId;
-  final String educationalContentCollectionId;
   final String gamificationProfilesCollectionId;
   final String gamificationEventsCollectionId;
 
@@ -67,19 +57,12 @@ class EnvConfig extends Equatable {
   /// heuristic fallback in the Flutter client.
   final String aiCoachFunctionId;
 
-  /// Optional audit collection for AI coach invocations.
-  final String aiInteractionsCollectionId;
   final String widgetAppGroupId;
   final String revenueCatAndroidApiKey;
   final String revenueCatIosApiKey;
   final String revenueCatEntitlementId;
   final String revenueCatOfferingId;
-  final String avatarsBucketId;
-  final String userUploadsBucketId;
-  final String contentAssetsBucketId;
   final bool allowSelfSigned;
-  final String revenueCatApiKeyIos;
-  final String revenueCatApiKeyAndroid;
   final String sentryDsn;
   final String sentryEnvironment;
 
@@ -92,7 +75,6 @@ class EnvConfig extends Equatable {
         'https://nyc.cloud.appwrite.io/v1',
       ),
       appwriteProjectId: _str('APPWRITE_PROJECT_ID', '6a53570100147968d1f6'),
-      appwriteProjectName: _str('APPWRITE_PROJECT_NAME', 'Stay Alive'),
       appwriteDatabaseId: _str('APPWRITE_DATABASE_ID', 'stay_alive_v1'),
       usersCollectionId: _str('APPWRITE_USERS_COLLECTION_ID', 'users'),
       categoryDefinitionsCollectionId: _str(
@@ -115,10 +97,6 @@ class EnvConfig extends Equatable {
         'APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID',
         'analytics_events',
       ),
-      educationalContentCollectionId: _str(
-        'APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID',
-        'educational_content',
-      ),
       gamificationProfilesCollectionId: _str(
         'APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID',
         'gamification_profiles',
@@ -129,10 +107,6 @@ class EnvConfig extends Equatable {
       ),
       deleteUserFunctionId: _str('APPWRITE_DELETE_USER_FUNCTION_ID', ''),
       aiCoachFunctionId: _str('APPWRITE_AI_COACH_FUNCTION_ID', ''),
-      aiInteractionsCollectionId: _str(
-        'APPWRITE_AI_INTERACTIONS_COLLECTION_ID',
-        'ai_interactions',
-      ),
       widgetAppGroupId: _str(
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.gaussdev.stayalive',
@@ -150,18 +124,7 @@ class EnvConfig extends Equatable {
         'Stay Alive Pro',
       ),
       revenueCatOfferingId: _str('REVENUECAT_OFFERING_ID', 'default'),
-      avatarsBucketId: _str('APPWRITE_AVATARS_BUCKET_ID', 'avatars'),
-      userUploadsBucketId: _str(
-        'APPWRITE_USER_UPLOADS_BUCKET_ID',
-        'user_uploads',
-      ),
-      contentAssetsBucketId: _str(
-        'APPWRITE_CONTENT_ASSETS_BUCKET_ID',
-        'content_assets',
-      ),
       allowSelfSigned: _bool('APPWRITE_SELF_SIGNED', false),
-      revenueCatApiKeyIos: _str('REVENUECAT_API_KEY_IOS', ''),
-      revenueCatApiKeyAndroid: _str('REVENUECAT_API_KEY_ANDROID', ''),
       sentryDsn: _str('SENTRY_DSN', ''),
       sentryEnvironment: _str('SENTRY_ENVIRONMENT', flavor.name),
     );
@@ -197,35 +160,27 @@ class EnvConfig extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-    appFlavor,
-    appwriteEndpoint,
-    appwriteProjectId,
-    appwriteProjectName,
-    appwriteDatabaseId,
-    usersCollectionId,
-    categoryDefinitionsCollectionId,
-    dailyLogsCollectionId,
-    dailyLogItemsCollectionId,
-    subscriptionsCollectionId,
-    analyticsEventsCollectionId,
-    educationalContentCollectionId,
-    gamificationProfilesCollectionId,
-    gamificationEventsCollectionId,
-    deleteUserFunctionId,
-    aiCoachFunctionId,
-    aiInteractionsCollectionId,
-    widgetAppGroupId,
-    revenueCatAndroidApiKey,
-    revenueCatIosApiKey,
-    revenueCatEntitlementId,
-    revenueCatOfferingId,
-    avatarsBucketId,
-    userUploadsBucketId,
-    contentAssetsBucketId,
-    allowSelfSigned,
-    revenueCatApiKeyIos,
-    revenueCatApiKeyAndroid,
-    sentryDsn,
-    sentryEnvironment,
-  ];
+        appFlavor,
+        appwriteEndpoint,
+        appwriteProjectId,
+        appwriteDatabaseId,
+        usersCollectionId,
+        categoryDefinitionsCollectionId,
+        dailyLogsCollectionId,
+        dailyLogItemsCollectionId,
+        subscriptionsCollectionId,
+        analyticsEventsCollectionId,
+        gamificationProfilesCollectionId,
+        gamificationEventsCollectionId,
+        deleteUserFunctionId,
+        aiCoachFunctionId,
+        widgetAppGroupId,
+        revenueCatAndroidApiKey,
+        revenueCatIosApiKey,
+        revenueCatEntitlementId,
+        revenueCatOfferingId,
+        allowSelfSigned,
+        sentryDsn,
+        sentryEnvironment,
+      ];
 }

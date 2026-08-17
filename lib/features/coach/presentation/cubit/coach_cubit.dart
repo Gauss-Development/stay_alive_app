@@ -108,7 +108,6 @@ class CoachCubit extends Cubit<CoachState> {
                 role: 'assistant',
                 text: response.message,
                 createdAt: DateTime.now().toUtc(),
-                suggestedActions: response.suggestedActions,
               ),
             ],
             clearError: true,

@@ -4,7 +4,6 @@ import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/logger/logger_service.dart';
-import 'package:stay_alive/core/network/network_service.dart';
 import 'package:stay_alive/core/services/appwrite_client_provider.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -86,7 +85,6 @@ void _registerCore() {
   sl
     ..registerLazySingleton<EnvConfig>(() => EnvConfig.fromEnv(sl<AppFlavor>()))
     ..registerLazySingleton<AppLogger>(() => const LoggerService())
-    ..registerLazySingleton<NetworkService>(() => const DefaultNetworkService())
     ..registerLazySingleton<Client>(
       () => AppwriteClientProvider(sl<EnvConfig>()).build(),
     )

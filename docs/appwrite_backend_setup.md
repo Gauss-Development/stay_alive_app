@@ -162,8 +162,8 @@ Legacy database `69de1ac5002830be7040` is deprecated; do not point the app at it
 
 - `subscription_sync` for provider webhook handling
 - `analytics_normalizer` for event normalization/enrichment
-- `daily_rollup` for streak/summary denormalization
 - `ai_coach` for LLM coach proxy (`functions/ai_coach`) — set `APPWRITE_AI_COACH_FUNCTION_ID` and optional `OPENAI_API_KEY`
+- `delete_user` for store-compliant account deletion
 
 ## 7) Reproducible Setup Script
 

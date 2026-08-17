@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/foundation.dart';
 import 'package:rive/rive.dart';
 
@@ -16,6 +18,12 @@ abstract final class RiveBootstrap {
       return _available;
     }
     _attempted = true;
+
+    // Widget tests run without the native rive_native dylib.
+    if (!kIsWeb && Platform.environment.containsKey('FLUTTER_TEST')) {
+      _available = false;
+      return false;
+    }
 
     try {
       _available = await RiveNative.init();

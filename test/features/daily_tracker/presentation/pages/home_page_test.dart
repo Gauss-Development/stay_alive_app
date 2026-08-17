@@ -12,6 +12,9 @@ import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item
 import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
+import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/category_mastery.dart';
@@ -39,6 +42,8 @@ class _MockSubscriptionCubit extends MockCubit<SubscriptionState>
 class _MockUserProfileCubit extends MockCubit<UserProfileState>
     implements UserProfileCubit {}
 
+class _MockCoachCubit extends MockCubit<CoachState> implements CoachCubit {}
+
 class _FakeHomeWidgetGateway extends Fake implements HomeWidgetGateway {}
 
 class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
@@ -48,7 +53,6 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
           appFlavor: AppFlavor.development,
           appwriteEndpoint: '',
           appwriteProjectId: '',
-          appwriteProjectName: '',
           appwriteDatabaseId: '',
           usersCollectionId: '',
           categoryDefinitionsCollectionId: '',
@@ -56,21 +60,16 @@ class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
           dailyLogItemsCollectionId: '',
           subscriptionsCollectionId: '',
           analyticsEventsCollectionId: '',
-          educationalContentCollectionId: '',
           gamificationProfilesCollectionId: '',
           gamificationEventsCollectionId: '',
           deleteUserFunctionId: '',
+          aiCoachFunctionId: '',
           widgetAppGroupId: '',
           revenueCatAndroidApiKey: '',
           revenueCatIosApiKey: '',
           revenueCatEntitlementId: 'premium',
           revenueCatOfferingId: 'default',
-          avatarsBucketId: '',
-          userUploadsBucketId: '',
-          contentAssetsBucketId: '',
           allowSelfSigned: false,
-          revenueCatApiKeyIos: '',
-          revenueCatApiKeyAndroid: '',
           sentryDsn: '',
           sentryEnvironment: 'test',
         ),
@@ -89,6 +88,7 @@ void main() {
   late _MockGamificationCubit gamificationCubit;
   late _MockSubscriptionCubit subscriptionCubit;
   late _MockUserProfileCubit userProfileCubit;
+  late _MockCoachCubit coachCubit;
   late _FakeDailyGoalWidgetService dailyGoalWidgetService;
   late DailyTrackerState loadedState;
 
@@ -105,6 +105,18 @@ void main() {
         isFullyCompleted: false,
       ),
     );
+    registerFallbackValue(
+      const CoachContextPayload(
+        level: 1,
+        levelTitle: 'Seedling',
+        streak: 0,
+        activityStreak: 0,
+        todayCompleted: 0,
+        todayTarget: 24,
+        incompleteCategories: <String>[],
+        wilting: false,
+      ),
+    );
   });
 
   setUp(() {
@@ -112,6 +124,7 @@ void main() {
     gamificationCubit = _MockGamificationCubit();
     subscriptionCubit = _MockSubscriptionCubit();
     userProfileCubit = _MockUserProfileCubit();
+    coachCubit = _MockCoachCubit();
     dailyGoalWidgetService = _FakeDailyGoalWidgetService();
     final DateTime now = DateTime.parse('2026-04-09T00:00:00Z');
     const TrackerCategory category = TrackerCategory(
@@ -219,7 +232,18 @@ void main() {
       Stream<UserProfileState>.value(const UserProfileInitial()),
       initialState: const UserProfileInitial(),
     );
+    whenListen<CoachState>(
+      coachCubit,
+      Stream<CoachState>.value(const CoachInitial()),
+      initialState: const CoachInitial(),
+    );
     when(() => userProfileCubit.load()).thenAnswer((_) async {});
+    when(
+      () => coachCubit.requestNudge(
+        context: any(named: 'context'),
+        isPremium: any(named: 'isPremium'),
+      ),
+    ).thenAnswer((_) async {});
     when(
       () => gamificationCubit.load(isPremium: any(named: 'isPremium')),
     ).thenAnswer((_) async {});
@@ -242,6 +266,7 @@ void main() {
           BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
           BlocProvider<GamificationCubit>.value(value: gamificationCubit),
           BlocProvider<UserProfileCubit>.value(value: userProfileCubit),
+          BlocProvider<CoachCubit>.value(value: coachCubit),
         ],
         child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
       ),

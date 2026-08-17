@@ -10,7 +10,6 @@ or claim medical outcomes. Reply in the user's language (default Russian).
 Always return STRICT JSON:
 {
   "message": string,
-  "suggestedActions": string[],
   "insightCards": [{"title": string, "body": string, "emphasis"?: string}],
   "challengeDraft"?: {
     "title": string,

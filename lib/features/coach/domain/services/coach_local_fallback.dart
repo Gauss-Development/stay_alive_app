@@ -22,7 +22,6 @@ abstract final class CoachLocalFallback {
         message:
             'Росток слегка вянет — даже одна порция сегодня поддержит серию '
             '(сейчас ${context.streak} дн.).',
-        suggestedActions: context.incompleteCategories.take(2).toList(),
         fromFallback: true,
       );
     }
@@ -32,7 +31,6 @@ abstract final class CoachLocalFallback {
         message:
             'Отличный прогресс: ${context.todayCompleted}/${context.todayTarget}. '
             'Следующий шаг — $next.',
-        suggestedActions: <String>[next],
         fromFallback: true,
       );
     }
@@ -50,7 +48,6 @@ abstract final class CoachLocalFallback {
             'Я коуч «Ростка». Спроси, что добрать сегодня, или как удержать '
             'серию ${context.streak} дн. Я не ставлю диагнозов — только мотивацию '
             'по Daily Dozen.',
-        suggestedActions: context.incompleteCategories.take(3).toList(),
         fromFallback: true,
       );
     }
@@ -60,7 +57,6 @@ abstract final class CoachLocalFallback {
             'По твоим логам не хватает: ${context.incompleteCategories.join(', ')}. '
             'Выбери одну категорию и отметь порцию — маленькие шаги копят уровень '
             '${context.levelTitle}.',
-        suggestedActions: context.incompleteCategories.take(3).toList(),
         fromFallback: true,
       );
     }
@@ -124,7 +120,6 @@ abstract final class CoachLocalFallback {
       message:
           'Категория «$id» — часть Daily Dozen. Добавляй порции постепенно, '
           'без жёстких диетических правил. Это привычка, не лечение.',
-      suggestedActions: <String>[id],
       fromFallback: true,
     );
   }
