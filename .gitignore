@@ -54,3 +54,6 @@ app.*.map.json
 
 # Release-build secrets (RevenueCat, Sentry, etc.)
 /scripts/release.env
+
+# Claude Code session worktrees — never commit
+.claude/worktrees/
