@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite_models;
+import 'package:collection/collection.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
@@ -53,6 +54,13 @@ class AppwriteGamificationRemoteDataSource
 
   static const int _fullReconcileDayWindow = 365;
   static const int _todayReconcileDayWindow = 45;
+
+  /// Rows fetched per request while paging. Appwrite imposes no hard ceiling,
+  /// but large pages degrade list performance.
+  static const int _pageSize = 100;
+
+  /// Log IDs per `Query.equal` filter — Appwrite caps values in one query.
+  static const int _idsPerQuery = 100;
 
   @override
   Future<GamificationOverviewModel> reconcileOverview({
@@ -252,6 +260,36 @@ class AppwriteGamificationRemoteDataSource
         .toList(growable: false);
   }
 
+  /// Pages through every document matching [queries], following the cursor
+  /// until a short page ends the scan.
+  ///
+  /// A bare `Query.limit(n)` silently truncates once the match count passes
+  /// `n`, and without an explicit sort the rows that survive are the oldest —
+  /// so the newest data is what goes missing. Paging has no such ceiling.
+  Future<List<appwrite_models.Document>> _listAllDocuments({
+    required String collectionId,
+    required List<String> queries,
+  }) async {
+    final List<appwrite_models.Document> all = <appwrite_models.Document>[];
+    String? cursor;
+    while (true) {
+      final appwrite_models.DocumentList page = await _databases.listDocuments(
+        databaseId: _envConfig.appwriteDatabaseId,
+        collectionId: collectionId,
+        queries: <String>[
+          ...queries,
+          Query.limit(_pageSize),
+          if (cursor != null) Query.cursorAfter(cursor),
+        ],
+      );
+      all.addAll(page.documents);
+      if (page.documents.length < _pageSize) {
+        return all;
+      }
+      cursor = page.documents.last.$id;
+    }
+  }
+
   Future<Map<String, List<DailyLogItemModel>>> _loadItemsByLogIds(
     String userId,
     List<String> logIds,
@@ -260,16 +298,34 @@ class AppwriteGamificationRemoteDataSource
       return const <String, List<DailyLogItemModel>>{};
     }
 
-    final appwrite_models.DocumentList itemDocuments = await _databases
-        .listDocuments(
-          databaseId: _envConfig.appwriteDatabaseId,
+    // Filter server-side, chunked because `Query.equal` caps how many values
+    // one query may carry. The previous `Query.limit(5000)` was unfiltered: it
+    // pulled the entire collection and, with no ordering, dropped the newest
+    // rows once a user passed 5000 items (~14 months at 12 categories/day).
+    final List<List<appwrite_models.Document>> chunkResults = await Future.wait(
+      logIds.slices(_idsPerQuery).map((List<String> chunk) {
+        return _listAllDocuments(
           collectionId: _envConfig.dailyLogItemsCollectionId,
-          queries: <String>[Query.limit(5000)],
+          queries: <String>[Query.equal('log_document_id', chunk)],
         );
+      }),
+    );
+    List<appwrite_models.Document> documents = chunkResults
+        .expand((List<appwrite_models.Document> chunk) => chunk)
+        .toList(growable: false);
+
+    // Legacy rows predate the `log_document_id` attribute and are matched by
+    // document-ID prefix instead, so they can only be found by a full scan.
+    if (documents.isEmpty) {
+      documents = await _listAllDocuments(
+        collectionId: _envConfig.dailyLogItemsCollectionId,
+        queries: const <String>[],
+      );
+    }
 
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         <String, List<DailyLogItemModel>>{};
-    for (final appwrite_models.Document document in itemDocuments.documents) {
+    for (final appwrite_models.Document document in documents) {
       final String? logDocumentIdFromData = document.data['log_document_id']
           ?.toString();
       String? matchedLogId;
