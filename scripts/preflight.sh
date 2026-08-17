@@ -36,6 +36,17 @@ else
   pass "Legal URLs point at a real host"
 fi
 
+# --- Legal document content (GAU-315) -----------------------------------
+# Hosting is pointless while the text still has unfilled placeholders — a
+# published policy reading "Оператор: {{COMPANY}}" is worse than none.
+if grep -rq '{{' docs/legal/; then
+  UNFILLED=$(grep -rhoE '\{\{[A-Z_]+\}\}' docs/legal/ | sort -u | tr '\n' ' ')
+  fail "Legal documents still contain placeholders" \
+       "docs/legal/ has unfilled: ${UNFILLED}— and both drafts are marked as needing legal review."
+else
+  pass "Legal documents have no unfilled placeholders"
+fi
+
 # --- Android signing (GAU-305) ------------------------------------------
 # Without key.properties the release build silently falls back to the debug
 # keystore, producing an artifact the Play Console will reject.
