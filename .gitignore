@@ -54,3 +54,6 @@ app.*.map.json
 
 # Release-build secrets (RevenueCat, Sentry, etc.)
 /scripts/release.env
+
+# Local tooling — untracked on purpose. Kept on disk, not shared via git.
+/scripts/
