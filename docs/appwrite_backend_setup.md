@@ -28,8 +28,8 @@ Run the idempotent auth setup script after creating a project API key with
 `project.write` scope:
 
 ```bash
-export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
-export APPWRITE_PROJECT_ID="69de16de001dfb5c1e5d"
+export APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="6a53570100147968d1f6"
 export APPWRITE_API_KEY="<API_KEY_WITH_PROJECT_WRITE_SCOPE>"
 python3 scripts/appwrite_auth_setup.py
 ```
@@ -42,11 +42,22 @@ client credentials.
 
 ### Appwrite MCP (Cursor)
 
-To use the Appwrite API MCP server in Cursor, configure these env vars in
-**Cursor Settings → MCP → appwrite-api** (not the placeholder defaults):
+Project-level config: [`.cursor/mcp.json`](.cursor/mcp.json) uses hosted OAuth:
 
-- `APPWRITE_ENDPOINT=https://sfo.cloud.appwrite.io/v1`
-- `APPWRITE_PROJECT_ID=69de16de001dfb5c1e5d`
+```json
+{
+  "mcpServers": {
+    "appwrite": {
+      "url": "https://mcp.appwrite.io/mcp"
+    }
+  }
+}
+```
+
+Alternatively, use stdio + API key in **Cursor Settings → MCP** (remove legacy `--users` flag):
+
+- `APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1`
+- `APPWRITE_PROJECT_ID=6a53570100147968d1f6`
 - `APPWRITE_API_KEY=<your project API key>`
 
 Flutter client uses:
@@ -80,102 +91,53 @@ the app and require an active RevenueCat `premium` entitlement.
 
 ## 3) Database Plan
 
-Database ID: `69de1ac5002830be7040` (Stay Alive project default)
+Database ID: `stay_alive_v1` (canonical Stay Alive database in project `6a53570100147968d1f6`)
+
+Design: document id is the natural key where possible; row-level permissions enforce ownership (no redundant `user_id` on user-owned collections).
 
 Collections:
 
-1. `users`
-   - `user_id` (string, required, unique)
+1. `users` — document id = Auth user id
    - `email` (string, required, indexed)
-   - `display_name` (string, required)
+   - `name` (string, required)
    - `avatar_url` (string, optional)
-   - `onboarding_completed` (bool, required, default false)
-   - `units_preference` (string, required, default `metric`)
-   - `locale` (string, required, default `en`)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+   - `onboarding_completed` (bool, default false)
+   - `units_preference` (string, default `metric`)
+   - `locale` (string, default `en`)
+   - profile fields (`age`, `gender`, `preferred_diet`, `height_cm`, `weight_kg`)
+   - `created_at`, `updated_at` (datetime)
 
-2. `category_definitions`
-   - `category_id` (string, required, unique)
-   - `title` (string)
-   - `description` (string)
-   - `icon_key` (string)
-   - `target_count` (int)
-   - `display_order` (int)
-   - `is_active` (bool)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+2. `category_definitions` — document id = category slug
+   - `category_id`, `title`, `description`, `icon_key`, `target_count`, `display_order`, `is_active`, timestamps
 
-3. `daily_logs`
-   - `log_id` (string, required, unique)
-   - `user_id` (string, indexed)
+3. `daily_logs` — document id = `{userId}_{yyyy-MM-dd}`
    - `log_date` (string `yyyy-MM-dd`, indexed)
-   - `completion_percentage` (double)
-   - `total_completed` (int)
-   - `total_target` (int)
-   - `is_fully_completed` (bool)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+   - `completion_percentage`, `total_completed`, `total_target`, `is_fully_completed`
+   - `created_at`, `updated_at`
 
-4. `daily_log_items`
-   - `item_id` (string, required, unique)
-   - `log_id` (string, indexed)
-   - `user_id` (string, indexed)
-   - `category_id` (string, indexed)
-   - `completed_count` (int)
-   - `target_count` (int)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+4. `daily_log_items` — document id = `{logDocId}_{categoryId}`
+   - `category_id`, `category_title`, `description`, `icon_key`, `target_count`, `display_order`, `is_active`
+   - `completed_count`, `created_at`, `updated_at`
 
-5. `subscriptions`
-   - `subscription_id` (string, required, unique)
-   - `user_id` (string, indexed)
-   - `plan` (string)
-   - `status` (string)
-   - `expires_at` (datetime, optional)
-   - `provider` (string)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+5. `subscriptions` — document id = subscription id
+   - `plan`, `status`, `expires_at`, `provider`, timestamps
 
-6. `analytics_events`
-   - `event_id` (string, required, unique)
-   - `user_id` (string, optional/indexed)
-   - `event_name` (string, indexed)
-   - `screen_name` (string, optional/indexed)
-   - `metadata_json` (string/text)
-   - `created_at` (datetime, indexed)
+6. `analytics_events` — document id = auto-generated
+   - `event_name`, `screen_name`, `metadata_json`, `created_at`
 
-7. `educational_content`
-   - `content_id` (string, required, unique)
-   - `category_id` (string, indexed)
-   - `title` (string)
-   - `short_description` (string)
-   - `body` (text)
-   - `language_code` (string, default `en`)
-   - `is_published` (bool)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+7. `educational_content` — document id = content id
+   - `content_id`, `category_id`, `title`, `short_description`, `body`, `language_code`, `is_published`, timestamps
 
-8. `gamification_profiles`
-   - `user_id` (string, required, unique)
-   - `xp` (int)
-   - `level` (int)
-   - `current_streak` (int)
-   - `best_streak` (int)
-   - `completed_days` (int)
-   - `last_completed_date` (string, optional)
-   - `badges` (string array)
-   - `created_at` (datetime)
-   - `updated_at` (datetime)
+8. `gamification_profiles` — document id = user id
+   - `xp`, `level`, streak/badge fields, `created_at`, `updated_at`
 
-9. `gamification_events`
-   - `event_id` (string, required, unique)
-   - `user_id` (string, indexed)
-   - `event_type` (string, indexed)
-   - `xp_delta` (int)
-   - `log_date` (string, optional/indexed)
-   - `metadata_json` (string/text)
-   - `created_at` (datetime, indexed)
+9. `gamification_events` — document id = auto-generated
+   - `event_type`, `xp_delta`, `log_date`, `metadata_json`, `created_at`
+
+10. `ai_interactions` — document id = auto-generated (AI coach audit)
+   - `user_id`, `mode`, `from_fallback`, `created_at`
+
+Legacy database `69de1ac5002830be7040` is deprecated; do not point the app at it.
 
 ## 4) Permissions Plan
 
@@ -200,18 +162,20 @@ Collections:
 
 - `subscription_sync` for provider webhook handling
 - `analytics_normalizer` for event normalization/enrichment
-- `daily_rollup` for streak/summary denormalization
+- `ai_coach` for LLM coach proxy (`functions/ai_coach`) — set `APPWRITE_AI_COACH_FUNCTION_ID` and optional `OPENAI_API_KEY`
+- `delete_user` for store-compliant account deletion
 
 ## 7) Reproducible Setup Script
 
 The repository includes an idempotent provisioning script that uses the Appwrite REST API directly. The Appwrite CLI is not required.
 
 ```bash
-export APPWRITE_ENDPOINT="https://sfo.cloud.appwrite.io/v1"
-export APPWRITE_PROJECT_ID="69de16de001dfb5c1e5d"
+export APPWRITE_ENDPOINT="https://nyc.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="6a53570100147968d1f6"
+export APPWRITE_DATABASE_ID="stay_alive_v1"
 export APPWRITE_API_KEY="<API_KEY_WITH_DATABASE_AND_STORAGE_SCOPES>"
-python3 scripts/appwrite_provision.py
-python3 scripts/appwrite_auth_setup.py
+./scripts/provision_fresh_db.sh
+python3 scripts/appwrite_verify.py
 ```
 
 Run the script a second time to verify idempotency:

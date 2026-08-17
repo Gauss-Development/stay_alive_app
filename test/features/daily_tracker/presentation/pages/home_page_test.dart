@@ -12,6 +12,9 @@ import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item
 import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_state.dart';
+import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_state.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/pages/home_page.dart';
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/category_mastery.dart';
@@ -24,6 +27,8 @@ import 'package:stay_alive/features/gamification/presentation/cubit/gamification
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_state.dart';
+import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
+import 'package:stay_alive/features/user/presentation/cubit/user_profile_state.dart';
 
 class _MockDailyTrackerCubit extends MockCubit<DailyTrackerState>
     implements DailyTrackerCubit {}
@@ -34,42 +39,42 @@ class _MockGamificationCubit extends MockCubit<GamificationState>
 class _MockSubscriptionCubit extends MockCubit<SubscriptionState>
     implements SubscriptionCubit {}
 
+class _MockUserProfileCubit extends MockCubit<UserProfileState>
+    implements UserProfileCubit {}
+
+class _MockCoachCubit extends MockCubit<CoachState> implements CoachCubit {}
+
 class _FakeHomeWidgetGateway extends Fake implements HomeWidgetGateway {}
 
 class _FakeDailyGoalWidgetService extends DailyGoalWidgetService {
   _FakeDailyGoalWidgetService()
-      : super(
-          envConfig: const EnvConfig(
-            appFlavor: AppFlavor.development,
-            appwriteEndpoint: '',
-            appwriteProjectId: '',
-            appwriteProjectName: '',
-            appwriteDatabaseId: '',
-            usersCollectionId: '',
-            categoryDefinitionsCollectionId: '',
-            dailyLogsCollectionId: '',
-            dailyLogItemsCollectionId: '',
-            subscriptionsCollectionId: '',
-            analyticsEventsCollectionId: '',
-            educationalContentCollectionId: '',
-            gamificationProfilesCollectionId: '',
-            gamificationEventsCollectionId: '',
-            widgetAppGroupId: '',
-            revenueCatAndroidApiKey: '',
-            revenueCatIosApiKey: '',
-            revenueCatEntitlementId: 'premium',
-            revenueCatOfferingId: 'default',
-            avatarsBucketId: '',
-            userUploadsBucketId: '',
-            contentAssetsBucketId: '',
-            allowSelfSigned: false,
-            revenueCatApiKeyIos: '',
-            revenueCatApiKeyAndroid: '',
-            sentryDsn: '',
-            sentryEnvironment: 'test',
-          ),
-          gateway: _FakeHomeWidgetGateway(),
-        );
+    : super(
+        envConfig: const EnvConfig(
+          appFlavor: AppFlavor.development,
+          appwriteEndpoint: '',
+          appwriteProjectId: '',
+          appwriteDatabaseId: '',
+          usersCollectionId: '',
+          categoryDefinitionsCollectionId: '',
+          dailyLogsCollectionId: '',
+          dailyLogItemsCollectionId: '',
+          subscriptionsCollectionId: '',
+          analyticsEventsCollectionId: '',
+          gamificationProfilesCollectionId: '',
+          gamificationEventsCollectionId: '',
+          deleteUserFunctionId: '',
+          aiCoachFunctionId: '',
+          widgetAppGroupId: '',
+          revenueCatAndroidApiKey: '',
+          revenueCatIosApiKey: '',
+          revenueCatEntitlementId: 'premium',
+          revenueCatOfferingId: 'default',
+          allowSelfSigned: false,
+          sentryDsn: '',
+          sentryEnvironment: 'test',
+        ),
+        gateway: _FakeHomeWidgetGateway(),
+      );
 
   @override
   Future<void> updateDailyGoal({
@@ -82,6 +87,8 @@ void main() {
   late _MockDailyTrackerCubit cubit;
   late _MockGamificationCubit gamificationCubit;
   late _MockSubscriptionCubit subscriptionCubit;
+  late _MockUserProfileCubit userProfileCubit;
+  late _MockCoachCubit coachCubit;
   late _FakeDailyGoalWidgetService dailyGoalWidgetService;
   late DailyTrackerState loadedState;
 
@@ -98,12 +105,26 @@ void main() {
         isFullyCompleted: false,
       ),
     );
+    registerFallbackValue(
+      const CoachContextPayload(
+        level: 1,
+        levelTitle: 'Seedling',
+        streak: 0,
+        activityStreak: 0,
+        todayCompleted: 0,
+        todayTarget: 24,
+        incompleteCategories: <String>[],
+        wilting: false,
+      ),
+    );
   });
 
   setUp(() {
     cubit = _MockDailyTrackerCubit();
     gamificationCubit = _MockGamificationCubit();
     subscriptionCubit = _MockSubscriptionCubit();
+    userProfileCubit = _MockUserProfileCubit();
+    coachCubit = _MockCoachCubit();
     dailyGoalWidgetService = _FakeDailyGoalWidgetService();
     final DateTime now = DateTime.parse('2026-04-09T00:00:00Z');
     const TrackerCategory category = TrackerCategory(
@@ -206,29 +227,48 @@ void main() {
       Stream<SubscriptionState>.value(const SubscriptionState.initial()),
       initialState: const SubscriptionState.initial(),
     );
-    when(() => gamificationCubit.load(isPremium: any(named: 'isPremium')))
-        .thenAnswer((_) async {});
+    whenListen<UserProfileState>(
+      userProfileCubit,
+      Stream<UserProfileState>.value(const UserProfileInitial()),
+      initialState: const UserProfileInitial(),
+    );
+    whenListen<CoachState>(
+      coachCubit,
+      Stream<CoachState>.value(const CoachInitial()),
+      initialState: const CoachInitial(),
+    );
+    when(() => userProfileCubit.load()).thenAnswer((_) async {});
+    when(
+      () => coachCubit.requestNudge(
+        context: any(named: 'context'),
+        isPremium: any(named: 'isPremium'),
+      ),
+    ).thenAnswer((_) async {});
+    when(
+      () => gamificationCubit.load(isPremium: any(named: 'isPremium')),
+    ).thenAnswer((_) async {});
     when(
       () => gamificationCubit.refreshToday(
         todayLog: any(named: 'todayLog'),
         isPremium: any(named: 'isPremium'),
       ),
     ).thenAnswer((_) async {});
-    when(() => gamificationCubit.refresh(isPremium: any(named: 'isPremium')))
-        .thenAnswer((_) async {});
+    when(
+      () => gamificationCubit.refresh(isPremium: any(named: 'isPremium')),
+    ).thenAnswer((_) async {});
   });
 
   Widget buildWidget() {
     return MaterialApp(
-      home: BlocProvider<DailyTrackerCubit>.value(
-        value: cubit,
-        child: BlocProvider<SubscriptionCubit>.value(
-          value: subscriptionCubit,
-          child: BlocProvider<GamificationCubit>.value(
-            value: gamificationCubit,
-            child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
-          ),
-        ),
+      home: MultiBlocProvider(
+        providers: <BlocProvider<dynamic>>[
+          BlocProvider<DailyTrackerCubit>.value(value: cubit),
+          BlocProvider<SubscriptionCubit>.value(value: subscriptionCubit),
+          BlocProvider<GamificationCubit>.value(value: gamificationCubit),
+          BlocProvider<UserProfileCubit>.value(value: userProfileCubit),
+          BlocProvider<CoachCubit>.value(value: coachCubit),
+        ],
+        child: HomePage(dailyGoalWidgetService: dailyGoalWidgetService),
       ),
     );
   }
@@ -240,7 +280,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final Finder checklistHeading = find.text('What did you eat today?');
+    final Finder checklistHeading = find.text('Съедено сегодня');
     await tester.scrollUntilVisible(
       checklistHeading,
       120,
@@ -251,7 +291,7 @@ void main() {
     expect(checklistHeading, findsOneWidget);
     expect(find.text('Beans / Legumes'), findsOneWidget);
     expect(
-      find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)'),
+      find.bySemanticsLabel('Добавить порцию: Beans / Legumes (1 из 3)'),
       findsOneWidget,
     );
   });
@@ -263,8 +303,9 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final Finder incrementButton =
-        find.bySemanticsLabel('Add Beans / Legumes serving (1 of 3)');
+    final Finder incrementButton = find.bySemanticsLabel(
+      'Добавить порцию: Beans / Legumes (1 из 3)',
+    );
     await tester.scrollUntilVisible(
       incrementButton,
       120,

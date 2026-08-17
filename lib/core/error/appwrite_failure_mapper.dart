@@ -9,7 +9,9 @@ Failure mapExceptionToFailure(Object exception) {
   }
 
   if (exception is SocketException) {
-    return const NetworkFailure('Unable to reach server. Please check your internet connection.');
+    return const NetworkFailure(
+      'Unable to reach server. Please check your internet connection.',
+    );
   }
 
   return UnknownFailure(exception.toString());

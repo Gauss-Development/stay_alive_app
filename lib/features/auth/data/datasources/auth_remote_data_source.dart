@@ -45,15 +45,18 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   AppwriteAuthRemoteDataSource({
     required Account account,
     required Databases databases,
+    required Functions functions,
     required EnvConfig envConfig,
     required AppLogger logger,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig,
-        _logger = logger;
+  }) : _account = account,
+       _databases = databases,
+       _functions = functions,
+       _envConfig = envConfig,
+       _logger = logger;
 
   final Account _account;
   final Databases _databases;
+  final Functions _functions;
   final EnvConfig _envConfig;
   final AppLogger _logger;
 
@@ -64,10 +67,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   }) async {
     await _deleteCurrentSessionIfActive();
     final appwrite_models.Session session = await _account
-        .createEmailPasswordSession(
-      email: email,
-      password: password,
-    );
+        .createEmailPasswordSession(email: email, password: password);
     _logger.info(
       'Logged in with email',
       data: <String, Object?>{'email': email},
@@ -95,10 +95,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       data: <String, Object?>{'email': email},
     );
 
-    await _createEmailPasswordSessionIfNeeded(
-      email: email,
-      password: password,
-    );
+    await _createEmailPasswordSessionIfNeeded(email: email, password: password);
 
     final appwrite_models.User user = await _account.get();
     final AuthUserModel authUser = AuthUserModel.fromAppwrite(user);
@@ -136,8 +133,16 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   @override
   Future<AuthUserModel> getCurrentUser() async {
     final appwrite_models.User user = await _account.get();
-    await _ensureUserDocument(AuthUserModel.fromAppwrite(user));
-    return AuthUserModel.fromAppwrite(user);
+    final AuthUserModel authUser = AuthUserModel.fromAppwrite(user);
+    try {
+      await _ensureUserDocument(authUser);
+    } on AppwriteException catch (exception) {
+      _logger.warning(
+        'Continuing without users collection profile document',
+        data: <String, Object?>{'reason': exception.message},
+      );
+    }
+    return authUser;
   }
 
   @override
@@ -218,7 +223,10 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       _envConfig.gamificationEventsCollectionId,
     ];
     for (final String collectionId in collectionsByUserId) {
-      await _deleteDocumentsByUserId(collectionId: collectionId, userId: userId);
+      await _deleteDocumentsByUserId(
+        collectionId: collectionId,
+        userId: userId,
+      );
     }
 
     await _deleteDocumentIfExists(
@@ -226,24 +234,108 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
       documentId: userId,
     );
 
-    await _account.deleteSessions();
+    // Delete the Appwrite auth record itself. The client SDK cannot delete its
+    // own user, so this runs a server-side Function that reads the caller id
+    // from the authenticated execution context. Must happen while the session
+    // is still active, otherwise the execution has no identity.
+    await _deleteAuthRecord(userId);
+
+    // Clear local session state. The auth record (and its sessions) may already
+    // be gone from the server function, so a 401 here is expected and harmless.
+    try {
+      await _account.deleteSessions();
+    } on AppwriteException catch (exception) {
+      if (exception.code != 401) {
+        rethrow;
+      }
+    }
+  }
+
+  /// Runs the `delete_user` Appwrite Function to remove the caller's auth
+  /// record. The function derives the user id from the session context, so a
+  /// session can only ever delete its own account.
+  ///
+  /// Best-effort: the user's documents are already deleted by the time this
+  /// runs, so a failure here must NOT abort account deletion — that would leave
+  /// the user signed in with their data gone. Failures are logged (→ Sentry) so
+  /// a stale auth record can be reconciled server-side; the caller still clears
+  /// the session and signs the user out.
+  Future<void> _deleteAuthRecord(String userId) async {
+    final String functionId = _envConfig.deleteUserFunctionId;
+    if (functionId.isEmpty) {
+      _logger.warning(
+        'APPWRITE_DELETE_USER_FUNCTION_ID not set — auth record NOT deleted; '
+        'only documents and sessions were cleared. Deploy functions/delete_user '
+        'and set the id before store release (account-deletion compliance).',
+        data: <String, Object?>{'userId': userId},
+      );
+      return;
+    }
+
+    final appwrite_models.Execution execution = await _functions.createExecution(
+      functionId: functionId,
+      xasync: false,
+    );
+    final bool ok =
+        execution.status == 'completed' &&
+        execution.responseStatusCode >= 200 &&
+        execution.responseStatusCode < 300;
+    if (!ok) {
+      // Do not throw: documents are already gone, so we must still clear the
+      // session and sign the user out. Log for server-side reconciliation.
+      _logger.error(
+        'Server-side auth-record deletion failed; auth record may be orphaned',
+        error:
+            'status=${execution.status} code=${execution.responseStatusCode} '
+            'errors=${execution.errors}',
+        data: <String, Object?>{'userId': userId},
+      );
+      return;
+    }
+    _logger.info(
+      'Deleted server-side auth record',
+      data: <String, Object?>{'userId': userId},
+    );
   }
 
   Future<void> _deleteDocumentsByUserId({
     required String collectionId,
     required String userId,
   }) async {
+    Set<String>? previousPageIds;
     while (true) {
       final appwrite_models.DocumentList page = await _databases.listDocuments(
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: collectionId,
-        queries: <String>[
-        Query.limit(100),
-      ],
+        queries: <String>[Query.limit(100)],
       );
       if (page.documents.isEmpty) {
         return;
       }
+
+      // A document can be listable but not deletable (read-only permissions),
+      // and Appwrite answers 404 rather than leaking existence — which the
+      // catch below swallows. Without this guard the identical page would be
+      // re-listed forever and account deletion would hang with no way out.
+      final Set<String> pageIds = page.documents
+          .map((appwrite_models.Document document) => document.$id)
+          .toSet();
+      if (previousPageIds != null &&
+          pageIds.length == previousPageIds.length &&
+          pageIds.containsAll(previousPageIds)) {
+        _logger.error(
+          'Account deletion made no progress on a page; leaving orphaned '
+          'documents for server-side cleanup',
+          data: <String, Object?>{
+            'collectionId': collectionId,
+            'userId': userId,
+            'remaining': pageIds.length,
+          },
+        );
+        return;
+      }
+      previousPageIds = pageIds;
+
       for (final appwrite_models.Document document in page.documents) {
         try {
           await _databases.deleteDocument(
@@ -310,16 +402,19 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     );
   }
 
-  /// Payload for the deployed Stay Alive `users` collection.
+  /// Payload for the `stay_alive_v1` `users` collection.
   ///
-  /// The live Appwrite schema uses the Auth user id as the document id and
-  /// stores `name` + `email` only. Extra fields from
-  /// [scripts/appwrite_provision.py] (e.g. `user_id`, `display_name`) are not
-  /// present on the console-provisioned collection.
+  /// Document id is the Auth user id; no redundant `user_id` attribute.
   Map<String, dynamic> _userDocumentDataForCreate(AuthUserModel user) {
+    final String now = DateTime.now().toUtc().toIso8601String();
     return <String, dynamic>{
       'email': _emailForUserDocument(user),
       'name': _displayNameFor(user),
+      'onboarding_completed': false,
+      'units_preference': 'metric',
+      'locale': 'en',
+      'created_at': now,
+      'updated_at': now,
     };
   }
 
@@ -355,12 +450,9 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
     Map<String, dynamic> preferences,
   ) async {
     try {
-      await _updateUserDocument(
-        user,
-        <String, dynamic>{
-          'onboarding_completed': preferences['onboardingCompleted'] == true,
-        },
-      );
+      await _updateUserDocument(user, <String, dynamic>{
+        'onboarding_completed': preferences['onboardingCompleted'] == true,
+      });
     } on AppwriteException catch (exception) {
       _logger.warning(
         'Skipped onboarding sync to users collection',
@@ -387,10 +479,7 @@ class AppwriteAuthRemoteDataSource implements AuthRemoteDataSource {
   }) async {
     try {
       final appwrite_models.Session session = await _account
-          .createEmailPasswordSession(
-        email: email,
-        password: password,
-      );
+          .createEmailPasswordSession(email: email, password: password);
       _logger.info(
         'Signed in after account creation',
         data: <String, Object?>{'sessionId': session.$id},

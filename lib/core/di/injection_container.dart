@@ -4,7 +4,6 @@ import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/logger/logger_service.dart';
-import 'package:stay_alive/core/network/network_service.dart';
 import 'package:stay_alive/core/services/appwrite_client_provider.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/auth/data/datasources/auth_remote_data_source.dart';
@@ -37,6 +36,11 @@ import 'package:stay_alive/features/gamification/domain/repositories/gamificatio
 import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_overview_usecase.dart';
 import 'package:stay_alive/features/gamification/domain/usecases/reconcile_gamification_today_usecase.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
+import 'package:stay_alive/features/coach/data/datasources/coach_remote_data_source.dart';
+import 'package:stay_alive/features/coach/data/repositories_impl/coach_repository_impl.dart';
+import 'package:stay_alive/features/coach/domain/repositories/coach_repository.dart';
+import 'package:stay_alive/features/coach/domain/usecases/invoke_coach_usecase.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
 import 'package:stay_alive/features/analytics/data/datasources/analytics_remote_data_source.dart';
 import 'package:stay_alive/features/analytics/data/repositories_impl/analytics_repository_impl.dart';
 import 'package:stay_alive/features/analytics/domain/repositories/analytics_repository.dart';
@@ -70,6 +74,7 @@ Future<void> configureDependencies(AppFlavor flavor) async {
   _registerAuthFeature();
   _registerDailyTrackerFeature();
   _registerGamificationFeature();
+  _registerCoachFeature();
   _registerUserFeature();
   _registerHistoryFeature();
   _registerAnalyticsFeature();
@@ -80,12 +85,12 @@ void _registerCore() {
   sl
     ..registerLazySingleton<EnvConfig>(() => EnvConfig.fromEnv(sl<AppFlavor>()))
     ..registerLazySingleton<AppLogger>(() => const LoggerService())
-    ..registerLazySingleton<NetworkService>(() => const DefaultNetworkService())
     ..registerLazySingleton<Client>(
       () => AppwriteClientProvider(sl<EnvConfig>()).build(),
     )
     ..registerLazySingleton<Account>(() => Account(sl<Client>()))
     ..registerLazySingleton<Databases>(() => Databases(sl<Client>()))
+    ..registerLazySingleton<Functions>(() => Functions(sl<Client>()))
     ..registerLazySingleton<HomeWidgetGateway>(
       () => const HomeWidgetPluginGateway(),
     )
@@ -103,15 +108,13 @@ void _registerAuthFeature() {
       () => AppwriteAuthRemoteDataSource(
         account: sl<Account>(),
         databases: sl<Databases>(),
+        functions: sl<Functions>(),
         envConfig: sl<EnvConfig>(),
         logger: sl<AppLogger>(),
       ),
     )
     ..registerLazySingleton<AuthRepository>(
-      () => AuthRepositoryImpl(
-        sl<AuthRemoteDataSource>(),
-        sl<AppLogger>(),
-      ),
+      () => AuthRepositoryImpl(sl<AuthRemoteDataSource>(), sl<AppLogger>()),
     )
     ..registerLazySingleton<LoginWithEmailUseCase>(
       () => LoginWithEmailUseCase(sl<AuthRepository>()),
@@ -196,8 +199,10 @@ void _registerDailyTrackerFeature() {
       () => DailyTrackerCubit(
         getTodayLogUseCase: sl<GetTodayLogUseCase>(),
         initializeTodayLogUseCase: sl<InitializeTodayLogUseCase>(),
-        incrementCategoryProgressUseCase: sl<IncrementCategoryProgressUseCase>(),
-        decrementCategoryProgressUseCase: sl<DecrementCategoryProgressUseCase>(),
+        incrementCategoryProgressUseCase:
+            sl<IncrementCategoryProgressUseCase>(),
+        decrementCategoryProgressUseCase:
+            sl<DecrementCategoryProgressUseCase>(),
         resetTodayLogUseCase: sl<ResetTodayLogUseCase>(),
         getCompletionSummaryUseCase: sl<GetCompletionSummaryUseCase>(),
         logger: sl<AppLogger>(),
@@ -222,9 +227,8 @@ void _registerUserFeature() {
       () => GetUserProfileUseCase(sl<UserRepository>()),
     )
     ..registerFactory<UserProfileCubit>(
-      () => UserProfileCubit(
-        getUserProfileUseCase: sl<GetUserProfileUseCase>(),
-      ),
+      () =>
+          UserProfileCubit(getUserProfileUseCase: sl<GetUserProfileUseCase>()),
     );
 }
 
@@ -253,6 +257,26 @@ void _registerGamificationFeature() {
         reconcileGamificationTodayUseCase:
             sl<ReconcileGamificationTodayUseCase>(),
       ),
+    );
+}
+
+void _registerCoachFeature() {
+  sl
+    ..registerLazySingleton<CoachRemoteDataSource>(
+      () => CoachRemoteDataSourceImpl(
+        functions: sl<Functions>(),
+        envConfig: sl<EnvConfig>(),
+        logger: sl<AppLogger>(),
+      ),
+    )
+    ..registerLazySingleton<CoachRepository>(
+      () => CoachRepositoryImpl(sl<CoachRemoteDataSource>()),
+    )
+    ..registerLazySingleton<InvokeCoachUseCase>(
+      () => InvokeCoachUseCase(sl<CoachRepository>()),
+    )
+    ..registerFactory<CoachCubit>(
+      () => CoachCubit(sl<InvokeCoachUseCase>()),
     );
 }
 

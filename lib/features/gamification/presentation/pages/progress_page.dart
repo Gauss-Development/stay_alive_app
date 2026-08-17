@@ -1,5 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
+import 'package:stay_alive/core/widgets/animations/scale_pop.dart';
+import 'package:stay_alive/core/widgets/app_button.dart';
+import 'package:stay_alive/core/widgets/app_card.dart';
+import 'package:stay_alive/core/widgets/app_icon_button.dart';
+import 'package:stay_alive/core/widgets/app_section_header.dart';
+import 'package:stay_alive/core/widgets/app_states.dart';
+import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
+import 'package:stay_alive/features/coach/domain/services/coach_context_builder.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_state.dart';
+import 'package:stay_alive/features/coach/presentation/widgets/weekly_insight_section.dart';
+import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/badge_gallery.dart';
@@ -10,6 +28,7 @@ import 'package:stay_alive/features/gamification/presentation/widgets/xp_event_t
 import 'package:stay_alive/features/gamification/presentation/widgets/xp_level_bar.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 
+/// «Челленджи» — quests, streaks, achievements and XP history.
 class ProgressPage extends StatefulWidget {
   const ProgressPage({super.key});
 
@@ -24,8 +43,10 @@ class _ProgressPageState extends State<ProgressPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final GamificationState state = context.read<GamificationCubit>().state;
-        final bool isPremium =
-            context.read<SubscriptionCubit>().state.isPremiumActive;
+        final bool isPremium = context
+            .read<SubscriptionCubit>()
+            .state
+            .isPremiumActive;
         if (state is! GamificationLoaded) {
           context.read<GamificationCubit>().load(isPremium: isPremium);
         }
@@ -36,187 +57,295 @@ class _ProgressPageState extends State<ProgressPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Progress')),
-      body: BlocBuilder<GamificationCubit, GamificationState>(
-        builder: (BuildContext context, GamificationState state) {
-          if (state is GamificationInitial || state is GamificationLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SafeArea(
+        child: BlocBuilder<GamificationCubit, GamificationState>(
+          builder: (BuildContext context, GamificationState state) {
+            if (state is GamificationInitial || state is GamificationLoading) {
+              return const AppLoadingState(message: 'Загружаем квесты...');
+            }
 
-          if (state is GamificationError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(state.message, textAlign: TextAlign.center),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () {
-                        final bool isPremium = context
-                            .read<SubscriptionCubit>()
-                            .state
-                            .isPremiumActive;
-                        context
-                            .read<GamificationCubit>()
-                            .load(isPremium: isPremium);
-                      },
-                      child: const Text('Try again'),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }
+            if (state is GamificationError) {
+              return AppErrorState(
+                onRetry: () {
+                  final bool isPremium = context
+                      .read<SubscriptionCubit>()
+                      .state
+                      .isPremiumActive;
+                  context.read<GamificationCubit>().load(isPremium: isPremium);
+                },
+              );
+            }
 
-          if (state is! GamificationLoaded) {
-            return const SizedBox.shrink();
-          }
+            if (state is! GamificationLoaded) {
+              return const SizedBox.shrink();
+            }
 
-          final overview = state.overview;
-          final profile = overview.profile;
+            final overview = state.overview;
+            final profile = overview.profile;
 
-          return RefreshIndicator(
-            onRefresh: () {
-              final bool isPremium =
-                  context.read<SubscriptionCubit>().state.isPremiumActive;
-              return context
-                  .read<GamificationCubit>()
-                  .refresh(isPremium: isPremium);
-            },
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: <Widget>[
-                Text(
-                  '${profile.currentLevel.title} · Level ${profile.currentLevel.level}',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                      ),
+            return RefreshIndicator(
+              color: AppColors.green,
+              onRefresh: () {
+                final bool isPremium = context
+                    .read<SubscriptionCubit>()
+                    .state
+                    .isPremiumActive;
+                return context.read<GamificationCubit>().refresh(
+                  isPremium: isPremium,
+                );
+              },
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  AppSpacing.sm,
+                  AppSpacing.screen,
+                  AppSpacing.xl,
                 ),
-                if (overview.isPremium) ...<Widget>[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Premium perks active · ${overview.xpMultiplier}x XP',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: Theme.of(context).colorScheme.tertiary,
-                        ),
-                  ),
-                ],
-                const SizedBox(height: 12),
-                XpLevelBar(profile: profile),
-                const SizedBox(height: 16),
-                DailyChallengeCard(
-                  challenge: overview.dailyChallenge,
-                  isPremium: overview.isPremium,
-                ),
-                const SizedBox(height: 16),
-                DailyChallengeCard(
-                  challenge: overview.weeklyChallenge,
-                  isPremium: overview.isPremium,
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'Streaks',
-                  child: Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                children: <Widget>[
+                  Row(
                     children: <Widget>[
-                      _InfoChip(
-                        label: 'Perfect streak',
-                        value: '${profile.currentStreak}',
+                      AppIconButton(
+                        icon: Icons.chevron_left_rounded,
+                        onTap: () {
+                          if (context.canPop()) {
+                            context.pop();
+                          } else {
+                            context.go(AppRoutes.home);
+                          }
+                        },
                       ),
-                      _InfoChip(
-                        label: 'Active streak',
-                        value: '${profile.activityStreak}',
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            'Челленджи',
+                            style: AppTextStyles.titleLarge,
+                          ),
+                        ),
                       ),
-                      _InfoChip(
-                        label: 'Best streak',
-                        value: '${profile.longestStreak}',
-                      ),
-                      _InfoChip(
-                        label: 'Perfect days',
-                        value: '${profile.completedDates.length}',
-                      ),
-                      _InfoChip(
-                        label: 'Streak freezes',
-                        value: '${profile.streakFreezesRemaining}',
-                      ),
+                      const SizedBox(width: 44),
                     ],
                   ),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'Badge Gallery',
-                  child: BadgeGallery(items: overview.badgeGallery),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'Recent Badges',
-                  child: BadgeList(badges: profile.earnedBadges),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'Category Mastery',
-                  child: CategoryMasteryList(items: overview.categoryMastery),
-                ),
-                const SizedBox(height: 16),
-                _SectionCard(
-                  title: 'XP Activity',
-                  child: XpEventTimeline(events: overview.recentXpEvents),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-  });
-
-  final String title;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                  const SizedBox(height: AppSpacing.lg),
+                  ScalePop(
+                    delay: const Duration(milliseconds: 60),
+                    fromScale: 0.96,
+                    child: DailyChallengeCard(
+                      challenge: overview.weeklyChallenge,
+                      isPremium: overview.isPremium,
+                    ),
                   ),
-            ),
-            const SizedBox(height: 12),
-            child,
-          ],
+                  const SizedBox(height: AppSpacing.xl),
+                  const FadeSlideIn(
+                    delay: Duration(milliseconds: 180),
+                    child: AppSectionHeader(title: 'Ежедневные'),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 240),
+                    child: DailyChallengeCard(
+                      challenge: overview.dailyChallenge,
+                      isPremium: overview.isPremium,
+                    ),
+                  ),
+                  if (overview.isPremium) ...<Widget>[
+                    const SizedBox(height: AppSpacing.md),
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 260),
+                      child: _PersonalizedQuestBlock(),
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 280),
+                    child: WeeklyInsightSection(
+                      onRequestInsights: () => _requestWeeklyInsights(context),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 320),
+                    child: AppCard(
+                      radius: AppRadius.xl,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          XpLevelBar(profile: profile),
+                          if (overview.isPremium) ...<Widget>[
+                            const SizedBox(height: AppSpacing.md),
+                            Text(
+                              'Premium активен · ${overview.xpMultiplier}x очков',
+                              style: AppTextStyles.labelMedium.copyWith(
+                                color: AppColors.green,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: AppSpacing.lg),
+                          Wrap(
+                            spacing: AppSpacing.sm,
+                            runSpacing: AppSpacing.sm,
+                            children: <Widget>[
+                              _StreakStat(
+                                label: 'Идеальная серия',
+                                value: '${profile.currentStreak}',
+                              ),
+                              _StreakStat(
+                                label: 'Активная серия',
+                                value: '${profile.activityStreak}',
+                              ),
+                              _StreakStat(
+                                label: 'Рекорд',
+                                value: '${profile.longestStreak}',
+                              ),
+                              _StreakStat(
+                                label: 'Идеальные дни',
+                                value: '${profile.completedDates.length}',
+                              ),
+                              _StreakStat(
+                                label: 'Заморозки',
+                                value: '${profile.streakFreezesRemaining}',
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const FadeSlideIn(
+                    delay: Duration(milliseconds: 380),
+                    child: AppSectionHeader(title: 'Достижения'),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 420),
+                    child: BadgeGallery(items: overview.badgeGallery),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const AppSectionHeader(title: 'Недавние награды'),
+                  const SizedBox(height: AppSpacing.md),
+                  AppCard(child: BadgeList(badges: profile.earnedBadges)),
+                  const SizedBox(height: AppSpacing.xl),
+                  const AppSectionHeader(title: 'Прогресс по категориям'),
+                  const SizedBox(height: AppSpacing.md),
+                  CategoryMasteryList(items: overview.categoryMastery),
+                  const SizedBox(height: AppSpacing.xl),
+                  const AppSectionHeader(title: 'История очков'),
+                  const SizedBox(height: AppSpacing.md),
+                  AppCard(
+                    child: XpEventTimeline(events: overview.recentXpEvents),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
+
+  Future<void> _requestWeeklyInsights(BuildContext context) async {
+    final bool isPremium =
+        context.read<SubscriptionCubit>().state.isPremiumActive;
+    final gState = context.read<GamificationCubit>().state;
+    await context.read<CoachCubit>().loadWeeklyInsights(
+          context: CoachContextBuilder.build(
+            overview: gState is GamificationLoaded ? gState.overview : null,
+            todayLog: context.read<DailyTrackerCubit>().state.log,
+          ),
+          isPremium: isPremium,
+        );
+    if (!context.mounted) {
+      return;
+    }
+    await context.read<AnalyticsCubit>().track(
+          eventName: 'coach_weekly_insight',
+          screenName: 'progress',
+        );
+  }
 }
 
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.label,
-    required this.value,
-  });
+class _PersonalizedQuestBlock extends StatelessWidget {
+  const _PersonalizedQuestBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final bool hasAiDaily = context
+            .watch<GamificationCubit>()
+            .aiDailyDraft !=
+        null;
+    if (hasAiDaily) {
+      final overview = context.watch<GamificationCubit>().state;
+      if (overview is GamificationLoaded) {
+        return DailyChallengeCard(
+          challenge: overview.overview.dailyChallenge,
+          isPremium: true,
+        );
+      }
+    }
+
+    return AppButton(
+      text: 'Сгенерировать квест сада',
+      onPressed: () async {
+        final bool isPremium =
+            context.read<SubscriptionCubit>().state.isPremiumActive;
+        final gState = context.read<GamificationCubit>().state;
+        final log = context.read<DailyTrackerCubit>().state.log;
+        await context.read<CoachCubit>().personalizeChallenge(
+              context: CoachContextBuilder.build(
+                overview: gState is GamificationLoaded ? gState.overview : null,
+                todayLog: log,
+              ),
+              isPremium: isPremium,
+            );
+        if (!context.mounted) {
+          return;
+        }
+        final coachState = context.read<CoachCubit>().state;
+        final draft =
+            coachState is CoachLoaded ? coachState.challengeDraft : null;
+        if (draft == null) {
+          return;
+        }
+        context.read<GamificationCubit>().setAiDailyDraft(draft);
+        if (log != null) {
+          await context.read<GamificationCubit>().refreshToday(
+                todayLog: log,
+                isPremium: isPremium,
+              );
+        }
+        if (context.mounted) {
+          await context.read<AnalyticsCubit>().track(
+                eventName: 'coach_personalize_challenge',
+                screenName: 'progress',
+              );
+        }
+      },
+    );
+  }
+}
+
+class _StreakStat extends StatelessWidget {
+  const _StreakStat({required this.label, required this.value});
 
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) {
-    return Chip(label: Text('$label: $value'));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(value, style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
+          const SizedBox(width: 6),
+          Text(label, style: AppTextStyles.labelMedium),
+        ],
+      ),
+    );
   }
 }

@@ -11,10 +11,7 @@ import 'package:stay_alive/features/subscription/domain/entities/subscription_pa
 import 'package:stay_alive/features/subscription/domain/entities/subscription_plan.dart';
 
 abstract class RevenueCatGateway {
-  Future<void> configure({
-    required String apiKey,
-    String? appUserId,
-  });
+  Future<void> configure({required String apiKey, String? appUserId});
 
   Future<void> logIn(String appUserId);
 
@@ -24,6 +21,8 @@ abstract class RevenueCatGateway {
 
   Future<CustomerInfo> purchasePackage(Package package);
 
+  Future<void> syncPurchases();
+
   Future<CustomerInfo> restorePurchases();
 }
 
@@ -31,10 +30,7 @@ class PurchasesRevenueCatGateway implements RevenueCatGateway {
   const PurchasesRevenueCatGateway();
 
   @override
-  Future<void> configure({
-    required String apiKey,
-    String? appUserId,
-  }) {
+  Future<void> configure({required String apiKey, String? appUserId}) {
     final PurchasesConfiguration configuration = PurchasesConfiguration(apiKey);
     if (appUserId != null && appUserId.isNotEmpty) {
       configuration.appUserID = appUserId;
@@ -59,9 +55,15 @@ class PurchasesRevenueCatGateway implements RevenueCatGateway {
 
   @override
   Future<CustomerInfo> purchasePackage(Package package) async {
-    final PurchaseResult result =
-        await Purchases.purchase(PurchaseParams.package(package));
+    final PurchaseResult result = await Purchases.purchase(
+      PurchaseParams.package(package),
+    );
     return result.customerInfo;
+  }
+
+  @override
+  Future<void> syncPurchases() {
+    return Purchases.syncPurchases();
   }
 
   @override
@@ -89,10 +91,10 @@ class RevenueCatSubscriptionRemoteDataSource
     required Account account,
     required EnvConfig envConfig,
     required AppLogger logger,
-  })  : _revenueCatGateway = revenueCatGateway,
-        _account = account,
-        _envConfig = envConfig,
-        _logger = logger;
+  }) : _revenueCatGateway = revenueCatGateway,
+       _account = account,
+       _envConfig = envConfig,
+       _logger = logger;
 
   final RevenueCatGateway _revenueCatGateway;
   final Account _account;
@@ -126,7 +128,8 @@ class RevenueCatSubscriptionRemoteDataSource
       return const SubscriptionInfo.free();
     }
     await _logInCurrentUserIfPossible();
-    final CustomerInfo customerInfo = await _revenueCatGateway.getCustomerInfo();
+    final CustomerInfo customerInfo = await _revenueCatGateway
+        .getCustomerInfo();
     return _mapCustomerInfo(customerInfo);
   }
 
@@ -149,21 +152,20 @@ class RevenueCatSubscriptionRemoteDataSource
       ..clear()
       ..addEntries(
         revenueCatPackages.map(
-          (Package package) => MapEntry<String, Package>(
-            _packageIdFor(package),
-            package,
-          ),
+          (Package package) =>
+              MapEntry<String, Package>(_packageIdFor(package), package),
         ),
       );
 
-    final List<SubscriptionPackage> packages = revenueCatPackages
-        .map(_mapPackage)
-        .where((SubscriptionPackage package) => package.plan.isPaid)
-        .toList(growable: false)
-      ..sort(
-        (SubscriptionPackage a, SubscriptionPackage b) =>
-            a.plan.sortOrder.compareTo(b.plan.sortOrder),
-      );
+    final List<SubscriptionPackage> packages =
+        revenueCatPackages
+            .map(_mapPackage)
+            .where((SubscriptionPackage package) => package.plan.isPaid)
+            .toList(growable: false)
+          ..sort(
+            (SubscriptionPackage a, SubscriptionPackage b) =>
+                a.plan.sortOrder.compareTo(b.plan.sortOrder),
+          );
 
     return SubscriptionOffering(
       packages: packages.isEmpty ? _fallbackPackages() : packages,
@@ -185,9 +187,16 @@ class RevenueCatSubscriptionRemoteDataSource
     if (package == null) {
       throw ArgumentError('Unknown subscription package: $packageId');
     }
-    final CustomerInfo customerInfo =
-        await _revenueCatGateway.purchasePackage(package);
-    return _mapCustomerInfo(customerInfo);
+    final CustomerInfo purchaseInfo = await _revenueCatGateway.purchasePackage(
+      package,
+    );
+    var info = _mapCustomerInfo(purchaseInfo);
+    if (!info.isPremiumActive) {
+      await _revenueCatGateway.syncPurchases();
+      final CustomerInfo refreshed = await _revenueCatGateway.getCustomerInfo();
+      info = _mapCustomerInfo(refreshed);
+    }
+    return info;
   }
 
   @override
@@ -197,30 +206,74 @@ class RevenueCatSubscriptionRemoteDataSource
       return const SubscriptionInfo.free();
     }
     await _logInCurrentUserIfPossible();
-    final CustomerInfo customerInfo =
-        await _revenueCatGateway.restorePurchases();
+    final CustomerInfo customerInfo = await _revenueCatGateway
+        .restorePurchases();
     return _mapCustomerInfo(customerInfo);
   }
 
   SubscriptionInfo _mapCustomerInfo(CustomerInfo customerInfo) {
-    final EntitlementInfo? entitlement = customerInfo
-        .entitlements.all[_envConfig.revenueCatEntitlementId];
-    if (entitlement == null || !entitlement.isActive) {
-      return const SubscriptionInfo.free();
+    final EntitlementInfo? entitlement = _resolveActiveEntitlement(customerInfo);
+    if (entitlement != null) {
+      final String productIdentifier = entitlement.productIdentifier;
+      final SubscriptionPlan plan = SubscriptionPlan.fromRevenueCatIdentifier(
+        productIdentifier,
+      );
+      return SubscriptionInfo(
+        plan: plan,
+        status: SubscriptionStatus.active,
+        productIdentifier: productIdentifier,
+        expiresAt: _parseExpirationDate(entitlement.expirationDate),
+        managementUrl: customerInfo.managementURL,
+      );
     }
 
-    final String productIdentifier = entitlement.productIdentifier;
-    final SubscriptionPlan plan = SubscriptionPlan.fromRevenueCatIdentifier(
-      productIdentifier,
+    if (customerInfo.activeSubscriptions.isNotEmpty) {
+      final String productIdentifier = customerInfo.activeSubscriptions.first;
+      _logger.warning(
+        'No active entitlement "${_envConfig.revenueCatEntitlementId}"; '
+        'inferring premium from active subscription $productIdentifier.',
+      );
+      return SubscriptionInfo(
+        plan: SubscriptionPlan.fromRevenueCatIdentifier(productIdentifier),
+        status: SubscriptionStatus.active,
+        productIdentifier: productIdentifier,
+        expiresAt: _parseExpirationDate(
+          customerInfo.allExpirationDates[productIdentifier],
+        ),
+        managementUrl: customerInfo.managementURL,
+      );
+    }
+
+    return const SubscriptionInfo.free();
+  }
+
+  EntitlementInfo? _resolveActiveEntitlement(CustomerInfo customerInfo) {
+    final String configuredId = _envConfig.revenueCatEntitlementId;
+    final EntitlementInfo? configuredEntitlement =
+        customerInfo.entitlements.active[configuredId];
+    if (configuredEntitlement != null) {
+      return configuredEntitlement;
+    }
+
+    final Map<String, EntitlementInfo> activeEntitlements =
+        customerInfo.entitlements.active;
+    if (activeEntitlements.isEmpty) {
+      return null;
+    }
+
+    final EntitlementInfo fallback = activeEntitlements.values.first;
+    _logger.warning(
+      'Entitlement "$configuredId" is not active; using '
+      '"${fallback.identifier}" instead.',
     );
-    return SubscriptionInfo(
-      plan: plan,
-      status: SubscriptionStatus.active,
-      productIdentifier: productIdentifier,
-      expiresAt: entitlement.expirationDate == null
-          ? null
-          : DateTime.tryParse(entitlement.expirationDate!),
-    );
+    return fallback;
+  }
+
+  DateTime? _parseExpirationDate(String? rawDate) {
+    if (rawDate == null || rawDate.isEmpty) {
+      return null;
+    }
+    return DateTime.tryParse(rawDate);
   }
 
   SubscriptionPackage _mapPackage(Package package) {

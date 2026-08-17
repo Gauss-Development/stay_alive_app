@@ -16,9 +16,7 @@ class TrackEventUseCase implements UseCase<void, TrackEventParams> {
 }
 
 class TrackEventParams extends Equatable {
-  const TrackEventParams({
-    required this.event,
-  });
+  const TrackEventParams({required this.event});
 
   final AnalyticsEvent event;
 

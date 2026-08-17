@@ -15,7 +15,6 @@ lib/
 │   ├── env/
 │   ├── error/
 │   ├── logger/
-│   ├── network/
 │   ├── result/
 │   ├── services/
 │   └── usecase/
@@ -40,8 +39,9 @@ lib/
     ├── user/
     ├── history/
     ├── analytics/
-    ├── categories/
     ├── gamification/
+    ├── coach/
+    ├── rostok/
     ├── subscription/
     └── education/
 ```
@@ -67,16 +67,14 @@ Required keys:
 - `APPWRITE_DAILY_LOG_ITEMS_COLLECTION_ID`
 - `APPWRITE_SUBSCRIPTIONS_COLLECTION_ID`
 - `APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID`
-- `APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID`
 - `APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID`
 - `APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID`
+- `APPWRITE_DELETE_USER_FUNCTION_ID` (optional in local/dev)
+- `APPWRITE_AI_COACH_FUNCTION_ID` (optional; empty → local coach heuristics)
 - `REVENUECAT_ANDROID_API_KEY`
 - `REVENUECAT_IOS_API_KEY`
 - `REVENUECAT_ENTITLEMENT_ID`
 - `REVENUECAT_OFFERING_ID`
-- `APPWRITE_AVATARS_BUCKET_ID`
-- `APPWRITE_USER_UPLOADS_BUCKET_ID`
-- `APPWRITE_CONTENT_ASSETS_BUCKET_ID`
 - `DAILY_GOAL_WIDGET_APP_GROUP_ID`
 - `APPWRITE_SELF_SIGNED`
 
@@ -84,8 +82,8 @@ Example:
 
 ```bash
 flutter run \
-  --dart-define=APPWRITE_ENDPOINT=https://fra.cloud.appwrite.io/v1 \
-  --dart-define=APPWRITE_PROJECT_ID=<PROJECT_ID> \
+  --dart-define=APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1 \
+  --dart-define=APPWRITE_PROJECT_ID=6a53570100147968d1f6 \
   --dart-define=APPWRITE_DATABASE_ID=daily_dozen_db
 ```
 

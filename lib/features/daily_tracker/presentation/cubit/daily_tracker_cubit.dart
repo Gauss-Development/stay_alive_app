@@ -39,6 +39,16 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
   final GetCompletionSummaryUseCase _getCompletionSummaryUseCase;
   final AppLogger _logger;
 
+  /// Serialises serving mutations.
+  ///
+  /// `updateCategoryProgress` is a read-modify-write against Appwrite with no
+  /// optimistic concurrency: it reads the log, adds the delta, then writes the
+  /// absolute value. Two taps issued before the first round-trip finishes both
+  /// read the same count and both write count+1, so one serving is silently
+  /// lost — and tapping "+" repeatedly is the primary interaction of the app.
+  /// Chaining makes each tap observe the previous one's result.
+  Future<void> _mutations = Future<void>.value();
+
   Future<void> loadToday() async {
     final bool shouldShowLoader = state.log == null;
     if (shouldShowLoader) {
@@ -64,24 +74,37 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
     );
   }
 
-  Future<void> increment(String categoryId) async {
-    await _mutateWithLoading(
-      operation: () => _incrementCategoryProgressUseCase(
-        IncrementCategoryProgressParams(categoryId: categoryId),
+  Future<void> increment(String categoryId) {
+    return _enqueue(
+      () => _mutateWithLoading(
+        operation: () => _incrementCategoryProgressUseCase(
+          IncrementCategoryProgressParams(categoryId: categoryId),
+        ),
+        operationName: 'increment',
+        categoryId: categoryId,
       ),
-      operationName: 'increment',
-      categoryId: categoryId,
     );
   }
 
-  Future<void> decrement(String categoryId) async {
-    await _mutateWithLoading(
-      operation: () => _decrementCategoryProgressUseCase(
-        DecrementCategoryProgressParams(categoryId: categoryId),
+  Future<void> decrement(String categoryId) {
+    return _enqueue(
+      () => _mutateWithLoading(
+        operation: () => _decrementCategoryProgressUseCase(
+          DecrementCategoryProgressParams(categoryId: categoryId),
+        ),
+        operationName: 'decrement',
+        categoryId: categoryId,
       ),
-      operationName: 'decrement',
-      categoryId: categoryId,
     );
+  }
+
+  /// Runs [action] after every previously queued mutation has settled.
+  Future<void> _enqueue(Future<void> Function() action) {
+    final Future<void> queued = _mutations.then((_) => action());
+    // Swallow only on the chain, never on the returned future: one failed tap
+    // must not stall every tap after it.
+    _mutations = queued.catchError((Object _) {});
+    return queued;
   }
 
   Future<void> resetToday() async {

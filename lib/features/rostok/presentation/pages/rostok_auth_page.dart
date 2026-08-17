@@ -10,9 +10,9 @@ import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dar
 import 'package:stay_alive/features/auth/domain/usecases/sign_in_anonymously_usecase.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/auth/presentation/cubit/auth_state.dart';
+import 'package:stay_alive/core/widgets/animations/sprout_growth_animation.dart';
 import 'package:stay_alive/features/rostok/presentation/theme/rostok_colors.dart';
 import 'package:stay_alive/features/rostok/presentation/theme/rostok_text.dart';
-import 'package:stay_alive/features/rostok/presentation/widgets/rostok_primitives.dart';
 
 /// Which mode the unified auth screen opens in.
 enum RostokAuthMode { signIn, register }
@@ -50,8 +50,10 @@ class _RostokAuthPageState extends State<RostokAuthPage>
     vsync: this,
     duration: const Duration(milliseconds: 2600),
   );
-  late final Animation<double> _nameReveal =
-      CurvedAnimation(parent: _mode, curve: Curves.easeOutCubic);
+  late final Animation<double> _nameReveal = CurvedAnimation(
+    parent: _mode,
+    curve: Curves.easeOutCubic,
+  );
 
   final TextEditingController _name = TextEditingController();
   final TextEditingController _email = TextEditingController();
@@ -166,15 +168,12 @@ class _RostokAuthPageState extends State<RostokAuthPage>
     if (!mounted) {
       return;
     }
-    result.fold(
-      (Failure failure) {
-        setState(() => _mockLoading = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text('Mock login failed: ${failure.message}')),
-        );
-      },
-      (AuthUser user) => authCubit.restoreAuthenticatedUser(user),
-    );
+    result.fold((Failure failure) {
+      setState(() => _mockLoading = false);
+      messenger.showSnackBar(
+        SnackBar(content: Text('Mock login failed: ${failure.message}')),
+      );
+    }, (AuthUser user) => authCubit.restoreAuthenticatedUser(user));
   }
 
   @override
@@ -196,8 +195,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
           },
           builder: (BuildContext context, AuthState state) {
             final bool busy = state is AuthLoading;
-            final String? errorMessage =
-                state is AuthError ? state.message : null;
+            final String? errorMessage = state is AuthError
+                ? state.message
+                : null;
             return SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
               child: Column(
@@ -209,16 +209,26 @@ class _RostokAuthPageState extends State<RostokAuthPage>
                   const SizedBox(height: 22),
                   _staggered(2, _buildHeadline()),
                   const SizedBox(height: 22),
-                  _staggered(3, _ModeToggle(mode: _currentMode, animation: _mode, onChanged: _setMode)),
+                  _staggered(
+                    3,
+                    _ModeToggle(
+                      mode: _currentMode,
+                      animation: _mode,
+                      onChanged: _setMode,
+                    ),
+                  ),
                   const SizedBox(height: 20),
                   _staggered(4, _buildErrorBanner(errorMessage)),
                   _staggered(5, _buildForm(busy)),
                   const SizedBox(height: 18),
-                  _staggered(6, _PrimaryButton(
-                    label: _isRegister ? 'Создать аккаунт' : 'Войти',
-                    loading: busy,
-                    onTap: busy ? null : _submit,
-                  )),
+                  _staggered(
+                    6,
+                    _PrimaryButton(
+                      label: _isRegister ? 'Создать аккаунт' : 'Войти',
+                      loading: busy,
+                      onTap: busy ? null : _submit,
+                    ),
+                  ),
                   const SizedBox(height: 18),
                   _staggered(7, _buildDivider()),
                   const SizedBox(height: 18),
@@ -239,8 +249,11 @@ class _RostokAuthPageState extends State<RostokAuthPage>
     final double start = (index * 0.05).clamp(0.0, 0.5);
     final Animation<double> anim = CurvedAnimation(
       parent: _entrance,
-      curve: Interval(start, (start + 0.5).clamp(0.0, 1.0),
-          curve: Curves.easeOutCubic),
+      curve: Interval(
+        start,
+        (start + 0.5).clamp(0.0, 1.0),
+        curve: Curves.easeOutCubic,
+      ),
     );
     return FadeTransition(
       opacity: anim,
@@ -267,7 +280,10 @@ class _RostokAuthPageState extends State<RostokAuthPage>
           ),
         ),
         const SizedBox(width: 9),
-        Text('росток', style: RostokText.display(size: 26, weight: FontWeight.w600)),
+        Text(
+          'росток',
+          style: RostokText.display(size: 26, weight: FontWeight.w600),
+        ),
       ],
     );
   }
@@ -296,7 +312,10 @@ class _RostokAuthPageState extends State<RostokAuthPage>
           shape: BoxShape.circle,
           boxShadow: RostokDimens.softShadow,
         ),
-        child: const RostokMascot(size: 44),
+        child: const SproutGrowthAnimation(
+          size: 54,
+          delay: Duration(milliseconds: 250),
+        ),
       ),
     );
     if (reduceMotion) {
@@ -307,7 +326,10 @@ class _RostokAuthPageState extends State<RostokAuthPage>
         animation: _mascot,
         builder: (BuildContext context, Widget? child) {
           final double t = Curves.easeInOut.transform(_mascot.value);
-          return Transform.translate(offset: Offset(0, t * 8 - 4), child: child);
+          return Transform.translate(
+            offset: Offset(0, t * 8 - 4),
+            child: child,
+          );
         },
         child: core,
       ),
@@ -358,8 +380,11 @@ class _RostokAuthPageState extends State<RostokAuthPage>
               ),
               child: Row(
                 children: <Widget>[
-                  const Icon(Icons.error_outline_rounded,
-                      size: 18, color: _errorColor),
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    size: 18,
+                    color: _errorColor,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -383,7 +408,7 @@ class _RostokAuthPageState extends State<RostokAuthPage>
       children: <Widget>[
         SizeTransition(
           sizeFactor: _nameReveal,
-          axisAlignment: -1,
+          alignment: Alignment.topCenter,
           child: FadeTransition(
             opacity: _nameReveal,
             child: ExcludeSemantics(
@@ -413,8 +438,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           enabled: !busy,
-          errorText:
-              _submitted && !_emailValid ? 'Введите корректную почту' : null,
+          errorText: _submitted && !_emailValid
+              ? 'Введите корректную почту'
+              : null,
         ),
         const SizedBox(height: 12),
         _AuthField(
@@ -426,8 +452,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
           onToggleObscure: () => setState(() => _obscure = !_obscure),
-          errorText:
-              _submitted && !_passwordValid ? 'Минимум 8 символов' : null,
+          errorText: _submitted && !_passwordValid
+              ? 'Минимум 8 символов'
+              : null,
         ),
       ],
     );
@@ -436,12 +463,19 @@ class _RostokAuthPageState extends State<RostokAuthPage>
   Widget _buildDivider() {
     return Row(
       children: <Widget>[
-        const Expanded(child: Divider(color: RostokColors.hairline, thickness: 1)),
+        const Expanded(
+          child: Divider(color: RostokColors.hairline, thickness: 1),
+        ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Text('или', style: RostokText.body(size: 13, color: RostokColors.textFaint)),
+          child: Text(
+            'или',
+            style: RostokText.body(size: 13, color: RostokColors.textFaint),
+          ),
         ),
-        const Expanded(child: Divider(color: RostokColors.hairline, thickness: 1)),
+        const Expanded(
+          child: Divider(color: RostokColors.hairline, thickness: 1),
+        ),
       ],
     );
   }
@@ -455,9 +489,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
             icon: Icons.apple,
             onTap: busy
                 ? null
-                : () => context
-                    .read<AuthCubit>()
-                    .signInWithOAuth(provider: OAuthSignInProvider.apple),
+                : () => context.read<AuthCubit>().signInWithOAuth(
+                    provider: OAuthSignInProvider.apple,
+                  ),
           ),
         ),
         const SizedBox(width: 12),
@@ -467,9 +501,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
             icon: Icons.g_mobiledata_rounded,
             onTap: busy
                 ? null
-                : () => context
-                    .read<AuthCubit>()
-                    .signInWithOAuth(provider: OAuthSignInProvider.google),
+                : () => context.read<AuthCubit>().signInWithOAuth(
+                    provider: OAuthSignInProvider.google,
+                  ),
           ),
         ),
       ],
@@ -491,8 +525,8 @@ class _RostokAuthPageState extends State<RostokAuthPage>
         label: const Text('Mock login (dev)'),
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
-          foregroundColor: Colors.deepOrange,
-          side: const BorderSide(color: Colors.deepOrange),
+          foregroundColor: RostokColors.accentOrange,
+          side: const BorderSide(color: RostokColors.accentOrange),
         ),
       ),
     );
@@ -527,9 +561,11 @@ class _ModeToggle extends StatelessWidget {
             builder: (BuildContext context, Widget? child) {
               return Align(
                 alignment: Alignment(
-                  Alignment.lerp(Alignment.centerLeft, Alignment.centerRight,
-                          animation.value)!
-                      .x,
+                  Alignment.lerp(
+                    Alignment.centerLeft,
+                    Alignment.centerRight,
+                    animation.value,
+                  )!.x,
                   0,
                 ),
                 child: child,
@@ -689,8 +725,10 @@ class _AuthFieldState extends State<_AuthField> {
                     errorBorder: InputBorder.none,
                     focusedErrorBorder: InputBorder.none,
                     hintText: widget.label,
-                    hintStyle:
-                        RostokText.body(size: 16, color: RostokColors.textFaint),
+                    hintStyle: RostokText.body(
+                      size: 16,
+                      color: RostokColors.textFaint,
+                    ),
                   ),
                 ),
               ),
@@ -736,11 +774,7 @@ class _AuthFieldState extends State<_AuthField> {
 }
 
 class _PrimaryButton extends StatelessWidget {
-  const _PrimaryButton({
-    required this.label,
-    this.loading = false,
-    this.onTap,
-  });
+  const _PrimaryButton({required this.label, this.loading = false, this.onTap});
 
   final String label;
   final bool loading;
@@ -767,8 +801,9 @@ class _PrimaryButton extends StatelessWidget {
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.4,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(RostokColors.accent),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          RostokColors.accent,
+                        ),
                       ),
                     )
                   : AnimatedSwitcher(

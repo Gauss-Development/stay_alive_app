@@ -2,6 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
+import 'package:stay_alive/core/widgets/animations/green_sprout_rive.dart';
+import 'package:stay_alive/core/widgets/app_button.dart';
+import 'package:stay_alive/core/widgets/app_states.dart';
+import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
+import 'package:stay_alive/features/coach/domain/services/coach_context_builder.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
+import 'package:stay_alive/features/coach/presentation/widgets/weekly_insight_section.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
+import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_state.dart';
 import 'package:stay_alive/features/history/presentation/widgets/completion_trend_chart.dart';
@@ -32,27 +45,28 @@ class _HistoryPageState extends State<HistoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Statistics')),
-      body: BlocConsumer<SubscriptionCubit, SubscriptionState>(
-        listenWhen: (SubscriptionState previous, SubscriptionState current) =>
-            previous.info != current.info && current.isPremiumActive,
-        listener: (BuildContext context, SubscriptionState state) {
-          context.read<HistoryCubit>().load();
-        },
-        builder: (BuildContext context, SubscriptionState subscriptionState) {
-          if (subscriptionState.status == SubscriptionViewStatus.initial ||
-              subscriptionState.status == SubscriptionViewStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: SafeArea(
+        child: BlocConsumer<SubscriptionCubit, SubscriptionState>(
+          listenWhen: (SubscriptionState previous, SubscriptionState current) =>
+              previous.info != current.info && current.isPremiumActive,
+          listener: (BuildContext context, SubscriptionState state) {
+            context.read<HistoryCubit>().load();
+          },
+          builder: (BuildContext context, SubscriptionState subscriptionState) {
+            if (subscriptionState.status == SubscriptionViewStatus.initial ||
+                subscriptionState.status == SubscriptionViewStatus.loading) {
+              return const AppLoadingState();
+            }
 
-          if (!subscriptionState.isPremiumActive) {
-            return _HistoryPaywallPrompt(
-              message: subscriptionState.errorMessage,
-            );
-          }
+            if (!subscriptionState.isPremiumActive) {
+              return _HistoryPaywallPrompt(
+                message: subscriptionState.errorMessage,
+              );
+            }
 
-          return const _HistoryBody();
-        },
+            return const _HistoryBody();
+          },
+        ),
       ),
     );
   }
@@ -81,25 +95,12 @@ class _HistoryBodyState extends State<_HistoryBody> {
     return BlocBuilder<HistoryCubit, HistoryState>(
       builder: (BuildContext context, HistoryState state) {
         if (state is HistoryInitial || state is HistoryLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const AppLoadingState(message: 'Считаем твой прогресс...');
         }
 
         if (state is HistoryError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(state.message, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  FilledButton(
-                    onPressed: () => context.read<HistoryCubit>().load(),
-                    child: const Text('Try again'),
-                  ),
-                ],
-              ),
-            ),
+          return AppErrorState(
+            onRetry: () => context.read<HistoryCubit>().load(),
           );
         }
 
@@ -112,38 +113,74 @@ class _HistoryBodyState extends State<_HistoryBody> {
         final monthlyPoints = summary.dailyPoints;
 
         return RefreshIndicator(
+          color: AppColors.green,
           onRefresh: () => context.read<HistoryCubit>().load(),
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screen,
+              AppSpacing.sm,
+              AppSpacing.screen,
+              AppSpacing.xl,
+            ),
             children: <Widget>[
-              Text(
-                summary.periodLabel,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
+              FadeSlideIn(
+                child: Text(
+                  summary.periodLabel,
+                  style: AppTextStyles.headlineMedium,
+                ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Track how consistently you complete the Daily Dozen over time.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+              const SizedBox(height: AppSpacing.xs),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 80),
+                child: Text(
+                  'Смотри, как растёт твоя полезная привычка.',
+                  style: AppTextStyles.bodyMedium,
+                ),
               ),
-              const SizedBox(height: 16),
-              HistoryStatsGrid(summary: summary),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 160),
+                child: HistoryStatsGrid(summary: summary),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              FadeSlideIn(
+                delay: const Duration(milliseconds: 180),
+                child: WeeklyInsightSection(
+                  onRequestInsights: () {
+                    final bool isPremium = context
+                        .read<SubscriptionCubit>()
+                        .state
+                        .isPremiumActive;
+                    final gState = context.read<GamificationCubit>().state;
+                    context.read<CoachCubit>().loadWeeklyInsights(
+                          context: CoachContextBuilder.build(
+                            overview: gState is GamificationLoaded
+                                ? gState.overview
+                                : null,
+                            weekSummary: summary.periodLabel,
+                          ),
+                          isPremium: isPremium,
+                        );
+                    context.read<AnalyticsCubit>().track(
+                          eventName: 'coach_weekly_insight',
+                          screenName: 'history',
+                        );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
               CompletionTrendChart(
                 points: weeklyPoints,
-                title: 'Last 7 days',
+                title: 'Последние 7 дней',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               CompletionTrendChart(
                 points: monthlyPoints,
-                title: 'Last 30 days',
+                title: 'Последние 30 дней',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               DailyServingsChart(points: monthlyPoints),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               DailyCompletionHeatmap(points: monthlyPoints),
             ],
           ),
@@ -160,45 +197,41 @@ class _HistoryPaywallPrompt extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     return ListView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       children: <Widget>[
-        Icon(
-          Icons.insights,
-          size: 64,
-          color: theme.colorScheme.primary,
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.xl),
+        const Center(child: GreenSproutRiveEmblem(size: 120)),
+        const SizedBox(height: AppSpacing.lg),
         Text(
-          'Full statistics are Premium',
-          style: theme.textTheme.headlineSmall?.copyWith(
-            fontWeight: FontWeight.w800,
-          ),
+          'Полная статистика — в Premium',
+          style: AppTextStyles.headlineMedium,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 12),
-        const Text(
-          'Daily fruit and vegetable tracking stays free. Upgrade to see completion trends, serving charts, streaks, and monthly progress insights.',
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'Отмечать полезные продукты можно бесплатно. С Premium ты увидишь '
+          'тренды, серии, графики порций и прогресс за месяц.',
           textAlign: TextAlign.center,
+          style: AppTextStyles.bodyMedium,
         ),
         if (message != null) ...<Widget>[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             message!,
             textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.error),
+            style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
           ),
         ],
-        const SizedBox(height: 24),
-        FilledButton.icon(
+        const SizedBox(height: AppSpacing.xl),
+        AppButton(
+          text: 'Посмотреть Premium',
           onPressed: () => context.go(AppRoutes.premium),
-          icon: const Icon(Icons.workspace_premium),
-          label: const Text('View Premium Plans'),
         ),
+        const SizedBox(height: AppSpacing.sm),
         TextButton(
           onPressed: () => context.read<SubscriptionCubit>().load(),
-          child: const Text('I already subscribed — refresh'),
+          child: const Text('Я уже подписан — обновить'),
         ),
       ],
     );

@@ -12,16 +12,12 @@ class LoginWithOAuthUseCase
 
   @override
   Future<Result<AuthSession>> call(LoginWithOAuthParams params) {
-    return _authRepository.loginWithOAuth(
-      provider: params.provider,
-    );
+    return _authRepository.loginWithOAuth(provider: params.provider);
   }
 }
 
 class LoginWithOAuthParams extends Equatable {
-  const LoginWithOAuthParams({
-    required this.provider,
-  });
+  const LoginWithOAuthParams({required this.provider});
 
   final OAuthSignInProvider provider;
 

@@ -39,10 +39,7 @@ class HomeWidgetPluginGateway implements HomeWidgetGateway {
     required String androidName,
     required String iOSName,
   }) {
-    return HomeWidget.updateWidget(
-      androidName: androidName,
-      iOSName: iOSName,
-    );
+    return HomeWidget.updateWidget(androidName: androidName, iOSName: iOSName);
   }
 }
 
@@ -50,8 +47,8 @@ class DailyGoalWidgetService {
   DailyGoalWidgetService({
     required EnvConfig envConfig,
     required HomeWidgetGateway gateway,
-  })  : _envConfig = envConfig,
-        _gateway = gateway;
+  }) : _envConfig = envConfig,
+       _gateway = gateway;
 
   static const String androidProviderName = 'DailyGoalWidgetProvider';
   static const String iOSWidgetName = 'DailyGoalWidget';
@@ -74,10 +71,7 @@ class DailyGoalWidgetService {
       log.completionPercentage.round().clamp(0, 100),
     );
     await _gateway.saveString('daily_goal_date', log.dateKey);
-    await _gateway.saveInt(
-      'daily_goal_streak',
-      profile?.currentStreak ?? 0,
-    );
+    await _gateway.saveInt('daily_goal_streak', profile?.currentStreak ?? 0);
     await _gateway.saveInt(
       'daily_goal_level',
       profile?.currentLevel.level ?? 1,

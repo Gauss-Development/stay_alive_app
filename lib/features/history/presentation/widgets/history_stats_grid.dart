@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/app_card.dart';
 import 'package:stay_alive/features/history/domain/entities/history_summary.dart';
 
 class HistoryStatsGrid extends StatelessWidget {
-  const HistoryStatsGrid({
-    required this.summary,
-    super.key,
-  });
+  const HistoryStatsGrid({required this.summary, super.key});
 
   final HistorySummary summary;
 
@@ -17,28 +18,33 @@ class HistoryStatsGrid extends StatelessWidget {
         final List<_StatCardData> cards = <_StatCardData>[
           _StatCardData(
             icon: Icons.calendar_month_outlined,
-            label: 'Period average',
+            tint: AppColors.mutedGreen,
+            label: 'Среднее за период',
             value: '${summary.averageCompletionPercentage.toStringAsFixed(1)}%',
             subtitle:
-                '${summary.completedDays}/${summary.totalDays} full days',
+                '${summary.completedDays}/${summary.totalDays} '
+                'полных дней',
           ),
           _StatCardData(
             icon: Icons.local_fire_department_outlined,
-            label: 'Current streak',
+            tint: AppColors.softYellow,
+            label: 'Текущая серия',
             value: '${summary.currentStreak}',
-            subtitle: 'days in a row',
+            subtitle: 'дней подряд',
           ),
           _StatCardData(
             icon: Icons.emoji_events_outlined,
-            label: 'Best streak',
+            tint: AppColors.purple,
+            label: 'Рекорд',
             value: '${summary.bestStreak}',
-            subtitle: 'longest run',
+            subtitle: 'лучшая серия',
           ),
           _StatCardData(
-            icon: Icons.trending_up,
-            label: 'Last 7 days',
+            icon: Icons.trending_up_rounded,
+            tint: AppColors.blue,
+            label: 'Последние 7 дней',
             value: '${summary.weeklyCompletionPercent.toStringAsFixed(1)}%',
-            subtitle: 'weekly average',
+            subtitle: 'среднее за неделю',
           ),
         ];
 
@@ -47,13 +53,11 @@ class HistoryStatsGrid extends StatelessWidget {
             crossAxisCount: 2,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
+            mainAxisSpacing: AppSpacing.md,
+            crossAxisSpacing: AppSpacing.md,
             childAspectRatio: 2.2,
             children: cards
-                .map(
-                  (_StatCardData card) => _HistoryStatCard(data: card),
-                )
+                .map((_StatCardData card) => _HistoryStatCard(data: card))
                 .toList(growable: false),
           );
         }
@@ -62,7 +66,7 @@ class HistoryStatsGrid extends StatelessWidget {
           children: cards
               .map(
                 (_StatCardData card) => Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
                   child: _HistoryStatCard(data: card),
                 ),
               )
@@ -76,12 +80,14 @@ class HistoryStatsGrid extends StatelessWidget {
 class _StatCardData {
   const _StatCardData({
     required this.icon,
+    required this.tint,
     required this.label,
     required this.value,
     required this.subtitle,
   });
 
   final IconData icon;
+  final Color tint;
   final String label;
   final String value;
   final String subtitle;
@@ -94,55 +100,34 @@ class _HistoryStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    final ColorScheme colors = theme.colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: <Widget>[
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: colors.primaryContainer.withValues(alpha: 0.65),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                data.icon,
-                color: colors.onPrimaryContainer,
-              ),
+    return AppCard(
+      child: Row(
+        children: <Widget>[
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: data.tint.withValues(alpha: 0.55),
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    data.label,
-                    style: theme.textTheme.labelLarge?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    data.value,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(
-                    data.subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(data.icon, size: 20, color: AppColors.textPrimary),
+          ),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(data.label, style: AppTextStyles.labelMedium),
+                const SizedBox(height: 4),
+                Text(
+                  data.value,
+                  style: AppTextStyles.headlineMedium.copyWith(fontSize: 22),
+                ),
+                Text(data.subtitle, style: AppTextStyles.bodySmall),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

@@ -14,9 +14,9 @@ class AppwriteAnalyticsRemoteDataSource implements AnalyticsRemoteDataSource {
     required Account account,
     required Databases databases,
     required EnvConfig envConfig,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig;
+  }) : _account = account,
+       _databases = databases,
+       _envConfig = envConfig;
 
   final Account _account;
   final Databases _databases;
@@ -37,7 +37,6 @@ class AppwriteAnalyticsRemoteDataSource implements AnalyticsRemoteDataSource {
       collectionId: _envConfig.analyticsEventsCollectionId,
       documentId: ID.unique(),
       data: <String, dynamic>{
-        'event_id': ID.unique(),
         'event_name': event.name,
         'screen_name': event.screenName ?? '',
         'metadata_json': jsonEncode(event.metadata),

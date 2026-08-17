@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/features/history/domain/entities/daily_history_point.dart';
 
 class DailyCompletionHeatmap extends StatelessWidget {
-  const DailyCompletionHeatmap({
-    required this.points,
-    super.key,
-  });
+  const DailyCompletionHeatmap({required this.points, super.key});
 
   final List<DailyHistoryPoint> points;
 
@@ -25,14 +23,14 @@ class DailyCompletionHeatmap extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Daily completion map',
+              'Карта дней',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Each cell shows how close you were to the full Daily Dozen',
+              'Каждая клетка — насколько день был близок к цели',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -41,26 +39,25 @@ class DailyCompletionHeatmap extends StatelessWidget {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: points.map((DailyHistoryPoint point) {
-                return _HeatmapCell(point: point);
-              }).toList(growable: false),
+              children: points
+                  .map((DailyHistoryPoint point) {
+                    return _HeatmapCell(point: point);
+                  })
+                  .toList(growable: false),
             ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
               runSpacing: 8,
               children: <Widget>[
-                _LegendItem(
-                  color: colors.primary,
-                  label: 'Goal reached',
+                const _LegendItem(
+                  color: AppColors.green,
+                  label: 'Цель выполнена',
                 ),
-                _LegendItem(
-                  color: colors.tertiary,
-                  label: 'In progress',
-                ),
+                const _LegendItem(color: AppColors.lime, label: 'В процессе'),
                 _LegendItem(
                   color: colors.outlineVariant.withValues(alpha: 0.35),
-                  label: 'No log',
+                  label: 'Нет записи',
                 ),
               ],
             ),
@@ -82,17 +79,18 @@ class _HeatmapCell extends StatelessWidget {
     final Color backgroundColor = !point.hasLog
         ? colors.outlineVariant.withValues(alpha: 0.25)
         : point.isFullyCompleted
-            ? colors.primary
-            : Color.lerp(
-                  colors.tertiary.withValues(alpha: 0.25),
-                  colors.tertiary,
-                  (point.completionPercentage / 100).clamp(0, 1),
-                ) ??
-                colors.tertiary;
+        ? AppColors.green
+        : Color.lerp(
+                AppColors.lime.withValues(alpha: 0.25),
+                AppColors.lime,
+                (point.completionPercentage / 100).clamp(0, 1),
+              ) ??
+              AppColors.lime;
 
     return Tooltip(
-      message: '${point.dateKey}: '
-          '${point.totalCompleted}/${point.totalTarget} servings '
+      message:
+          '${point.dateKey}: '
+          '${point.totalCompleted}/${point.totalTarget} порций '
           '(${point.completionPercentage.toStringAsFixed(0)}%)',
       child: Container(
         width: 28,
@@ -108,7 +106,7 @@ class _HeatmapCell extends StatelessWidget {
             fontSize: 11,
             fontWeight: FontWeight.w600,
             color: point.isFullyCompleted
-                ? colors.onPrimary
+                ? AppColors.white
                 : colors.onSurface.withValues(alpha: 0.75),
           ),
         ),
@@ -118,10 +116,7 @@ class _HeatmapCell extends StatelessWidget {
 }
 
 class _LegendItem extends StatelessWidget {
-  const _LegendItem({
-    required this.color,
-    required this.label,
-  });
+  const _LegendItem({required this.color, required this.label});
 
   final Color color;
   final String label;
@@ -140,10 +135,7 @@ class _LegendItem extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.labelSmall,
-        ),
+        Text(label, style: Theme.of(context).textTheme.labelSmall),
       ],
     );
   }

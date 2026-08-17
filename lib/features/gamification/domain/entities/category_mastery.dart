@@ -1,12 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum MasteryTier {
-  none,
-  bronze,
-  silver,
-  gold,
-  platinum,
-}
+enum MasteryTier { none, bronze, silver, gold, platinum }
 
 class CategoryMastery extends Equatable {
   const CategoryMastery({
@@ -83,11 +77,11 @@ class CategoryMastery extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        categoryId,
-        title,
-        iconKey,
-        totalServings,
-        tier,
-        nextTierThreshold,
-      ];
+    categoryId,
+    title,
+    iconKey,
+    totalServings,
+    tier,
+    nextTierThreshold,
+  ];
 }

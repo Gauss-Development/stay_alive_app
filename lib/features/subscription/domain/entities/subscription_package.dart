@@ -23,11 +23,11 @@ class SubscriptionPackage extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        plan,
-        title,
-        description,
-        priceLabel,
-        productIdentifier,
-      ];
+    id,
+    plan,
+    title,
+    description,
+    priceLabel,
+    productIdentifier,
+  ];
 }

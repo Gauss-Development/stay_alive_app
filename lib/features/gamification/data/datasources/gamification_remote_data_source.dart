@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:appwrite/appwrite.dart';
 import 'package:appwrite/models.dart' as appwrite_models;
+import 'package:collection/collection.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
@@ -14,6 +15,7 @@ import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_challenge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
+import 'package:stay_alive/features/gamification/domain/entities/personalized_challenge_draft.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_overview_builder.dart';
@@ -21,11 +23,13 @@ import 'package:stay_alive/features/gamification/domain/services/gamification_ov
 abstract class GamificationRemoteDataSource {
   Future<GamificationOverviewModel> reconcileOverview({
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   });
 
   Future<GamificationOverviewModel> reconcileTodayOverview({
     required DailyLog todayLog,
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   });
 }
 
@@ -37,11 +41,11 @@ class AppwriteGamificationRemoteDataSource
     required EnvConfig envConfig,
     GamificationEngine? engine,
     GamificationOverviewBuilder? overviewBuilder,
-  })  : _account = account,
-        _databases = databases,
-        _envConfig = envConfig,
-        _overviewBuilder =
-            overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
+  }) : _account = account,
+       _databases = databases,
+       _envConfig = envConfig,
+       _overviewBuilder =
+           overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
 
   final Account _account;
   final Databases _databases;
@@ -51,24 +55,33 @@ class AppwriteGamificationRemoteDataSource
   static const int _fullReconcileDayWindow = 365;
   static const int _todayReconcileDayWindow = 45;
 
+  /// Rows fetched per request while paging. Appwrite imposes no hard ceiling,
+  /// but large pages degrade list performance.
+  static const int _pageSize = 100;
+
+  /// Log IDs per `Query.equal` filter — Appwrite caps values in one query.
+  static const int _idsPerQuery = 100;
+
   @override
   Future<GamificationOverviewModel> reconcileOverview({
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
     final appwrite_models.User user = await _account.get();
-    final UserGameProfileModel? persistedProfile =
-        await _loadPersistedProfile(user.$id);
-    final List<DailyLogModel> logs =
-        await _loadLogsWithItems(user.$id, dayWindow: _fullReconcileDayWindow);
-    final List<GamificationXpEventModel> persistedEvents =
-        await _fetchXpEvents(user.$id);
+    // Independent reads run concurrently — reconcile is on the home-screen path.
+    final List<Object?> reads = await Future.wait(<Future<Object?>>[
+      _loadPersistedProfile(user.$id),
+      _loadLogsWithItems(user.$id, dayWindow: _fullReconcileDayWindow),
+      _fetchXpEvents(user.$id),
+    ]);
 
     return _buildAndPersist(
       userId: user.$id,
-      logs: logs,
-      persistedEvents: persistedEvents,
+      logs: reads[1]! as List<DailyLogModel>,
+      persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
-      persistedProfile: persistedProfile,
+      persistedProfile: reads[0] as UserGameProfileModel?,
+      personalizedDailyDraft: personalizedDailyDraft,
     );
   }
 
@@ -76,24 +89,27 @@ class AppwriteGamificationRemoteDataSource
   Future<GamificationOverviewModel> reconcileTodayOverview({
     required DailyLog todayLog,
     required bool isPremium,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
     final appwrite_models.User user = await _account.get();
-    final UserGameProfileModel? persistedProfile =
-        await _loadPersistedProfile(user.$id);
-    final List<DailyLogModel> logs = await _loadLogsWithItems(
-      user.$id,
-      dayWindow: _todayReconcileDayWindow,
+    // Independent reads run concurrently — reconcile is on the home-screen path.
+    final List<Object?> reads = await Future.wait(<Future<Object?>>[
+      _loadPersistedProfile(user.$id),
+      _loadLogsWithItems(user.$id, dayWindow: _todayReconcileDayWindow),
+      _fetchXpEvents(user.$id),
+    ]);
+    final List<DailyLogModel> mergedLogs = _mergeTodayLog(
+      reads[1]! as List<DailyLogModel>,
+      todayLog,
     );
-    final List<DailyLogModel> mergedLogs = _mergeTodayLog(logs, todayLog);
-    final List<GamificationXpEventModel> persistedEvents =
-        await _fetchXpEvents(user.$id);
 
     return _buildAndPersist(
       userId: user.$id,
       logs: mergedLogs,
-      persistedEvents: persistedEvents,
+      persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
-      persistedProfile: persistedProfile,
+      persistedProfile: reads[0] as UserGameProfileModel?,
+      personalizedDailyDraft: personalizedDailyDraft,
     );
   }
 
@@ -103,46 +119,54 @@ class AppwriteGamificationRemoteDataSource
     required List<GamificationXpEventModel> persistedEvents,
     required bool isPremium,
     required UserGameProfileModel? persistedProfile,
+    PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
     final GamificationOverview overview = _overviewBuilder.build(
       userId: userId,
       logs: logs,
       persistedEvents: persistedEvents,
       isPremium: isPremium,
-      streakFreezesRemaining:
-          persistedProfile?.streakFreezesRemaining ?? 0,
+      streakFreezesRemaining: persistedProfile?.streakFreezesRemaining ?? 0,
       streakFreezeUsedDates:
           persistedProfile?.streakFreezeUsedDates ?? const <String>[],
+      personalizedDailyDraft: personalizedDailyDraft,
     );
 
-    final UserGameProfileModel profileModel =
-        UserGameProfileModel.fromProfile(overview.profile);
-    await _upsertProfile(profileModel);
-    await _upsertBadgeEvents(profileModel);
-    await _upsertChallengeEvent(
-      userId: userId,
-      challenge: overview.dailyChallenge,
-      profile: overview.profile,
-      persistedEvents: persistedEvents,
-      eventType: 'challenge_completed',
-      isPremium: isPremium,
+    final UserGameProfileModel profileModel = UserGameProfileModel.fromProfile(
+      overview.profile,
     );
-    await _upsertChallengeEvent(
-      userId: userId,
-      challenge: overview.weeklyChallenge,
-      profile: overview.profile,
-      persistedEvents: persistedEvents,
-      eventType: 'weekly_challenge_completed',
-      isPremium: isPremium,
-    );
-    await _upsertStreakFreezeEvents(
-      userId: userId,
-      previousProfile: persistedProfile,
-      nextProfile: overview.profile,
-    );
+    // These writes target distinct documents and don't read each other's
+    // results (dedup uses the pre-write persistedEvents snapshot), so they run
+    // concurrently; all complete before the event re-fetch below.
+    await Future.wait(<Future<void>>[
+      _upsertProfile(profileModel),
+      _upsertBadgeEvents(profileModel),
+      _upsertChallengeEvent(
+        userId: userId,
+        challenge: overview.dailyChallenge,
+        profile: overview.profile,
+        persistedEvents: persistedEvents,
+        eventType: 'challenge_completed',
+        isPremium: isPremium,
+      ),
+      _upsertChallengeEvent(
+        userId: userId,
+        challenge: overview.weeklyChallenge,
+        profile: overview.profile,
+        persistedEvents: persistedEvents,
+        eventType: 'weekly_challenge_completed',
+        isPremium: isPremium,
+      ),
+      _upsertStreakFreezeEvents(
+        userId: userId,
+        previousProfile: persistedProfile,
+        nextProfile: overview.profile,
+      ),
+    ]);
 
-    final List<GamificationXpEventModel> refreshedEvents =
-        await _fetchXpEvents(userId);
+    final List<GamificationXpEventModel> refreshedEvents = await _fetchXpEvents(
+      userId,
+    );
 
     return GamificationOverviewModel(
       profile: overview.profile,
@@ -187,13 +211,10 @@ class AppwriteGamificationRemoteDataSource
   Future<List<GamificationXpEventModel>> _fetchXpEvents(String userId) async {
     final appwrite_models.DocumentList documents = await _databases
         .listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.gamificationEventsCollectionId,
-      queries: <String>[
-        Query.orderDesc('\$createdAt'),
-        Query.limit(50),
-      ],
-    );
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.gamificationEventsCollectionId,
+          queries: <String>[Query.orderDesc('\$createdAt'), Query.limit(50)],
+        );
 
     return documents.documents
         .map(GamificationXpEventModel.fromDocument)
@@ -204,56 +225,75 @@ class AppwriteGamificationRemoteDataSource
     String userId, {
     required int dayWindow,
   }) async {
-    final DateTime cutoff =
-        DateTime.now().toUtc().subtract(Duration(days: dayWindow));
+    final DateTime cutoff = DateTime.now().toUtc().subtract(
+      Duration(days: dayWindow),
+    );
     final String cutoffKey = _dateKey(cutoff);
 
     final appwrite_models.DocumentList documents = await _databases
         .listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogsCollectionId,
-      queries: <String>[
-        Query.limit(dayWindow + 30),
-      ],
-    );
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.dailyLogsCollectionId,
+          queries: <String>[
+            Query.greaterThanEqual('log_date', cutoffKey),
+            Query.orderAsc('log_date'),
+            // Range is inclusive of both ends → dayWindow + 1 distinct dates;
+            // limit(dayWindow) would drop the newest (today) at saturation.
+            Query.limit(dayWindow + 1),
+          ],
+        );
 
-    final List<appwrite_models.Document> filteredLogs = documents.documents
-        .where((appwrite_models.Document document) {
-          final String? dateKey =
-              DailyLogDocumentIds.dateKeyFromLogDocumentId(document.$id);
-          if (dateKey == null) {
-            return false;
-          }
-          return dateKey.compareTo(cutoffKey) >= 0;
-        })
-        .toList(growable: false)
-      ..sort(
-        (appwrite_models.Document a, appwrite_models.Document b) {
-          final String? dateA =
-              DailyLogDocumentIds.dateKeyFromLogDocumentId(a.$id);
-          final String? dateB =
-              DailyLogDocumentIds.dateKeyFromLogDocumentId(b.$id);
-          return (dateA ?? '').compareTo(dateB ?? '');
-        },
-      );
-
-    final List<String> logIds = filteredLogs
+    final List<String> logIds = documents.documents
         .map((appwrite_models.Document document) => document.$id)
         .toList(growable: false);
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         await _loadItemsByLogIds(userId, logIds);
 
-    return filteredLogs
-        .map(
-          (appwrite_models.Document document) {
-            final String logId = document.$id;
-            return DailyLogModel.fromDocument(
-              document: document,
-              items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
-            );
-          },
-        )
+    return documents.documents
+        .map((appwrite_models.Document document) {
+          final String logId = document.$id;
+          return DailyLogModel.fromDocument(
+            document: document,
+            items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
+          );
+        })
         .toList(growable: false);
+  }
+
+  /// Pages through every document matching [queries], following the cursor
+  /// until a short page ends the scan.
+  ///
+  /// A bare `Query.limit(n)` silently truncates once the match count passes
+  /// `n`, and without an explicit sort the rows that survive are the oldest —
+  /// so the newest data is what goes missing. Paging has no such ceiling.
+  Future<List<appwrite_models.Document>> _listAllDocuments({
+    required String collectionId,
+    required List<String> queries,
+  }) async {
+    final List<appwrite_models.Document> all = <appwrite_models.Document>[];
+    String? cursor;
+    while (true) {
+      final appwrite_models.DocumentList page = await _databases.listDocuments(
+        databaseId: _envConfig.appwriteDatabaseId,
+        collectionId: collectionId,
+        queries: <String>[
+          ...queries,
+          Query.limit(_pageSize),
+          if (cursor != null) Query.cursorAfter(cursor),
+        ],
+      );
+      all.addAll(page.documents);
+      if (page.documents.length < _pageSize) {
+        return all;
+      }
+      final String nextCursor = page.documents.last.$id;
+      // A cursor that does not advance means the server returned the same page
+      // again; continuing would loop forever and grow `all` without bound.
+      if (nextCursor == cursor) {
+        return all;
+      }
+      cursor = nextCursor;
+    }
   }
 
   Future<Map<String, List<DailyLogItemModel>>> _loadItemsByLogIds(
@@ -264,31 +304,55 @@ class AppwriteGamificationRemoteDataSource
       return const <String, List<DailyLogItemModel>>{};
     }
 
-    final appwrite_models.DocumentList itemDocuments =
-        await _databases.listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogItemsCollectionId,
-      queries: <String>[
-        Query.limit(5000),
-      ],
+    // Filter server-side, chunked because `Query.equal` caps how many values
+    // one query may carry. The previous `Query.limit(5000)` was unfiltered: it
+    // pulled the entire collection and, with no ordering, dropped the newest
+    // rows once a user passed 5000 items (~14 months at 12 categories/day).
+    final List<List<appwrite_models.Document>> chunkResults = await Future.wait(
+      logIds.slices(_idsPerQuery).map((List<String> chunk) {
+        return _listAllDocuments(
+          collectionId: _envConfig.dailyLogItemsCollectionId,
+          queries: <String>[Query.equal('log_document_id', chunk)],
+        );
+      }),
     );
+    List<appwrite_models.Document> documents = chunkResults
+        .expand((List<appwrite_models.Document> chunk) => chunk)
+        .toList(growable: false);
+
+    // Legacy rows predate the `log_document_id` attribute and are matched by
+    // document-ID prefix instead, so they can only be found by a full scan.
+    if (documents.isEmpty) {
+      documents = await _listAllDocuments(
+        collectionId: _envConfig.dailyLogItemsCollectionId,
+        queries: const <String>[],
+      );
+    }
 
     final Map<String, List<DailyLogItemModel>> itemsByLogId =
         <String, List<DailyLogItemModel>>{};
-    for (final appwrite_models.Document document in itemDocuments.documents) {
+    for (final appwrite_models.Document document in documents) {
+      final String? logDocumentIdFromData = document.data['log_document_id']
+          ?.toString();
       String? matchedLogId;
-      for (final String logId in logIds) {
-        if (DailyLogDocumentIds.isItemForLog(document.$id, logId)) {
-          matchedLogId = logId;
-          break;
+      if (logDocumentIdFromData != null &&
+          logDocumentIdFromData.isNotEmpty &&
+          logIds.contains(logDocumentIdFromData)) {
+        matchedLogId = logDocumentIdFromData;
+      } else {
+        for (final String logId in logIds) {
+          if (DailyLogDocumentIds.isLegacyItemForLog(document.$id, logId)) {
+            matchedLogId = logId;
+            break;
+          }
         }
       }
       if (matchedLogId == null) {
         continue;
       }
-      itemsByLogId.putIfAbsent(matchedLogId, () => <DailyLogItemModel>[]).add(
-            DailyLogItemModel.fromDocumentWithoutCategory(document),
-          );
+      itemsByLogId
+          .putIfAbsent(matchedLogId, () => <DailyLogItemModel>[])
+          .add(DailyLogItemModel.fromDocumentWithoutCategory(document));
     }
     return itemsByLogId;
   }
@@ -311,10 +375,7 @@ class AppwriteGamificationRemoteDataSource
         databaseId: _envConfig.appwriteDatabaseId,
         collectionId: _envConfig.gamificationProfilesCollectionId,
         documentId: profile.userId,
-        data: <String, dynamic>{
-          ...data,
-          'created_at': now,
-        },
+        data: <String, dynamic>{...data, 'created_at': now},
         permissions: <String>[
           Permission.read(Role.user(profile.userId)),
           Permission.update(Role.user(profile.userId)),
@@ -386,9 +447,8 @@ class AppwriteGamificationRemoteDataSource
     required UserGameProfile? previousProfile,
     required UserGameProfile nextProfile,
   }) async {
-    final Set<String> previousUsed = (previousProfile?.streakFreezeUsedDates ??
-            const <String>[])
-        .toSet();
+    final Set<String> previousUsed =
+        (previousProfile?.streakFreezeUsedDates ?? const <String>[]).toSet();
     for (final String date in nextProfile.streakFreezeUsedDates) {
       if (previousUsed.contains(date)) {
         continue;
@@ -417,18 +477,15 @@ class AppwriteGamificationRemoteDataSource
   }) async {
     final appwrite_models.DocumentList existing = await _databases
         .listDocuments(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.gamificationEventsCollectionId,
-      queries: <String>[
-        Query.equal('event_type', eventType),
-        Query.limit(50),
-      ],
-    );
-    final bool alreadyRecorded = existing.documents.any(
-      (appwrite_models.Document document) =>
-          _eventLogDate(document) == logDate,
-    );
-    if (alreadyRecorded) {
+          databaseId: _envConfig.appwriteDatabaseId,
+          collectionId: _envConfig.gamificationEventsCollectionId,
+          queries: <String>[
+            Query.equal('event_type', eventType),
+            Query.equal('log_date', logDate),
+            Query.limit(1),
+          ],
+        );
+    if (existing.documents.isNotEmpty) {
       return;
     }
 
@@ -441,12 +498,18 @@ class AppwriteGamificationRemoteDataSource
         data: <String, dynamic>{
           'event_type': eventType,
           'xp_delta': xpDelta,
-          'metadata_json': jsonEncode(<String, Object?>{
-            ...metadata,
-            'log_date': logDate,
-          }),
+          'log_date': logDate,
+          'metadata_json': jsonEncode(metadata),
+          'created_at': createdAt.toIso8601String(),
         },
-        permissions: <String>[Permission.read(Role.user(userId))],
+        // Delete permission is required: account deletion iterates this
+        // collection, and a read-only document is listable but not deletable,
+        // which stalls the deletion flow. Matches every other collection.
+        permissions: <String>[
+          Permission.read(Role.user(userId)),
+          Permission.update(Role.user(userId)),
+          Permission.delete(Role.user(userId)),
+        ],
       );
     } on AppwriteException catch (exception) {
       if (exception.code != 409) {
@@ -459,28 +522,5 @@ class AppwriteGamificationRemoteDataSource
     final String month = date.month.toString().padLeft(2, '0');
     final String day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
-  }
-
-  String _eventLogDate(appwrite_models.Document document) {
-    final Map<String, dynamic> data = document.data;
-    final String? storedDate = data['log_date']?.toString();
-    if (storedDate != null && storedDate.isNotEmpty) {
-      return storedDate;
-    }
-    final Object? metadata = data['metadata_json'];
-    if (metadata is String && metadata.isNotEmpty) {
-      try {
-        final Object? decoded = jsonDecode(metadata);
-        if (decoded is Map<String, dynamic>) {
-          final String? metadataDate = decoded['log_date']?.toString();
-          if (metadataDate != null && metadataDate.isNotEmpty) {
-            return metadataDate;
-          }
-        }
-      } on FormatException {
-        // Fall through to empty string.
-      }
-    }
-    return '';
   }
 }

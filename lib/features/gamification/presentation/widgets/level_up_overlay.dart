@@ -1,8 +1,24 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/motion/app_curves.dart';
+import 'package:stay_alive/core/motion/motion_config.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
+import 'package:stay_alive/core/widgets/animations/floating_particles.dart';
+import 'package:stay_alive/core/widgets/animations/pressable_scale.dart';
+import 'package:stay_alive/core/widgets/animations/reward_burst.dart';
+import 'package:stay_alive/core/widgets/animations/scale_pop.dart';
+import 'package:stay_alive/core/widgets/animations/sprout_growth_animation.dart';
+import 'package:stay_alive/core/widgets/app_badge.dart';
+import 'package:stay_alive/core/widgets/app_button.dart';
 import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
 
+/// Dark, emotional level-up celebration.
+///
+/// Sequence: floating particles drift in the background → badge pops →
+/// the sprout grows → title and level bounce in → a short radial burst →
+/// the lime CTA slides up from the bottom.
 class LevelUpOverlay extends StatefulWidget {
   const LevelUpOverlay({
     required this.level,
@@ -18,260 +34,164 @@ class LevelUpOverlay extends StatefulWidget {
 }
 
 class _LevelUpOverlayState extends State<LevelUpOverlay>
-    with TickerProviderStateMixin {
-  late final AnimationController _revealController;
-  late final AnimationController _particleController;
-  late final Animation<double> _revealAnim;
-  late final List<_Particle> _particles;
-
-  static const _kParticleCount = 60;
-  static const _kColors = <Color>[
-    Color(0xFF2E7D65),
-    Color(0xFF8CBF93),
-    Color(0xFFFFD700),
-    Color(0xFFFFFFFF),
-    Color(0xFFFF8A65),
-  ];
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _reveal = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 350),
+  );
+  bool _started = false;
 
   @override
-  void initState() {
-    super.initState();
-
-    _revealController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _revealAnim = CurvedAnimation(
-      parent: _revealController,
-      curve: Curves.easeOutExpo,
-    );
-
-    _particleController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 3),
-    );
-
-    final rng = math.Random();
-    _particles = List<_Particle>.generate(_kParticleCount, (_) {
-      return _Particle(
-        x: rng.nextDouble(),
-        y: rng.nextDouble() * -0.5 - 0.1,
-        vx: (rng.nextDouble() - 0.5) * 0.3,
-        vy: rng.nextDouble() * 0.3 + 0.1,
-        rotation: rng.nextDouble() * math.pi * 2,
-        rotationSpeed: (rng.nextDouble() - 0.5) * math.pi * 4,
-        color: _kColors[rng.nextInt(_kColors.length)],
-        size: rng.nextDouble() * 8 + 5,
-      );
-    });
-
-    _revealController.forward();
-    _particleController.repeat();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) {
+      return;
+    }
+    _started = true;
+    if (MotionConfig.reduceMotionOf(context)) {
+      _reveal.value = 1;
+    } else {
+      _reveal.forward();
+    }
   }
 
   @override
   void dispose() {
-    _revealController.dispose();
-    _particleController.dispose();
+    _reveal.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
+    final bool reduceMotion = MotionConfig.reduceMotionOf(context);
 
-    return AnimatedBuilder(
-      animation: Listenable.merge(
-        <Listenable>[_revealAnim, _particleController],
-      ),
-      builder: (BuildContext context, Widget? _) {
-        final double revealFraction = _revealAnim.value;
-        final double particleFraction = _particleController.value;
-
-        return Stack(
+    return FadeTransition(
+      opacity: CurvedAnimation(parent: _reveal, curve: AppCurves.standard),
+      child: ColoredBox(
+        color: AppColors.dark,
+        child: Stack(
+          fit: StackFit.expand,
           children: <Widget>[
-            // Radial reveal
-            CustomPaint(
-              size: size,
-              painter: _RadialRevealPainter(fraction: revealFraction),
-            ),
-            // Confetti
-            if (revealFraction > 0.4)
-              CustomPaint(
-                size: size,
-                painter: _ParticlePainter(
-                  particles: _particles,
-                  t: particleFraction,
-                  screenSize: size,
-                ),
-              ),
-            // Content
-            if (revealFraction > 0.7)
-              SafeArea(
-                child: Center(
-                  child: Opacity(
-                    opacity: ((revealFraction - 0.7) / 0.3).clamp(0.0, 1.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        const Text(
-                          '🎉',
-                          style: TextStyle(fontSize: 64),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'LEVEL UP!',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            letterSpacing: 3,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Level ${widget.level.level}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 56,
-                            fontWeight: FontWeight.w800,
-                            height: 1,
-                            letterSpacing: -2,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          widget.level.title,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        FilledButton(
-                          onPressed: widget.onDismiss,
-                          style: FilledButton.styleFrom(
-                            backgroundColor:
-                                Colors.white.withValues(alpha: 0.2),
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(200, 52),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: Colors.white.withValues(alpha: 0.4),
+            if (!reduceMotion)
+              const Positioned.fill(child: FloatingParticles()),
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: Column(
+                  children: <Widget>[
+                    Expanded(
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              const ScalePop(
+                                delay: Duration(milliseconds: 150),
+                                child: AppBadge(
+                                  label: 'НОВЫЙ УРОВЕНЬ',
+                                  onDark: true,
+                                ),
                               ),
-                            ),
-                          ),
-                          child: const Text(
-                            'Keep it up!',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                              const SizedBox(height: AppSpacing.xl),
+                              _buildSproutHero(),
+                              const SizedBox(height: AppSpacing.xl),
+                              FadeSlideIn(
+                                delay: const Duration(milliseconds: 650),
+                                child: Text(
+                                  'Уровень ${widget.level.level}',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.headlineLarge.copyWith(
+                                    color: AppColors.white,
+                                    fontSize: 44,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              ScalePop(
+                                delay: const Duration(milliseconds: 850),
+                                duration: const Duration(milliseconds: 500),
+                                curve: reduceMotion
+                                    ? AppCurves.standard
+                                    : AppCurves.bounce,
+                                fromScale: 0.7,
+                                child: Text(
+                                  widget.level.title,
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.points,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              FadeSlideIn(
+                                delay: const Duration(milliseconds: 1050),
+                                child: Text(
+                                  'Твой росток стал ещё сильнее',
+                                  textAlign: TextAlign.center,
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                    FadeSlideIn(
+                      delay: const Duration(milliseconds: 1150),
+                      offset: 24,
+                      child: PressableScale(
+                        child: AppButton(
+                          text: 'Продолжить',
+                          variant: AppButtonVariant.lime,
+                          onPressed: widget.onDismiss,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ),
           ],
-        );
-      },
-    );
-  }
-}
-
-// ── Painters ─────────────────────────────────────────────────────────────────
-
-class _RadialRevealPainter extends CustomPainter {
-  const _RadialRevealPainter({required this.fraction});
-
-  final double fraction;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (fraction <= 0) return;
-    final double maxRadius =
-        math.sqrt(size.width * size.width + size.height * size.height);
-    canvas.drawCircle(
-      Offset(size.width / 2, size.height / 2),
-      maxRadius * fraction,
-      Paint()..color = const Color(0xFF1A3D2E),
-    );
-  }
-
-  @override
-  bool shouldRepaint(_RadialRevealPainter old) => old.fraction != fraction;
-}
-
-class _Particle {
-  _Particle({
-    required this.x,
-    required this.y,
-    required this.vx,
-    required this.vy,
-    required this.rotation,
-    required this.rotationSpeed,
-    required this.color,
-    required this.size,
-  });
-
-  final double x;
-  final double y;
-  final double vx;
-  final double vy;
-  final double rotation;
-  final double rotationSpeed;
-  final Color color;
-  final double size;
-}
-
-class _ParticlePainter extends CustomPainter {
-  const _ParticlePainter({
-    required this.particles,
-    required this.t,
-    required this.screenSize,
-  });
-
-  final List<_Particle> particles;
-  final double t;
-  final Size screenSize;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint();
-    const double gravity = 0.4;
-
-    for (final _Particle p in particles) {
-      final double px = (p.x + p.vx * t) * size.width;
-      final double py =
-          (p.y + p.vy * t + gravity * t * t) * size.height;
-
-      if (py > size.height + 20) continue;
-
-      final double angle = p.rotation + p.rotationSpeed * t;
-
-      canvas.save();
-      canvas.translate(px, py);
-      canvas.rotate(angle);
-      paint.color = p.color.withValues(alpha: (1.0 - t * 0.5).clamp(0.0, 1.0));
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-            center: Offset.zero,
-            width: p.size,
-            height: p.size * 0.5,
-          ),
-          const Radius.circular(2),
         ),
-        paint,
-      );
-      canvas.restore();
-    }
+      ),
+    );
   }
 
-  @override
-  bool shouldRepaint(_ParticlePainter old) => old.t != t;
+  Widget _buildSproutHero() {
+    return SizedBox(
+      width: 220,
+      height: 190,
+      child: Stack(
+        alignment: Alignment.center,
+        children: <Widget>[
+          // Short premium burst timed to the level reveal.
+          const RewardBurst(size: 220, delay: Duration(milliseconds: 750)),
+          ScalePop(
+            delay: const Duration(milliseconds: 300),
+            fromScale: 0.8,
+            child: Container(
+              width: 132,
+              height: 132,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: AppColors.lime.withValues(alpha: 0.25),
+                    blurRadius: 44,
+                    spreadRadius: 6,
+                  ),
+                ],
+              ),
+              child: const SproutGrowthAnimation(
+                size: 76,
+                delay: Duration(milliseconds: 450),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

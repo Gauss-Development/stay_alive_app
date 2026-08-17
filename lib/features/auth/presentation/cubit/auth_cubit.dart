@@ -24,15 +24,15 @@ class AuthCubit extends Cubit<AuthState> {
     required CompleteOnboardingUseCase completeOnboardingUseCase,
     required DeleteAccountUseCase deleteAccountUseCase,
     required AppLogger logger,
-  })  : _loginWithEmailUseCase = loginWithEmailUseCase,
-        _signUpWithEmailUseCase = signUpWithEmailUseCase,
-        _getCurrentUserUseCase = getCurrentUserUseCase,
-        _logoutUseCase = logoutUseCase,
-        _loginWithOAuthUseCase = loginWithOAuthUseCase,
-        _completeOnboardingUseCase = completeOnboardingUseCase,
-        _deleteAccountUseCase = deleteAccountUseCase,
-        _logger = logger,
-        super(const AuthInitial());
+  }) : _loginWithEmailUseCase = loginWithEmailUseCase,
+       _signUpWithEmailUseCase = signUpWithEmailUseCase,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
+       _logoutUseCase = logoutUseCase,
+       _loginWithOAuthUseCase = loginWithOAuthUseCase,
+       _completeOnboardingUseCase = completeOnboardingUseCase,
+       _deleteAccountUseCase = deleteAccountUseCase,
+       _logger = logger,
+       super(const AuthInitial());
 
   final LoginWithEmailUseCase _loginWithEmailUseCase;
   final SignUpWithEmailUseCase _signUpWithEmailUseCase;
@@ -67,11 +67,7 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     emit(const AuthLoading());
     final result = await _signUpWithEmailUseCase(
-      SignUpWithEmailParams(
-        email: email,
-        password: password,
-        name: name,
-      ),
+      SignUpWithEmailParams(email: email, password: password, name: name),
     );
 
     result.fold(
@@ -80,9 +76,7 @@ class AuthCubit extends Cubit<AuthState> {
     );
   }
 
-  Future<void> signInWithOAuth({
-    required OAuthSignInProvider provider,
-  }) async {
+  Future<void> signInWithOAuth({required OAuthSignInProvider provider}) async {
     emit(const AuthLoading());
     final result = await _loginWithOAuthUseCase(
       LoginWithOAuthParams(provider: provider),
@@ -123,21 +117,18 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> deleteAccount() async {
     emit(const AuthLoading());
     final result = await _deleteAccountUseCase(const NoParams());
-    result.fold(
-      (failure) => emit(AuthError(failure.message)),
-      (_) {
-        try {
-          Purchases.logOut();
-        } catch (exception, stackTrace) {
-          _logger.warning(
-            'Failed to clear RevenueCat alias after account deletion.',
-            error: exception,
-            stackTrace: stackTrace,
-          );
-        }
-        emit(const AuthUnauthenticated());
-      },
-    );
+    result.fold((failure) => emit(AuthError(failure.message)), (_) {
+      try {
+        Purchases.logOut();
+      } catch (exception, stackTrace) {
+        _logger.warning(
+          'Failed to clear RevenueCat alias after account deletion.',
+          error: exception,
+          stackTrace: stackTrace,
+        );
+      }
+      emit(const AuthUnauthenticated());
+    });
   }
 
   Future<void> _loadCurrentUserAndEmit() async {

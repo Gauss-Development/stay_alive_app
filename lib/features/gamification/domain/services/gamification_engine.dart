@@ -13,6 +13,9 @@ class GamificationEngine {
   static const int xpStreakDay = 15;
   static const int xpFirstLogOfDay = 10;
   static const int xpEarlyBirdDay = 5;
+
+  /// Shared cutoff for early-bird XP, badge, and Morning Momentum challenge.
+  static const int earlyBirdHourCutoff = 9;
   static const double premiumXpMultiplier = 1.25;
   static const int premiumStreakFreezeAllowance = 2;
 
@@ -26,6 +29,8 @@ class GamificationEngine {
     BadgeId.winterWellness: 120,
     BadgeId.secretKeeper: 200,
     BadgeId.patron: 150,
+    BadgeId.firstBloom: 200,
+    BadgeId.streakGardener: 100,
   };
 
   UserGameProfile reconcile({
@@ -38,9 +43,7 @@ class GamificationEngine {
   }) {
     final DateTime reference = _dateOnly(referenceDate ?? DateTime.now());
     final List<DailyLog> sortedLogs = List<DailyLog>.of(logs)
-      ..sort(
-        (DailyLog a, DailyLog b) => a.dateKey.compareTo(b.dateKey),
-      );
+      ..sort((DailyLog a, DailyLog b) => a.dateKey.compareTo(b.dateKey));
 
     int xp = 0;
     int perfectRun = 0;
@@ -66,7 +69,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.firstStep,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -91,7 +94,7 @@ class GamificationEngine {
           _awardBadgeIfAvailable(
             earnedBadges,
             BadgeId.earlyBird,
-            _dateAtMidnight(log.logDate),
+            _dateOnly(log.logDate),
             reference,
             isPremium: isPremium,
           );
@@ -107,7 +110,7 @@ class GamificationEngine {
       _awardBadgeIfAvailable(
         earnedBadges,
         BadgeId.perfectDay,
-        _dateAtMidnight(log.logDate),
+        _dateOnly(log.logDate),
         reference,
         isPremium: isPremium,
       );
@@ -118,7 +121,7 @@ class GamificationEngine {
           _awardBadgeIfAvailable(
             earnedBadges,
             BadgeId.winterWellness,
-            _dateAtMidnight(log.logDate),
+            _dateOnly(log.logDate),
             reference,
             isPremium: isPremium,
           );
@@ -140,7 +143,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.weekStreak,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -149,7 +152,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.secretKeeper,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -158,7 +161,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.ironWill,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -167,7 +170,7 @@ class GamificationEngine {
         _awardBadgeIfAvailable(
           earnedBadges,
           BadgeId.centurion,
-          _dateAtMidnight(log.logDate),
+          _dateOnly(log.logDate),
           reference,
           isPremium: isPremium,
         );
@@ -196,8 +199,7 @@ class GamificationEngine {
       xp = (xp * premiumXpMultiplier).round();
     }
 
-    final List<String> freezeUsedDates =
-        List<String>.of(streakFreezeUsedDates);
+    final List<String> freezeUsedDates = List<String>.of(streakFreezeUsedDates);
     int freezesRemaining = isPremium
         ? _premiumFreezeAllowance(streakFreezesRemaining)
         : streakFreezesRemaining;
@@ -211,8 +213,10 @@ class GamificationEngine {
     freezesRemaining = freezeResult.freezesRemaining;
     final List<String> effectiveCompletedDates = freezeResult.completedDates;
 
-    final int longestPerfectStreak =
-        _longestConsecutiveStreak(effectiveCompletedDates, freezeUsedDates);
+    final int longestPerfectStreak = _longestConsecutiveStreak(
+      effectiveCompletedDates,
+      freezeUsedDates,
+    );
     final int perfectStreak = _currentConsecutiveStreak(
       dates: effectiveCompletedDates,
       reference: reference,
@@ -224,18 +228,35 @@ class GamificationEngine {
     );
 
     final GameLevel currentLevel = GameLevelTable.forXp(xp);
-    final List<EarnedBadge> badges = earnedBadges.entries
-        .map(
-          (MapEntry<BadgeId, DateTime> entry) => EarnedBadge(
-            id: entry.key,
-            earnedAt: entry.value,
-          ),
-        )
-        .toList(growable: false)
-      ..sort(
-        (EarnedBadge a, EarnedBadge b) =>
-            a.earnedAt.compareTo(b.earnedAt),
+    if (currentLevel.level >= 5) {
+      _awardBadgeIfAvailable(
+        earnedBadges,
+        BadgeId.firstBloom,
+        reference,
+        reference,
+        isPremium: isPremium,
       );
+    }
+    if (activityStreak >= 7) {
+      _awardBadgeIfAvailable(
+        earnedBadges,
+        BadgeId.streakGardener,
+        reference,
+        reference,
+        isPremium: isPremium,
+      );
+    }
+
+    final List<EarnedBadge> badges =
+        earnedBadges.entries
+            .map(
+              (MapEntry<BadgeId, DateTime> entry) =>
+                  EarnedBadge(id: entry.key, earnedAt: entry.value),
+            )
+            .toList(growable: false)
+          ..sort(
+            (EarnedBadge a, EarnedBadge b) => a.earnedAt.compareTo(b.earnedAt),
+          );
 
     return UserGameProfile(
       userId: userId,
@@ -308,7 +329,9 @@ class GamificationEngine {
       );
     }
 
-    final DateTime? lastPerfect = DateTime.tryParse('${lastPerfectDate}T00:00:00');
+    final DateTime? lastPerfect = DateTime.tryParse(
+      '${lastPerfectDate}T00:00:00',
+    );
     if (lastPerfect == null) {
       return _StreakFreezeResult(
         completedDates: completedDates,
@@ -316,8 +339,9 @@ class GamificationEngine {
       );
     }
 
-    final int daysSince =
-        _dateOnly(reference).difference(_dateOnly(lastPerfect)).inDays;
+    final int daysSince = _dateOnly(
+      reference,
+    ).difference(_dateOnly(lastPerfect)).inDays;
     if (daysSince != 2) {
       return _StreakFreezeResult(
         completedDates: completedDates,
@@ -380,11 +404,7 @@ class GamificationEngine {
 
     int streak = 1;
     for (int index = dates.length - 2; index >= 0; index -= 1) {
-      if (_isConnectedDay(
-        dates[index],
-        dates[index + 1],
-        freezeUsedDates,
-      )) {
+      if (_isConnectedDay(dates[index], dates[index + 1], freezeUsedDates)) {
         streak += 1;
       } else {
         break;
@@ -436,8 +456,9 @@ class GamificationEngine {
       return false;
     }
 
-    final int gap =
-        _dateOnly(currentDate).difference(_dateOnly(previousDate)).inDays;
+    final int gap = _dateOnly(
+      currentDate,
+    ).difference(_dateOnly(previousDate)).inDays;
     if (gap != 2) {
       return false;
     }
@@ -454,7 +475,7 @@ class GamificationEngine {
         continue;
       }
       final DateTime local = item.updatedAt.toLocal();
-      if (local.hour < 9) {
+      if (local.hour < earlyBirdHourCutoff) {
         return true;
       }
     }
@@ -490,8 +511,9 @@ class GamificationEngine {
     if (parsed == null) {
       return false;
     }
-    final int daysSince =
-        _dateOnly(reference).difference(_dateOnly(parsed)).inDays;
+    final int daysSince = _dateOnly(
+      reference,
+    ).difference(_dateOnly(parsed)).inDays;
     return daysSince == 0 || daysSince == 1;
   }
 
@@ -512,10 +534,6 @@ class GamificationEngine {
   }
 
   DateTime _dateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
-  }
-
-  DateTime _dateAtMidnight(DateTime value) {
     return DateTime(value.year, value.month, value.day);
   }
 }

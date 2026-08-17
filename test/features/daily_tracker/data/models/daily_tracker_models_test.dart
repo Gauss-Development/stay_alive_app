@@ -46,10 +46,11 @@ void main() {
       );
 
       final Map<String, dynamic> createData = item.toCreateData(
-        logId: '2026-05-06',
-        userId: 'user_1',
+        logDocumentId: '67a1b2c3d4e5f6789012_2026-05-06',
       );
       final Map<String, dynamic> updateData = item.toUpdateData();
+
+      expect(createData['log_document_id'], '67a1b2c3d4e5f6789012_2026-05-06');
 
       expect(createData.containsKey('item_id'), isFalse);
       expect(createData.containsKey('log_id'), isFalse);
@@ -57,7 +58,7 @@ void main() {
       expect(createData['category_id'], 'beans');
       expect(createData['completed_count'], 2);
       expect(updateData, containsPair('completed_count', 2));
-      expect(updateData.containsKey('updated_at'), isFalse);
+      expect(updateData, containsPair('updated_at', isA<String>()));
     });
   });
 
@@ -79,11 +80,11 @@ void main() {
 
       expect(createData.containsKey('log_id'), isFalse);
       expect(createData.containsKey('user_id'), isFalse);
-      expect(createData.containsKey('log_date'), isFalse);
+      expect(createData['log_date'], '2026-05-06');
       expect(createData['completion_percentage'], 25);
       expect(updateData['total_completed'], 6);
       expect(updateData['total_target'], 24);
-      expect(updateData.containsKey('updated_at'), isFalse);
+      expect(updateData, containsPair('updated_at', isA<String>()));
     });
   });
 }

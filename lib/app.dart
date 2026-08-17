@@ -9,11 +9,12 @@ import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
 import 'package:stay_alive/features/daily_tracker/presentation/cubit/daily_tracker_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/widgets/gamification_celebration_host.dart';
+import 'package:stay_alive/features/coach/presentation/cubit/coach_cubit.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/router.dart';
-import 'package:stay_alive/shared/theme/app_theme.dart';
+import 'package:stay_alive/core/theme/app_theme.dart';
 
 class DailyDozenApp extends StatefulWidget {
   const DailyDozenApp({required this.flavor, super.key});
@@ -49,30 +50,19 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
       providers: <BlocProvider<dynamic>>[
         BlocProvider<AuthCubit>.value(value: _authCubit),
         BlocProvider<AppStartupCubit>.value(value: _startupCubit),
-        BlocProvider<DailyTrackerCubit>(
-          create: (_) => sl<DailyTrackerCubit>(),
-        ),
-        BlocProvider<GamificationCubit>(
-          create: (_) => sl<GamificationCubit>(),
-        ),
-        BlocProvider<UserProfileCubit>(
-          create: (_) => sl<UserProfileCubit>(),
-        ),
-        BlocProvider<HistoryCubit>(
-          create: (_) => sl<HistoryCubit>(),
-        ),
-        BlocProvider<AnalyticsCubit>(
-          create: (_) => sl<AnalyticsCubit>(),
-        ),
-        BlocProvider<SubscriptionCubit>(
-          create: (_) => sl<SubscriptionCubit>(),
-        ),
+        BlocProvider<DailyTrackerCubit>(create: (_) => sl<DailyTrackerCubit>()),
+        BlocProvider<GamificationCubit>(create: (_) => sl<GamificationCubit>()),
+        BlocProvider<CoachCubit>(create: (_) => sl<CoachCubit>()),
+        BlocProvider<UserProfileCubit>(create: (_) => sl<UserProfileCubit>()),
+        BlocProvider<HistoryCubit>(create: (_) => sl<HistoryCubit>()),
+        BlocProvider<AnalyticsCubit>(create: (_) => sl<AnalyticsCubit>()),
+        BlocProvider<SubscriptionCubit>(create: (_) => sl<SubscriptionCubit>()),
       ],
       child: MaterialApp.router(
-        title: 'Daily Dozen',
+        title: 'Росток',
         debugShowCheckedModeBanner: widget.flavor.isDevelopment,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
         routerConfig: _router,
         builder: (BuildContext context, Widget? child) {
           return GamificationCelebrationHost(

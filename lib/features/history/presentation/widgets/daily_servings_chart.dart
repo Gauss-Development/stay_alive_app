@@ -1,13 +1,11 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/features/history/domain/entities/daily_history_point.dart';
 
 class DailyServingsChart extends StatelessWidget {
-  const DailyServingsChart({
-    required this.points,
-    super.key,
-  });
+  const DailyServingsChart({required this.points, super.key});
 
   final List<DailyHistoryPoint> points;
 
@@ -32,14 +30,14 @@ class DailyServingsChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              'Servings logged',
+              'Отмеченные порции',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'Completed servings vs daily target',
+              'Порции за день против цели дня',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: colors.onSurfaceVariant,
               ),
@@ -91,7 +89,8 @@ class DailyServingsChart extends StatelessWidget {
                           if (index < 0 || index >= points.length) {
                             return const SizedBox.shrink();
                           }
-                          final bool showLabel = points.length <= 7 ||
+                          final bool showLabel =
+                              points.length <= 7 ||
                               index == 0 ||
                               index == points.length - 1 ||
                               index % 5 == 0;
@@ -122,7 +121,7 @@ class DailyServingsChart extends StatelessWidget {
                           final DailyHistoryPoint point = points[index];
                           return LineTooltipItem(
                             '${labelFormat.format(point.date)}\n'
-                            '${point.totalCompleted}/${point.totalTarget} servings',
+                            '${point.totalCompleted}/${point.totalTarget} порций',
                             theme.textTheme.labelMedium!.copyWith(
                               color: colors.onInverseSurface,
                             ),
@@ -141,27 +140,28 @@ class DailyServingsChart extends StatelessWidget {
                         ),
                       ),
                       isCurved: true,
-                      color: colors.primary,
+                      color: AppColors.green,
                       barWidth: 3,
                       dotData: FlDotData(
                         show: points.length <= 14,
-                        getDotPainter: (
-                          FlSpot spot,
-                          double percent,
-                          LineChartBarData bar,
-                          int index,
-                        ) {
-                          return FlDotCirclePainter(
-                            radius: 3,
-                            color: colors.primary,
-                            strokeWidth: 1,
-                            strokeColor: colors.surface,
-                          );
-                        },
+                        getDotPainter:
+                            (
+                              FlSpot spot,
+                              double percent,
+                              LineChartBarData bar,
+                              int index,
+                            ) {
+                              return FlDotCirclePainter(
+                                radius: 3,
+                                color: AppColors.green,
+                                strokeWidth: 1,
+                                strokeColor: colors.surface,
+                              );
+                            },
                       ),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: colors.primary.withValues(alpha: 0.08),
+                        color: AppColors.green.withValues(alpha: 0.08),
                       ),
                     ),
                     LineChartBarData(

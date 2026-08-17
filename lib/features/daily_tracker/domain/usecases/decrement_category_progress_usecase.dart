@@ -12,16 +12,12 @@ class DecrementCategoryProgressUseCase
 
   @override
   Future<Result<DailyLog>> call(DecrementCategoryProgressParams params) {
-    return _repository.decrementCategoryProgress(
-      categoryId: params.categoryId,
-    );
+    return _repository.decrementCategoryProgress(categoryId: params.categoryId);
   }
 }
 
 class DecrementCategoryProgressParams extends Equatable {
-  const DecrementCategoryProgressParams({
-    required this.categoryId,
-  });
+  const DecrementCategoryProgressParams({required this.categoryId});
 
   final String categoryId;
 

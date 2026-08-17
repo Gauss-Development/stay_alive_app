@@ -19,23 +19,23 @@ class UserGameProfile extends Equatable {
   });
 
   const UserGameProfile.empty()
-      : userId = '',
-        totalXp = 0,
-        currentLevel = const GameLevel(
-          level: 1,
-          title: 'Seedling',
-          xpRequired: 0,
-          xpForNext: 500,
-        ),
-        currentStreak = 0,
-        longestStreak = 0,
-        activityStreak = 0,
-        completedDates = const <String>[],
-        earlyLogDates = const <String>[],
-        earnedBadges = const <EarnedBadge>[],
-        totalCategoriesCompleted = 0,
-        streakFreezesRemaining = 0,
-        streakFreezeUsedDates = const <String>[];
+    : userId = '',
+      totalXp = 0,
+      currentLevel = const GameLevel(
+        level: 1,
+        title: 'Seedling',
+        xpRequired: 0,
+        xpForNext: 500,
+      ),
+      currentStreak = 0,
+      longestStreak = 0,
+      activityStreak = 0,
+      completedDates = const <String>[],
+      earlyLogDates = const <String>[],
+      earnedBadges = const <EarnedBadge>[],
+      totalCategoriesCompleted = 0,
+      streakFreezesRemaining = 0,
+      streakFreezeUsedDates = const <String>[];
 
   final String userId;
   final int totalXp;
@@ -92,17 +92,17 @@ class UserGameProfile extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        userId,
-        totalXp,
-        currentLevel,
-        currentStreak,
-        longestStreak,
-        activityStreak,
-        completedDates,
-        earlyLogDates,
-        earnedBadges,
-        totalCategoriesCompleted,
-        streakFreezesRemaining,
-        streakFreezeUsedDates,
-      ];
+    userId,
+    totalXp,
+    currentLevel,
+    currentStreak,
+    longestStreak,
+    activityStreak,
+    completedDates,
+    earlyLogDates,
+    earnedBadges,
+    totalCategoriesCompleted,
+    streakFreezesRemaining,
+    streakFreezeUsedDates,
+  ];
 }

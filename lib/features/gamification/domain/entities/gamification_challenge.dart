@@ -10,10 +10,7 @@ enum ChallengeType {
   activeDaysInWeek,
 }
 
-enum ChallengePeriod {
-  daily,
-  weekly,
-}
+enum ChallengePeriod { daily, weekly }
 
 class GamificationChallenge extends Equatable {
   const GamificationChallenge({
@@ -53,16 +50,16 @@ class GamificationChallenge extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        type,
-        title,
-        description,
-        target,
-        progress,
-        xpReward,
-        dateKey,
-        period,
-        categoryId,
-        isPremiumOnly,
-      ];
+    id,
+    type,
+    title,
+    description,
+    target,
+    progress,
+    xpReward,
+    dateKey,
+    period,
+    categoryId,
+    isPremiumOnly,
+  ];
 }

@@ -17,9 +17,7 @@ class UserRepositoryImpl implements UserRepository {
       final profile = await _remoteDataSource.fetchProfile();
       return Right<Failure, UserProfile>(profile);
     } on FormatException catch (e) {
-      return Left<Failure, UserProfile>(
-        ValidationFailure(e.message),
-      );
+      return Left<Failure, UserProfile>(ValidationFailure(e.message));
     } catch (e) {
       return Left<Failure, UserProfile>(mapExceptionToFailure(e));
     }

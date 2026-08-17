@@ -10,10 +10,7 @@ import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  const AuthRepositoryImpl(
-    this._remoteDataSource,
-    this._logger,
-  );
+  const AuthRepositoryImpl(this._remoteDataSource, this._logger);
 
   final AuthRemoteDataSource _remoteDataSource;
   final AppLogger _logger;

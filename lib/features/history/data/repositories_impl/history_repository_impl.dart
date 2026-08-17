@@ -49,11 +49,11 @@ class HistoryRepositoryImpl implements HistoryRepository {
     final double averageCompletion = logs.isEmpty
         ? 0
         : logs.fold<double>(
-              0,
-              (double sum, DailyLogModel log) =>
-                  sum + log.completionPercentage,
-            ) /
-            logs.length;
+                0,
+                (double sum, DailyLogModel log) =>
+                    sum + log.completionPercentage,
+              ) /
+              logs.length;
 
     final Set<String> completedDateKeys = logs
         .where((DailyLogModel log) => log.isFullyCompleted)
@@ -67,10 +67,12 @@ class HistoryRepositoryImpl implements HistoryRepository {
     );
 
     final DateTime weekStart = endDate.subtract(const Duration(days: 6));
-    final List<DailyLogModel> weeklyLogs = logs.where((DailyLogModel log) {
-      final DateTime date = DateTime.parse('${log.dateKey}T00:00:00Z');
-      return !date.isBefore(_dateOnly(weekStart));
-    }).toList(growable: false);
+    final List<DailyLogModel> weeklyLogs = logs
+        .where((DailyLogModel log) {
+          final DateTime date = DateTime.parse('${log.dateKey}T00:00:00Z');
+          return !date.isBefore(_dateOnly(weekStart));
+        })
+        .toList(growable: false);
 
     final List<DailyHistoryPoint> dailyPoints = _buildDailyPoints(
       startDate: startDate,
@@ -129,8 +131,7 @@ class HistoryRepositoryImpl implements HistoryRepository {
     }
     return logs.fold<double>(
           0,
-          (double sum, DailyLogModel log) =>
-              sum + log.completionPercentage,
+          (double sum, DailyLogModel log) => sum + log.completionPercentage,
         ) /
         logs.length;
   }

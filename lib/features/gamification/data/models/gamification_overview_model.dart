@@ -12,7 +12,9 @@ class GamificationOverviewModel extends GamificationOverview {
     super.xpMultiplier,
   });
 
-  factory GamificationOverviewModel.fromOverview(GamificationOverview overview) {
+  factory GamificationOverviewModel.fromOverview(
+    GamificationOverview overview,
+  ) {
     return GamificationOverviewModel(
       profile: UserGameProfile(
         userId: overview.profile.userId,

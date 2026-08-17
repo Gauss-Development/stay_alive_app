@@ -1,0 +1,142 @@
+name: Release
+
+# Covers GAU-309 (secrets via --dart-define-from-file) and GAU-314 (release
+# smoke builds on both platforms).
+#
+# Required repository secrets — until these exist the release jobs are expected
+# to fail at the preflight step, which is the intended behaviour:
+#   REVENUECAT_IOS_API_KEY        appl_… from app.revenuecat.com → Project → APIs
+#   REVENUECAT_ANDROID_API_KEY    goog_… from the same page
+#   SENTRY_DSN                    sentry.io → Project → Settings → Client Keys
+#   ANDROID_KEYSTORE_BASE64       base64 -i stay-alive-upload.jks
+#   ANDROID_KEYSTORE_PASSWORD     keystore password
+#   ANDROID_KEY_PASSWORD          key password
+#   ANDROID_KEY_ALIAS             e.g. upload
+#
+# The iOS job builds with --no-codesign, so it needs no Apple secrets and
+# still proves the release configuration compiles.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      skip_ios:
+        description: 'Skip the iOS smoke build'
+        type: boolean
+        default: false
+
+env:
+  FLUTTER_VERSION: '3.44.5'
+
+jobs:
+  verify:
+    name: Analyze & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+  android:
+    name: Android release bundle
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not set. Release builds would" \
+                 "silently fall back to debug signing, which the Play Console rejects."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "${RUNNER_TEMP}/upload.jks"
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=${RUNNER_TEMP}/upload.jks
+          EOF
+
+      - name: Preflight
+        run: ./scripts/preflight.sh --ci
+
+      - name: Build app bundle
+        run: |
+          flutter build appbundle \
+            --release \
+            --flavor prod \
+            -t lib/main_prod.dart \
+            --dart-define=REVENUECAT_IOS_API_KEY=${{ secrets.REVENUECAT_IOS_API_KEY }} \
+            --dart-define=REVENUECAT_ANDROID_API_KEY=${{ secrets.REVENUECAT_ANDROID_API_KEY }} \
+            --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} \
+            --dart-define=SENTRY_ENVIRONMENT=production
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-prod-release.aab
+          path: build/app/outputs/bundle/prodRelease/*.aab
+          if-no-files-found: error
+
+      - name: Remove keystore
+        if: always()
+        run: rm -f android/key.properties "${RUNNER_TEMP}/upload.jks"
+
+  ios:
+    name: iOS smoke build
+    needs: verify
+    if: ${{ !inputs.skip_ios }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # Unsigned: proves the release configuration compiles without needing
+      # any Apple certificate or provisioning profile in CI.
+      - name: Build iOS (no codesign)
+        run: |
+          flutter build ios \
+            --release \
+            --no-codesign \
+            --flavor prod \
+            -t lib/main_prod.dart \
+            --dart-define=REVENUECAT_IOS_API_KEY=${{ secrets.REVENUECAT_IOS_API_KEY }} \
+            --dart-define=REVENUECAT_ANDROID_API_KEY=${{ secrets.REVENUECAT_ANDROID_API_KEY }} \
+            --dart-define=SENTRY_DSN=${{ secrets.SENTRY_DSN }} \
+            --dart-define=SENTRY_ENVIRONMENT=production

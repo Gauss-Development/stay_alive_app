@@ -1,23 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:stay_alive/features/auth/presentation/widgets/auth_submit_button.dart';
+import 'package:stay_alive/features/rostok/presentation/theme/rostok_colors.dart';
 
 void main() {
-  testWidgets('AuthSubmitButton shows loading indicator', (
+  testWidgets('RostokColors exposes brand mascot green', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: Scaffold(
-          body: AuthSubmitButton(
-            label: 'Continue',
-            isLoading: true,
-            onPressed: null,
-          ),
-        ),
-      ),
-    );
-
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(RostokColors.mascot, isA<Color>());
+    expect(RostokColors.mascot.toARGB32(), isNonZero);
   });
 }

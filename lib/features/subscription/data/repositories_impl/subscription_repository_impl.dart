@@ -28,14 +28,18 @@ class SubscriptionRepositoryImpl implements SubscriptionRepository {
       final SubscriptionOffering offering = await _dataSource.getOffering();
       return Right<Failure, SubscriptionOffering>(offering);
     } catch (exception) {
-      return Left<Failure, SubscriptionOffering>(mapExceptionToFailure(exception));
+      return Left<Failure, SubscriptionOffering>(
+        mapExceptionToFailure(exception),
+      );
     }
   }
 
   @override
   Future<Result<SubscriptionInfo>> purchasePackage(String packageId) async {
     try {
-      final SubscriptionInfo info = await _dataSource.purchasePackage(packageId);
+      final SubscriptionInfo info = await _dataSource.purchasePackage(
+        packageId,
+      );
       return Right<Failure, SubscriptionInfo>(info);
     } catch (exception) {
       return Left<Failure, SubscriptionInfo>(mapExceptionToFailure(exception));

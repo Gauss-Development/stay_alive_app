@@ -2,10 +2,7 @@ import 'package:stay_alive/core/result/result.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_session.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
 
-enum OAuthSignInProvider {
-  google,
-  apple,
-}
+enum OAuthSignInProvider { google, apple }
 
 abstract class AuthRepository {
   Future<Result<AuthSession>> loginWithEmail({
@@ -36,4 +33,3 @@ abstract class AuthRepository {
 
   Future<Result<AuthUser>> markOnboardingCompleted();
 }
-

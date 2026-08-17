@@ -49,13 +49,13 @@ class DailyLog extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        userId,
-        logDate,
-        items,
-        totalCompleted,
-        totalTarget,
-        completionPercentage,
-        isFullyCompleted,
-      ];
+    id,
+    userId,
+    logDate,
+    items,
+    totalCompleted,
+    totalTarget,
+    completionPercentage,
+    isFullyCompleted,
+  ];
 }

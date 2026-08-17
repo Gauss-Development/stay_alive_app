@@ -17,6 +17,7 @@ class ReconcileGamificationTodayUseCase
     return _repository.reconcileTodayOverview(
       todayLog: params.todayLog,
       isPremium: params.isPremium,
+      personalizedDailyDraft: params.personalizedDailyDraft,
     );
   }
 }

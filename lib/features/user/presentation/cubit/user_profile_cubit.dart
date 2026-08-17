@@ -4,10 +4,9 @@ import 'package:stay_alive/features/user/domain/usecases/get_user_profile_usecas
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_state.dart';
 
 class UserProfileCubit extends Cubit<UserProfileState> {
-  UserProfileCubit({
-    required GetUserProfileUseCase getUserProfileUseCase,
-  })  : _getUserProfileUseCase = getUserProfileUseCase,
-        super(const UserProfileInitial());
+  UserProfileCubit({required GetUserProfileUseCase getUserProfileUseCase})
+    : _getUserProfileUseCase = getUserProfileUseCase,
+      super(const UserProfileInitial());
 
   final GetUserProfileUseCase _getUserProfileUseCase;
 

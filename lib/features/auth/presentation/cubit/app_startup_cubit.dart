@@ -10,10 +10,10 @@ class AppStartupCubit extends Cubit<AppStartupState> {
     required CheckSessionUseCase checkSessionUseCase,
     required GetCurrentUserUseCase getCurrentUserUseCase,
     required AppLogger logger,
-  })  : _checkSessionUseCase = checkSessionUseCase,
-        _getCurrentUserUseCase = getCurrentUserUseCase,
-        _logger = logger,
-        super(const AppStartupState.initial());
+  }) : _checkSessionUseCase = checkSessionUseCase,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
+       _logger = logger,
+       super(const AppStartupState.initial());
 
   final CheckSessionUseCase _checkSessionUseCase;
   final GetCurrentUserUseCase _getCurrentUserUseCase;

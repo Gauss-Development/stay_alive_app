@@ -36,22 +36,20 @@ class UserGameProfileModel extends UserGameProfile {
     );
   }
 
-  factory UserGameProfileModel.fromDocument(
-    appwrite_models.Document document,
-  ) {
+  factory UserGameProfileModel.fromDocument(appwrite_models.Document document) {
     final Map<String, dynamic> data = document.data;
     final int xp = (data['xp'] as num?)?.toInt() ?? 0;
-    final List<String> badgeSlugs = (data['badges'] as List<dynamic>? ??
-            <dynamic>[])
-        .map((dynamic value) => value.toString())
-        .toList(growable: false);
+    final List<String> badgeSlugs =
+        (data['badges'] as List<dynamic>? ?? <dynamic>[])
+            .map((dynamic value) => value.toString())
+            .toList(growable: false);
     final List<String> freezeUsedDates =
         (data['streak_freezes_used'] as List<dynamic>? ?? <dynamic>[])
             .map((dynamic value) => value.toString())
             .toList(growable: false);
 
     return UserGameProfileModel(
-      userId: data['user_id']?.toString() ?? document.$id,
+      userId: document.$id,
       totalXp: xp,
       currentLevel: GameLevelTable.forXp(xp),
       currentStreak: (data['current_streak'] as num?)?.toInt() ?? 0,
@@ -79,8 +77,9 @@ class UserGameProfileModel extends UserGameProfile {
       'best_streak': longestStreak,
       'activity_streak': activityStreak,
       'completed_days': completedDates.length,
-      'last_completed_date':
-          completedDates.isEmpty ? null : completedDates.last,
+      'last_completed_date': completedDates.isEmpty
+          ? null
+          : completedDates.last,
       'completed_dates_json': completedDates,
       'early_log_dates_json': earlyLogDates,
       'total_categories_completed': totalCategoriesCompleted,
@@ -111,6 +110,8 @@ class UserGameProfileModel extends UserGameProfile {
       'winterWellness' => BadgeId.winterWellness,
       'secretKeeper' => BadgeId.secretKeeper,
       'patron' => BadgeId.patron,
+      'firstBloom' => BadgeId.firstBloom,
+      'streakGardener' => BadgeId.streakGardener,
       'first_log' => BadgeId.firstStep,
       'perfect_day' => BadgeId.perfectDay,
       'three_day_streak' => null,
@@ -120,9 +121,6 @@ class UserGameProfileModel extends UserGameProfile {
     if (badgeId == null) {
       return null;
     }
-    return EarnedBadge(
-      id: badgeId,
-      earnedAt: DateTime.now().toUtc(),
-    );
+    return EarnedBadge(id: badgeId, earnedAt: DateTime.now().toUtc());
   }
 }

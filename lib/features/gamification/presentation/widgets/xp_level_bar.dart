@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
+import 'package:stay_alive/core/widgets/app_progress_bar.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 
+/// Level progress bar: «До уровня N» + lime fill.
 class XpLevelBar extends StatelessWidget {
   const XpLevelBar({required this.profile, this.dark = false, super.key});
 
   final UserGameProfile profile;
 
-  /// True when displayed inside the dark green header.
+  /// True when displayed inside a dark panel.
   final bool dark;
 
   @override
   Widget build(BuildContext context) {
     final level = profile.currentLevel;
     final double progress = level.progressFraction(profile.totalXp);
-    final Color labelColor = dark ? Colors.white70 : const Color(0xFF5A7A65);
-    final Color barBg =
-        dark ? Colors.white.withValues(alpha: 0.2) : const Color(0xFFDDE8E0);
-    final Color barFill = dark ? Colors.white : const Color(0xFF2E7D65);
+    final Color labelColor = dark
+        ? AppColors.textMuted
+        : AppColors.textSecondary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -25,41 +28,30 @@ class XpLevelBar extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            Text(
-              'Lv ${level.level} · ${level.title}',
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+            Flexible(
+              child: Text(
+                'Уровень ${level.level} · ${level.title}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.labelMedium.copyWith(
+                  color: dark ? AppColors.white : AppColors.textPrimary,
+                ),
               ),
             ),
+            const SizedBox(width: 8),
             Text(
               level.isMaxLevel
                   ? 'MAX'
-                  : '${profile.totalXp} / ${level.xpForNext} XP',
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 12,
-              ),
+                  : '${profile.totalXp} / ${level.xpForNext}',
+              style: AppTextStyles.labelMedium.copyWith(color: labelColor),
             ),
           ],
         ),
-        const SizedBox(height: 5),
-        TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: progress),
-          duration: const Duration(milliseconds: 800),
-          curve: Curves.easeOutCubic,
-          builder: (BuildContext _, double value, Widget? child) {
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: value,
-                minHeight: 6,
-                backgroundColor: barBg,
-                valueColor: AlwaysStoppedAnimation<Color>(barFill),
-              ),
-            );
-          },
+        const SizedBox(height: 8),
+        AppProgressBar(
+          value: progress,
+          height: 10,
+          backgroundColor: dark ? AppColors.darkChip : AppColors.border,
         ),
       ],
     );

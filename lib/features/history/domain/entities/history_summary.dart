@@ -36,14 +36,14 @@ class HistorySummary extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        periodLabel,
-        averageCompletionPercentage,
-        completedDays,
-        totalDays,
-        currentStreak,
-        bestStreak,
-        weeklyCompletionPercent,
-        monthlyCompletionPercent,
-        dailyPoints,
-      ];
+    periodLabel,
+    averageCompletionPercentage,
+    completedDays,
+    totalDays,
+    currentStreak,
+    bestStreak,
+    weeklyCompletionPercent,
+    monthlyCompletionPercent,
+    dailyPoints,
+  ];
 }

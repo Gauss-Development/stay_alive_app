@@ -14,7 +14,6 @@ class EnvConfig extends Equatable {
     required this.appFlavor,
     required this.appwriteEndpoint,
     required this.appwriteProjectId,
-    required this.appwriteProjectName,
     required this.appwriteDatabaseId,
     required this.usersCollectionId,
     required this.categoryDefinitionsCollectionId,
@@ -22,20 +21,16 @@ class EnvConfig extends Equatable {
     required this.dailyLogItemsCollectionId,
     required this.subscriptionsCollectionId,
     required this.analyticsEventsCollectionId,
-    required this.educationalContentCollectionId,
     required this.gamificationProfilesCollectionId,
     required this.gamificationEventsCollectionId,
+    required this.deleteUserFunctionId,
+    required this.aiCoachFunctionId,
     required this.widgetAppGroupId,
     required this.revenueCatAndroidApiKey,
     required this.revenueCatIosApiKey,
     required this.revenueCatEntitlementId,
     required this.revenueCatOfferingId,
-    required this.avatarsBucketId,
-    required this.userUploadsBucketId,
-    required this.contentAssetsBucketId,
     required this.allowSelfSigned,
-    required this.revenueCatApiKeyIos,
-    required this.revenueCatApiKeyAndroid,
     required this.sentryDsn,
     required this.sentryEnvironment,
   });
@@ -43,7 +38,6 @@ class EnvConfig extends Equatable {
   final AppFlavor appFlavor;
   final String appwriteEndpoint;
   final String appwriteProjectId;
-  final String appwriteProjectName;
   final String appwriteDatabaseId;
   final String usersCollectionId;
   final String categoryDefinitionsCollectionId;
@@ -51,20 +45,24 @@ class EnvConfig extends Equatable {
   final String dailyLogItemsCollectionId;
   final String subscriptionsCollectionId;
   final String analyticsEventsCollectionId;
-  final String educationalContentCollectionId;
   final String gamificationProfilesCollectionId;
   final String gamificationEventsCollectionId;
+
+  /// Appwrite Function id that deletes the caller's auth record server-side
+  /// (`functions/delete_user`). Empty in dev/local → auth record is not removed
+  /// on account deletion; must be set for store-compliant deletion.
+  final String deleteUserFunctionId;
+
+  /// Appwrite Function id for AI coach (`functions/ai_coach`). Empty → local
+  /// heuristic fallback in the Flutter client.
+  final String aiCoachFunctionId;
+
   final String widgetAppGroupId;
   final String revenueCatAndroidApiKey;
   final String revenueCatIosApiKey;
   final String revenueCatEntitlementId;
   final String revenueCatOfferingId;
-  final String avatarsBucketId;
-  final String userUploadsBucketId;
-  final String contentAssetsBucketId;
   final bool allowSelfSigned;
-  final String revenueCatApiKeyIos;
-  final String revenueCatApiKeyAndroid;
   final String sentryDsn;
   final String sentryEnvironment;
 
@@ -74,24 +72,11 @@ class EnvConfig extends Equatable {
       appFlavor: flavor,
       appwriteEndpoint: _str(
         'APPWRITE_ENDPOINT',
-        'https://sfo.cloud.appwrite.io/v1',
+        'https://nyc.cloud.appwrite.io/v1',
       ),
-      appwriteProjectId: _str(
-        'APPWRITE_PROJECT_ID',
-        '69de16de001dfb5c1e5d',
-      ),
-      appwriteProjectName: _str(
-        'APPWRITE_PROJECT_NAME',
-        'Stay Alive',
-      ),
-      appwriteDatabaseId: _str(
-        'APPWRITE_DATABASE_ID',
-        '69de1ac5002830be7040',
-      ),
-      usersCollectionId: _str(
-        'APPWRITE_USERS_COLLECTION_ID',
-        'users',
-      ),
+      appwriteProjectId: _str('APPWRITE_PROJECT_ID', '6a53570100147968d1f6'),
+      appwriteDatabaseId: _str('APPWRITE_DATABASE_ID', 'stay_alive_v1'),
+      usersCollectionId: _str('APPWRITE_USERS_COLLECTION_ID', 'users'),
       categoryDefinitionsCollectionId: _str(
         'APPWRITE_CATEGORY_DEFINITIONS_COLLECTION_ID',
         'category_definitions',
@@ -112,10 +97,6 @@ class EnvConfig extends Equatable {
         'APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID',
         'analytics_events',
       ),
-      educationalContentCollectionId: _str(
-        'APPWRITE_EDUCATIONAL_CONTENT_COLLECTION_ID',
-        'educational_content',
-      ),
       gamificationProfilesCollectionId: _str(
         'APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID',
         'gamification_profiles',
@@ -124,50 +105,28 @@ class EnvConfig extends Equatable {
         'APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID',
         'gamification_events',
       ),
+      deleteUserFunctionId: _str('APPWRITE_DELETE_USER_FUNCTION_ID', ''),
+      aiCoachFunctionId: _str('APPWRITE_AI_COACH_FUNCTION_ID', ''),
       widgetAppGroupId: _str(
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.gaussdev.stayalive',
       ),
-      revenueCatAndroidApiKey: _str(
+      revenueCatAndroidApiKey: _secret(
         'REVENUECAT_ANDROID_API_KEY',
         'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
+        flavor,
       ),
-      revenueCatIosApiKey: _str(
+      revenueCatIosApiKey: _secret(
         'REVENUECAT_IOS_API_KEY',
         'test_xsTTIBRKlCVdXpltnlImbcuZhVt',
+        flavor,
       ),
       revenueCatEntitlementId: _str(
         'REVENUECAT_ENTITLEMENT_ID',
-        'premium',
+        'Stay Alive Pro',
       ),
-      revenueCatOfferingId: _str(
-        'REVENUECAT_OFFERING_ID',
-        'default',
-      ),
-      avatarsBucketId: _str(
-        'APPWRITE_AVATARS_BUCKET_ID',
-        'avatars',
-      ),
-      userUploadsBucketId: _str(
-        'APPWRITE_USER_UPLOADS_BUCKET_ID',
-        'user_uploads',
-      ),
-      contentAssetsBucketId: _str(
-        'APPWRITE_CONTENT_ASSETS_BUCKET_ID',
-        'content_assets',
-      ),
-      allowSelfSigned: _bool(
-        'APPWRITE_SELF_SIGNED',
-        false,
-      ),
-      revenueCatApiKeyIos: _str(
-        'REVENUECAT_API_KEY_IOS',
-        '',
-      ),
-      revenueCatApiKeyAndroid: _str(
-        'REVENUECAT_API_KEY_ANDROID',
-        '',
-      ),
+      revenueCatOfferingId: _str('REVENUECAT_OFFERING_ID', 'default'),
+      allowSelfSigned: _bool('APPWRITE_SELF_SIGNED', false),
       sentryDsn: _str('SENTRY_DSN', ''),
       sentryEnvironment: _str('SENTRY_ENVIRONMENT', flavor.name),
     );
@@ -185,6 +144,22 @@ class EnvConfig extends Equatable {
       }
     }
     return fallback;
+  }
+
+  /// Resolves a credential, refusing sandbox placeholders in production.
+  ///
+  /// RevenueCat sandbox keys are prefixed `test_`, and the committed fallbacks
+  /// are exactly that. Being non-empty, they slip past the data source's
+  /// `apiKey.isEmpty` guard, so a production build with no injected secret
+  /// would configure RevenueCat against the sandbox and mis-report entitlements
+  /// while looking like working code. Returning empty makes it fail closed:
+  /// subscriptions stay inactive and the data source logs why.
+  static String _secret(String key, String fallback, AppFlavor flavor) {
+    final String value = _str(key, fallback);
+    if (flavor.isProduction && value.startsWith('test_')) {
+      return '';
+    }
+    return value;
   }
 
   static bool _bool(String key, bool fallback) {
@@ -206,7 +181,6 @@ class EnvConfig extends Equatable {
         appFlavor,
         appwriteEndpoint,
         appwriteProjectId,
-        appwriteProjectName,
         appwriteDatabaseId,
         usersCollectionId,
         categoryDefinitionsCollectionId,
@@ -214,20 +188,16 @@ class EnvConfig extends Equatable {
         dailyLogItemsCollectionId,
         subscriptionsCollectionId,
         analyticsEventsCollectionId,
-        educationalContentCollectionId,
         gamificationProfilesCollectionId,
         gamificationEventsCollectionId,
+        deleteUserFunctionId,
+        aiCoachFunctionId,
         widgetAppGroupId,
         revenueCatAndroidApiKey,
         revenueCatIosApiKey,
         revenueCatEntitlementId,
         revenueCatOfferingId,
-        avatarsBucketId,
-        userUploadsBucketId,
-        contentAssetsBucketId,
         allowSelfSigned,
-        revenueCatApiKeyIos,
-        revenueCatApiKeyAndroid,
         sentryDsn,
         sentryEnvironment,
       ];

@@ -18,7 +18,9 @@ class AuthFailure extends Failure {
 }
 
 class PermissionFailure extends Failure {
-  const PermissionFailure([super.message = 'You do not have permission for this action.']);
+  const PermissionFailure([
+    super.message = 'You do not have permission for this action.',
+  ]);
 }
 
 class ValidationFailure extends Failure {
@@ -34,7 +36,9 @@ class DatabaseFailure extends Failure {
 }
 
 class UnknownFailure extends Failure {
-  const UnknownFailure([super.message = 'Something went wrong. Please try again.']);
+  const UnknownFailure([
+    super.message = 'Something went wrong. Please try again.',
+  ]);
 }
 
 class SubscriptionFailure extends Failure {

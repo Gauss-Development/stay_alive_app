@@ -1,38 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:stay_alive/features/rostok/presentation/theme/rostok_colors.dart';
+import 'package:stay_alive/core/theme/app_colors.dart';
 
-/// Typography for the Росток UI: Fredoka (display) + Plus Jakarta Sans (body).
+/// Typography compatibility layer for the `rostok` feature screens.
 ///
-/// Wraps [GoogleFonts] so the two families load without bundling `.ttf`s.
+/// Delegates to Manrope (the app-wide family) so the whole product shares a
+/// single type system.
 abstract final class RostokText {
-  /// Fredoka — headings, numbers, brand wordmark.
+  /// Headings, numbers, brand wordmark.
   static TextStyle display({
     double size = 32,
-    FontWeight weight = FontWeight.w600,
-    Color color = RostokColors.inkText,
+    FontWeight weight = FontWeight.w800,
+    Color color = AppColors.textPrimary,
     double height = 1.15,
     double? letterSpacing,
   }) {
-    return GoogleFonts.fredoka(
+    return GoogleFonts.manrope(
       fontSize: size,
-      fontWeight: weight,
+      // Display text in Росток is always bold and confident.
+      fontWeight: weight.value < FontWeight.w700.value
+          ? FontWeight.w700
+          : weight,
       color: color,
       height: height,
       letterSpacing: letterSpacing,
     );
   }
 
-  /// Plus Jakarta Sans — body copy, labels, captions.
+  /// Body copy, labels, captions.
   static TextStyle body({
     double size = 15,
     FontWeight weight = FontWeight.w500,
-    Color color = RostokColors.textMuted,
+    Color color = AppColors.textSecondary,
     double height = 1.4,
     double? letterSpacing,
     TextDecoration? decoration,
   }) {
-    return GoogleFonts.plusJakartaSans(
+    return GoogleFonts.manrope(
       fontSize: size,
       fontWeight: weight,
       color: color,

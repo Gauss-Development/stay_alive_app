@@ -8,8 +8,8 @@ class SubscriptionOffering extends Equatable {
   });
 
   const SubscriptionOffering.empty()
-      : packages = const <SubscriptionPackage>[],
-        isConfigured = false;
+    : packages = const <SubscriptionPackage>[],
+      isConfigured = false;
 
   final List<SubscriptionPackage> packages;
   final bool isConfigured;
