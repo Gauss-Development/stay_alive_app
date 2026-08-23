@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
 
-/// Unified Appwrite / app configuration.
+/// Unified Supabase / app configuration.
 ///
 /// Values are resolved in order:
 /// 1. `--dart-define=KEY=value` (CI / flavors)
@@ -12,101 +12,49 @@ import 'package:stay_alive/core/config/app_flavor.dart';
 class EnvConfig extends Equatable {
   const EnvConfig({
     required this.appFlavor,
-    required this.appwriteEndpoint,
-    required this.appwriteProjectId,
-    required this.appwriteDatabaseId,
-    required this.usersCollectionId,
-    required this.categoryDefinitionsCollectionId,
-    required this.dailyLogsCollectionId,
-    required this.dailyLogItemsCollectionId,
-    required this.subscriptionsCollectionId,
-    required this.analyticsEventsCollectionId,
-    required this.gamificationProfilesCollectionId,
-    required this.gamificationEventsCollectionId,
-    required this.deleteUserFunctionId,
-    required this.aiCoachFunctionId,
+    required this.supabaseUrl,
+    required this.supabaseAnonKey,
     required this.widgetAppGroupId,
     required this.revenueCatAndroidApiKey,
     required this.revenueCatIosApiKey,
     required this.revenueCatEntitlementId,
     required this.revenueCatOfferingId,
-    required this.allowSelfSigned,
     required this.sentryDsn,
     required this.sentryEnvironment,
   });
 
   final AppFlavor appFlavor;
-  final String appwriteEndpoint;
-  final String appwriteProjectId;
-  final String appwriteDatabaseId;
-  final String usersCollectionId;
-  final String categoryDefinitionsCollectionId;
-  final String dailyLogsCollectionId;
-  final String dailyLogItemsCollectionId;
-  final String subscriptionsCollectionId;
-  final String analyticsEventsCollectionId;
-  final String gamificationProfilesCollectionId;
-  final String gamificationEventsCollectionId;
 
-  /// Appwrite Function id that deletes the caller's auth record server-side
-  /// (`functions/delete_user`). Empty in dev/local → auth record is not removed
-  /// on account deletion; must be set for store-compliant deletion.
-  final String deleteUserFunctionId;
+  /// Supabase project URL. In production this must be injected
+  /// (`--dart-define=SUPABASE_URL=...`); the committed fallback points at the
+  /// local `supabase start` stack and is refused for prod builds, so a
+  /// misconfigured release fails loudly at bootstrap instead of silently
+  /// talking to a dev backend.
+  final String supabaseUrl;
 
-  /// Appwrite Function id for AI coach (`functions/ai_coach`). Empty → local
-  /// heuristic fallback in the Flutter client.
-  final String aiCoachFunctionId;
+  /// Supabase publishable (anon) key. Same fail-closed rule as [supabaseUrl];
+  /// `sb_publishable_...` keys go in the same variable.
+  final String supabaseAnonKey;
 
   final String widgetAppGroupId;
   final String revenueCatAndroidApiKey;
   final String revenueCatIosApiKey;
   final String revenueCatEntitlementId;
   final String revenueCatOfferingId;
-  final bool allowSelfSigned;
   final String sentryDsn;
   final String sentryEnvironment;
+
+  /// Default anon key of the local `supabase start` stack (public demo JWT,
+  /// identical for every local install — not a secret).
+  static const String _localAnonKey =
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
 
   /// Call after [loadEnvForFlavor] has run in [bootstrap].
   factory EnvConfig.fromEnv(AppFlavor flavor) {
     return EnvConfig(
       appFlavor: flavor,
-      appwriteEndpoint: _str(
-        'APPWRITE_ENDPOINT',
-        'https://nyc.cloud.appwrite.io/v1',
-      ),
-      appwriteProjectId: _str('APPWRITE_PROJECT_ID', '6a53570100147968d1f6'),
-      appwriteDatabaseId: _str('APPWRITE_DATABASE_ID', 'stay_alive_v1'),
-      usersCollectionId: _str('APPWRITE_USERS_COLLECTION_ID', 'users'),
-      categoryDefinitionsCollectionId: _str(
-        'APPWRITE_CATEGORY_DEFINITIONS_COLLECTION_ID',
-        'category_definitions',
-      ),
-      dailyLogsCollectionId: _str(
-        'APPWRITE_DAILY_LOGS_COLLECTION_ID',
-        'daily_logs',
-      ),
-      dailyLogItemsCollectionId: _str(
-        'APPWRITE_DAILY_LOG_ITEMS_COLLECTION_ID',
-        'daily_log_items',
-      ),
-      subscriptionsCollectionId: _str(
-        'APPWRITE_SUBSCRIPTIONS_COLLECTION_ID',
-        'subscriptions',
-      ),
-      analyticsEventsCollectionId: _str(
-        'APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID',
-        'analytics_events',
-      ),
-      gamificationProfilesCollectionId: _str(
-        'APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID',
-        'gamification_profiles',
-      ),
-      gamificationEventsCollectionId: _str(
-        'APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID',
-        'gamification_events',
-      ),
-      deleteUserFunctionId: _str('APPWRITE_DELETE_USER_FUNCTION_ID', ''),
-      aiCoachFunctionId: _str('APPWRITE_AI_COACH_FUNCTION_ID', ''),
+      supabaseUrl: _devOnly('SUPABASE_URL', 'http://127.0.0.1:54321', flavor),
+      supabaseAnonKey: _devOnly('SUPABASE_ANON_KEY', _localAnonKey, flavor),
       widgetAppGroupId: _str(
         'DAILY_GOAL_WIDGET_APP_GROUP_ID',
         'group.com.gaussdev.stayalive',
@@ -126,7 +74,6 @@ class EnvConfig extends Equatable {
         'Stay Alive Pro',
       ),
       revenueCatOfferingId: _str('REVENUECAT_OFFERING_ID', 'default'),
-      allowSelfSigned: _bool('APPWRITE_SELF_SIGNED', false),
       sentryDsn: _str('SENTRY_DSN', ''),
       sentryEnvironment: _str('SENTRY_ENVIRONMENT', flavor.name),
     );
@@ -146,6 +93,14 @@ class EnvConfig extends Equatable {
     return fallback;
   }
 
+  /// Resolves a value whose committed fallback is only valid for development.
+  ///
+  /// Production builds must inject the real value; returning empty makes prod
+  /// fail closed (bootstrap throws) instead of silently using the dev backend.
+  static String _devOnly(String key, String devFallback, AppFlavor flavor) {
+    return _str(key, flavor.isProduction ? '' : devFallback);
+  }
+
   /// Resolves a credential, refusing sandbox placeholders in production.
   ///
   /// RevenueCat sandbox keys are prefixed `test_`, and the committed fallbacks
@@ -162,42 +117,16 @@ class EnvConfig extends Equatable {
     return value;
   }
 
-  static bool _bool(String key, bool fallback) {
-    final String fromDefine = String.fromEnvironment(key, defaultValue: '');
-    if (fromDefine.isNotEmpty) {
-      return fromDefine == 'true';
-    }
-    if (dotenv.isInitialized) {
-      final String? v = dotenv.env[key];
-      if (v != null && v.trim().isNotEmpty) {
-        return v.trim().toLowerCase() == 'true';
-      }
-    }
-    return fallback;
-  }
-
   @override
   List<Object?> get props => <Object?>[
         appFlavor,
-        appwriteEndpoint,
-        appwriteProjectId,
-        appwriteDatabaseId,
-        usersCollectionId,
-        categoryDefinitionsCollectionId,
-        dailyLogsCollectionId,
-        dailyLogItemsCollectionId,
-        subscriptionsCollectionId,
-        analyticsEventsCollectionId,
-        gamificationProfilesCollectionId,
-        gamificationEventsCollectionId,
-        deleteUserFunctionId,
-        aiCoachFunctionId,
+        supabaseUrl,
+        supabaseAnonKey,
         widgetAppGroupId,
         revenueCatAndroidApiKey,
         revenueCatIosApiKey,
         revenueCatEntitlementId,
         revenueCatOfferingId,
-        allowSelfSigned,
         sentryDsn,
         sentryEnvironment,
       ];

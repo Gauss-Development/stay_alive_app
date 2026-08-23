@@ -1,7 +1,5 @@
 import 'dart:io';
 
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
@@ -9,6 +7,7 @@ import 'package:stay_alive/features/subscription/domain/entities/subscription_in
 import 'package:stay_alive/features/subscription/domain/entities/subscription_offering.dart';
 import 'package:stay_alive/features/subscription/domain/entities/subscription_package.dart';
 import 'package:stay_alive/features/subscription/domain/entities/subscription_plan.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 abstract class RevenueCatGateway {
   Future<void> configure({required String apiKey, String? appUserId});
@@ -88,16 +87,16 @@ class RevenueCatSubscriptionRemoteDataSource
     implements SubscriptionRemoteDataSource {
   RevenueCatSubscriptionRemoteDataSource({
     required RevenueCatGateway revenueCatGateway,
-    required Account account,
+    required supabase.GoTrueClient auth,
     required EnvConfig envConfig,
     required AppLogger logger,
   }) : _revenueCatGateway = revenueCatGateway,
-       _account = account,
+       _auth = auth,
        _envConfig = envConfig,
        _logger = logger;
 
   final RevenueCatGateway _revenueCatGateway;
-  final Account _account;
+  final supabase.GoTrueClient _auth;
   final EnvConfig _envConfig;
   final AppLogger _logger;
   final Map<String, Package> _packagesById = <String, Package>{};
@@ -315,12 +314,8 @@ class RevenueCatSubscriptionRemoteDataSource
   }
 
   Future<String?> _currentUserIdOrNull() async {
-    try {
-      final appwrite_models.User user = await _account.get();
-      return user.$id;
-    } on AppwriteException {
-      return null;
-    }
+    // The Supabase auth user id doubles as the RevenueCat appUserID.
+    return _auth.currentUser?.id;
   }
 
   String _apiKeyForPlatform() {

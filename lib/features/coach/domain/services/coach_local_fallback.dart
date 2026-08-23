@@ -1,7 +1,7 @@
 import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
 import 'package:stay_alive/features/gamification/domain/entities/personalized_challenge_draft.dart';
 
-/// Rule-based coach responses used when the Appwrite Function is unavailable.
+/// Rule-based coach responses used when the ai_coach edge function is unavailable.
 abstract final class CoachLocalFallback {
   static CoachResponse respond({
     required CoachMode mode,

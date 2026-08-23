@@ -41,7 +41,7 @@ class DailyTrackerCubit extends Cubit<DailyTrackerState> {
 
   /// Serialises serving mutations.
   ///
-  /// `updateCategoryProgress` is a read-modify-write against Appwrite with no
+  /// `updateCategoryProgress` is a read-modify-write against the backend with no
   /// optimistic concurrency: it reads the log, adds the delta, then writes the
   /// absolute value. Two taps issued before the first round-trip finishes both
   /// read the same count and both write count+1, so one serving is silently

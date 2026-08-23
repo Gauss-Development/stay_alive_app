@@ -5,7 +5,7 @@ import 'package:stay_alive/features/daily_tracker/data/models/tracker_category_m
 
 void main() {
   group('TrackerCategoryModel', () {
-    test('maps snake_case Appwrite data', () {
+    test('maps snake_case row data', () {
       final TrackerCategoryModel category = TrackerCategoryModel.fromJson(
         const <String, dynamic>{
           'category_id': 'whole_grains',
@@ -26,7 +26,7 @@ void main() {
   });
 
   group('DailyLogItemModel', () {
-    test('serializes Appwrite create and update payloads', () {
+    test('serializes create and update payloads', () {
       final DateTime now = DateTime.utc(2026, 5, 6, 12);
       const TrackerCategoryModel category = TrackerCategoryModel(
         id: 'beans',
@@ -46,14 +46,15 @@ void main() {
       );
 
       final Map<String, dynamic> createData = item.toCreateData(
-        logDocumentId: '67a1b2c3d4e5f6789012_2026-05-06',
+        logId: '4f9c76aa-1111-2222-3333-444455556666',
       );
       final Map<String, dynamic> updateData = item.toUpdateData();
 
-      expect(createData['log_document_id'], '67a1b2c3d4e5f6789012_2026-05-06');
+      expect(createData['log_id'], '4f9c76aa-1111-2222-3333-444455556666');
 
       expect(createData.containsKey('item_id'), isFalse);
-      expect(createData.containsKey('log_id'), isFalse);
+      // `id` and `user_id` come from column defaults, never the payload.
+      expect(createData.containsKey('id'), isFalse);
       expect(createData.containsKey('user_id'), isFalse);
       expect(createData['category_id'], 'beans');
       expect(createData['completed_count'], 2);
@@ -63,7 +64,7 @@ void main() {
   });
 
   group('DailyLogModel', () {
-    test('serializes Appwrite create and update payloads', () {
+    test('serializes create and update payloads', () {
       final DailyLogModel log = DailyLogModel(
         id: '2026-05-06',
         userId: 'user_1',

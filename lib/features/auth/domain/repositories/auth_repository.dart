@@ -22,7 +22,7 @@ abstract class AuthRepository {
 
   Future<Result<AuthUser>> getCurrentUser();
 
-  /// Dev-only: creates a real Appwrite anonymous session (throwaway user).
+  /// Dev-only: creates a real Supabase anonymous session (throwaway user).
   Future<Result<AuthUser>> signInAnonymously();
 
   Future<Result<AuthSession>> checkSession();

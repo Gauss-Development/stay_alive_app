@@ -1,42 +1,47 @@
-import 'package:appwrite/appwrite.dart';
-import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
+import 'package:stay_alive/core/supabase/supabase_tables.dart';
 import 'package:stay_alive/features/user/data/models/user_profile_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 abstract class UserRemoteDataSource {
   Future<UserProfileModel> fetchProfile();
 }
 
-class AppwriteUserRemoteDataSource implements UserRemoteDataSource {
-  AppwriteUserRemoteDataSource({
-    required Account account,
-    required Databases databases,
-    required EnvConfig envConfig,
+class SupabaseUserRemoteDataSource implements UserRemoteDataSource {
+  SupabaseUserRemoteDataSource({
+    required supabase.SupabaseClient client,
+    required supabase.GoTrueClient auth,
     required AppLogger logger,
-  }) : _account = account,
-       _databases = databases,
-       _envConfig = envConfig,
-       _logger = logger;
+  })  : _client = client,
+        _auth = auth,
+        _logger = logger;
 
-  final Account _account;
-  final Databases _databases;
-  final EnvConfig _envConfig;
+  final supabase.SupabaseClient _client;
+  final supabase.GoTrueClient _auth;
   final AppLogger _logger;
 
   @override
   Future<UserProfileModel> fetchProfile() async {
-    final user = await _account.get();
+    final supabase.User? user = _auth.currentUser;
+    if (user == null) {
+      throw const supabase.AuthException(
+        'No active session.',
+        statusCode: '401',
+      );
+    }
     _logger.debug(
-      'Fetching user profile document',
-      data: <String, Object?>{'documentId': user.$id},
+      'Fetching user profile row',
+      data: <String, Object?>{'userId': user.id},
     );
 
-    final document = await _databases.getDocument(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.usersCollectionId,
-      documentId: user.$id,
-    );
+    // `.single()` throws (PGRST116) when the row is missing — the same
+    // failure surface as the old getDocument 404.
+    final Map<String, dynamic> row = await _client
+        .from(SupabaseTables.profiles)
+        .select()
+        .eq('id', user.id)
+        .single();
 
-    return UserProfileModel.fromDocument(document);
+    return UserProfileModel.fromRow(row);
   }
 }

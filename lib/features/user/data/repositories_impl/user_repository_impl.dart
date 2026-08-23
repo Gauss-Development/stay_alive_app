@@ -1,5 +1,5 @@
 import 'package:dartz/dartz.dart';
-import 'package:stay_alive/core/error/appwrite_failure_mapper.dart';
+import 'package:stay_alive/core/error/supabase_failure_mapper.dart';
 import 'package:stay_alive/core/error/failures.dart';
 import 'package:stay_alive/core/result/result.dart';
 import 'package:stay_alive/features/user/data/datasources/user_remote_data_source.dart';

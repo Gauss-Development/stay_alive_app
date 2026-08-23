@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-/// Mirrors the Appwrite `users` collection attributes (plus document metadata).
+/// Mirrors the Supabase `profiles` table columns.
 class UserProfile extends Equatable {
   const UserProfile({
     required this.id,

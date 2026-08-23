@@ -1,4 +1,3 @@
-import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
 import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
@@ -36,8 +35,7 @@ class UserGameProfileModel extends UserGameProfile {
     );
   }
 
-  factory UserGameProfileModel.fromDocument(appwrite_models.Document document) {
-    final Map<String, dynamic> data = document.data;
+  factory UserGameProfileModel.fromRow(Map<String, dynamic> data) {
     final int xp = (data['xp'] as num?)?.toInt() ?? 0;
     final List<String> badgeSlugs =
         (data['badges'] as List<dynamic>? ?? <dynamic>[])
@@ -49,7 +47,7 @@ class UserGameProfileModel extends UserGameProfile {
             .toList(growable: false);
 
     return UserGameProfileModel(
-      userId: document.$id,
+      userId: data['user_id']?.toString() ?? '',
       totalXp: xp,
       currentLevel: GameLevelTable.forXp(xp),
       currentStreak: (data['current_streak'] as num?)?.toInt() ?? 0,
@@ -69,8 +67,12 @@ class UserGameProfileModel extends UserGameProfile {
     );
   }
 
-  Map<String, dynamic> toDocumentData({required String now}) {
+  /// Upsert payload for `gamification_profiles`. `created_at` is intentionally
+  /// absent: the column default stamps it on insert, and an upsert must not
+  /// overwrite it on update.
+  Map<String, dynamic> toRowData({required String now}) {
     return <String, dynamic>{
+      'user_id': userId,
       'xp': totalXp,
       'level': currentLevel.level,
       'current_streak': currentStreak,

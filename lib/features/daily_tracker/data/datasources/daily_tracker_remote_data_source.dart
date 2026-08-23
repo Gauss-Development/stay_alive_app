@@ -1,12 +1,10 @@
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
-import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
+import 'package:stay_alive/core/supabase/supabase_tables.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/tracker_category_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 abstract class DailyTrackerRemoteDataSource {
   Future<DailyLogModel?> getLogByDate(String dateKey);
@@ -22,21 +20,18 @@ abstract class DailyTrackerRemoteDataSource {
   Future<DailyLogModel> resetLog(String dateKey);
 }
 
-class AppwriteDailyTrackerRemoteDataSource
+class SupabaseDailyTrackerRemoteDataSource
     implements DailyTrackerRemoteDataSource {
-  AppwriteDailyTrackerRemoteDataSource({
-    required Account account,
-    required Databases databases,
-    required EnvConfig envConfig,
+  SupabaseDailyTrackerRemoteDataSource({
+    required supabase.SupabaseClient client,
+    required supabase.GoTrueClient auth,
     required AppLogger logger,
-  }) : _account = account,
-       _databases = databases,
-       _envConfig = envConfig,
-       _logger = logger;
+  })  : _client = client,
+        _auth = auth,
+        _logger = logger;
 
-  final Account _account;
-  final Databases _databases;
-  final EnvConfig _envConfig;
+  final supabase.SupabaseClient _client;
+  final supabase.GoTrueClient _auth;
   final AppLogger _logger;
 
   static const List<TrackerCategoryModel> _fallbackCategories =
@@ -153,31 +148,28 @@ class AppwriteDailyTrackerRemoteDataSource
 
   @override
   Future<DailyLogModel?> getLogByDate(String dateKey) async {
-    final appwrite_models.User user = await _account.get();
-    return _loadLogForUser(userId: user.$id, dateKey: dateKey);
+    return _loadLogForUser(userId: _requireUserId(), dateKey: dateKey);
   }
 
   @override
   Future<DailyLogModel> initializeLog(String dateKey) async {
-    final appwrite_models.User user = await _account.get();
+    final String userId = _requireUserId();
     final DailyLogModel? existing = await _loadLogForUser(
-      userId: user.$id,
+      userId: userId,
       dateKey: dateKey,
     );
-    if (existing != null) {
+    // An existing log with zero items means a previous init failed between the
+    // log insert and the item insert — fall through and heal it.
+    if (existing != null && existing.items.isNotEmpty) {
       return existing;
     }
 
     final List<TrackerCategoryModel> categories = await _loadCategories();
     final DateTime now = DateTime.now().toUtc();
-    final String logDocumentId = DailyLogDocumentIds.log(user.$id, dateKey);
     final List<DailyLogItemModel> items = categories
         .map(
           (TrackerCategoryModel category) => DailyLogItemModel(
-            id: DailyLogDocumentIds.item(
-              logDocumentId: logDocumentId,
-              categoryId: category.id,
-            ),
+            id: '', // assigned by the database
             category: category,
             completedCount: 0,
             createdAt: now,
@@ -188,8 +180,8 @@ class AppwriteDailyTrackerRemoteDataSource
 
     final DailyLogModel log = _recalculateLog(
       DailyLogModel(
-        id: logDocumentId,
-        userId: user.$id,
+        id: existing?.id ?? '',
+        userId: userId,
         logDate: DateTime.parse('${dateKey}T00:00:00Z'),
         items: items,
         totalCompleted: 0,
@@ -202,29 +194,39 @@ class AppwriteDailyTrackerRemoteDataSource
       ),
     );
 
-    await _databases.createDocument(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogsCollectionId,
-      documentId: log.id,
-      data: log.toCreateData(),
-      permissions: _ownerPermissions(user.$id),
-    );
+    // Ensure the log row exists; a concurrent init just keeps the winner.
+    await _client.from(SupabaseTables.dailyLogs).upsert(
+          log.toCreateData(),
+          onConflict: 'user_id,log_date',
+          ignoreDuplicates: true,
+        );
+    final Map<String, dynamic> logRow = await _client
+        .from(SupabaseTables.dailyLogs)
+        .select('id')
+        .eq('user_id', userId)
+        .eq('log_date', dateKey)
+        .single();
+    final String logId = logRow['id'] as String;
 
-    for (final DailyLogItemModel item in items) {
-      await _databases.createDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.dailyLogItemsCollectionId,
-        documentId: item.id,
-        data: item.toCreateData(logDocumentId: log.id),
-        permissions: _ownerPermissions(user.$id),
-      );
-    }
+    // One bulk insert for all category items; duplicates from races or a
+    // previous partial init are skipped by the (log_id, category_id) key.
+    await _client.from(SupabaseTables.dailyLogItems).upsert(
+          items
+              .map(
+                (DailyLogItemModel item) => item.toCreateData(logId: logId),
+              )
+              .toList(growable: false),
+          onConflict: 'log_id,category_id',
+          ignoreDuplicates: true,
+        );
 
     _logger.info(
-      'Initialized Appwrite daily log',
-      data: <String, Object?>{'userId': user.$id, 'dateKey': dateKey},
+      'Initialized daily log',
+      data: <String, Object?>{'userId': userId, 'dateKey': dateKey},
     );
-    return log;
+
+    // Reload so items carry their database-assigned ids.
+    return (await _loadLogForUser(userId: userId, dateKey: dateKey))!;
   }
 
   @override
@@ -254,12 +256,12 @@ class AppwriteDailyTrackerRemoteDataSource
     final DailyLogItemModel updatedItem = updatedItems.firstWhere(
       (DailyLogItemModel item) => item.categoryId == categoryId,
     );
-    await _databases.updateDocument(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogItemsCollectionId,
-      documentId: updatedItem.id,
-      data: updatedItem.toUpdateData(),
-    );
+    // Absolute write (not an increment): the cubit serializes taps, and the
+    // clamped read-modify-write above is the source of truth.
+    await _client
+        .from(SupabaseTables.dailyLogItems)
+        .update(updatedItem.toUpdateData())
+        .eq('id', updatedItem.id);
 
     return _saveRecalculatedLog(current.copyWith(items: updatedItems));
   }
@@ -275,14 +277,14 @@ class AppwriteDailyTrackerRemoteDataSource
         )
         .toList(growable: false);
 
-    for (final DailyLogItemModel item in resetItems) {
-      await _databases.updateDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.dailyLogItemsCollectionId,
-        documentId: item.id,
-        data: item.toUpdateData(),
-      );
-    }
+    // One bulk reset instead of a per-item loop.
+    await _client
+        .from(SupabaseTables.dailyLogItems)
+        .update(<String, dynamic>{
+          'completed_count': 0,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('log_id', current.id);
 
     return _saveRecalculatedLog(current.copyWith(items: resetItems));
   }
@@ -291,72 +293,26 @@ class AppwriteDailyTrackerRemoteDataSource
     required String userId,
     required String dateKey,
   }) async {
-    final String logDocumentId = DailyLogDocumentIds.log(userId, dateKey);
-    try {
-      final appwrite_models.Document logDocument = await _databases.getDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.dailyLogsCollectionId,
-        documentId: logDocumentId,
-      );
-      final List<DailyLogItemModel> items = await _loadItemsForLog(
-        logDocumentId: logDocumentId,
-      );
-      return _recalculateLog(
-        DailyLogModel.fromDocument(document: logDocument, items: items),
-      );
-    } on AppwriteException catch (exception) {
-      if (exception.code == 404) {
-        return null;
-      }
-      rethrow;
-    }
-  }
-
-  Future<List<DailyLogItemModel>> _loadItemsForLog({
-    required String logDocumentId,
-  }) async {
-    try {
-      final appwrite_models.DocumentList itemDocuments = await _databases
-          .listDocuments(
-            databaseId: _envConfig.appwriteDatabaseId,
-            collectionId: _envConfig.dailyLogItemsCollectionId,
-            queries: <String>[
-              Query.equal('log_document_id', logDocumentId),
-              Query.limit(100),
-            ],
-          );
-      if (itemDocuments.documents.isNotEmpty) {
-        return _sortItems(
-          itemDocuments.documents
-              .map(DailyLogItemModel.fromDocumentWithoutCategory)
-              .toList(growable: false),
-        );
-      }
-    } on AppwriteException catch (exception) {
-      _logger.warning(
-        'Falling back to legacy daily log item lookup',
-        data: <String, Object?>{'reason': exception.message},
-      );
+    final Map<String, dynamic>? row = await _client
+        .from(SupabaseTables.dailyLogs)
+        .select('*, ${SupabaseTables.dailyLogItems}(*)')
+        .eq('user_id', userId)
+        .eq('log_date', dateKey)
+        .maybeSingle();
+    if (row == null) {
+      return null;
     }
 
-    final appwrite_models.DocumentList itemDocuments = await _databases
-        .listDocuments(
-          databaseId: _envConfig.appwriteDatabaseId,
-          collectionId: _envConfig.dailyLogItemsCollectionId,
-          queries: <String>[Query.limit(100)],
-        );
-    final List<DailyLogItemModel> items = itemDocuments.documents
-        .where(
-          (appwrite_models.Document document) =>
-              DailyLogDocumentIds.isLegacyItemForLog(
-                document.$id,
-                logDocumentId,
-              ) ||
-              document.data['log_document_id']?.toString() == logDocumentId,
-        )
-        .map(DailyLogItemModel.fromDocumentWithoutCategory)
-        .toList(growable: false);
-    return _sortItems(items);
+    final List<DailyLogItemModel> items = _sortItems(
+      ((row[SupabaseTables.dailyLogItems] as List<dynamic>?) ??
+              const <dynamic>[])
+          .map(
+            (dynamic itemRow) =>
+                DailyLogItemModel.fromRow(itemRow as Map<String, dynamic>),
+          )
+          .toList(growable: false),
+    );
+    return _recalculateLog(DailyLogModel.fromRow(row: row, items: items));
   }
 
   List<DailyLogItemModel> _sortItems(List<DailyLogItemModel> items) {
@@ -369,26 +325,21 @@ class AppwriteDailyTrackerRemoteDataSource
 
   Future<List<TrackerCategoryModel>> _loadCategories() async {
     try {
-      final appwrite_models.DocumentList documents = await _databases
-          .listDocuments(
-            databaseId: _envConfig.appwriteDatabaseId,
-            collectionId: _envConfig.categoryDefinitionsCollectionId,
-            queries: <String>[
-              Query.equal('is_active', true),
-              Query.orderAsc('display_order'),
-              Query.limit(100),
-            ],
-          );
-      if (documents.documents.isEmpty) {
+      final List<Map<String, dynamic>> rows = await _client
+          .from(SupabaseTables.categoryDefinitions)
+          .select()
+          .eq('is_active', true)
+          .order('display_order', ascending: true);
+      if (rows.isEmpty) {
         return _fallbackCategories;
       }
-      return documents.documents
-          .map(TrackerCategoryModel.fromDocument)
+      return rows
+          .map(TrackerCategoryModel.fromRow)
           .toList(growable: false);
-    } on AppwriteException catch (exception) {
+    } on Exception catch (exception) {
       _logger.warning(
         'Falling back to bundled category definitions',
-        data: <String, Object?>{'reason': exception.message},
+        data: <String, Object?>{'reason': exception.toString()},
       );
       return _fallbackCategories;
     }
@@ -396,12 +347,10 @@ class AppwriteDailyTrackerRemoteDataSource
 
   Future<DailyLogModel> _saveRecalculatedLog(DailyLogModel log) async {
     final DailyLogModel updatedLog = _recalculateLog(log);
-    await _databases.updateDocument(
-      databaseId: _envConfig.appwriteDatabaseId,
-      collectionId: _envConfig.dailyLogsCollectionId,
-      documentId: updatedLog.id,
-      data: updatedLog.toUpdateData(),
-    );
+    await _client
+        .from(SupabaseTables.dailyLogs)
+        .update(updatedLog.toUpdateData())
+        .eq('id', updatedLog.id);
     return updatedLog;
   }
 
@@ -426,11 +375,14 @@ class AppwriteDailyTrackerRemoteDataSource
     );
   }
 
-  List<String> _ownerPermissions(String userId) {
-    return <String>[
-      Permission.read(Role.user(userId)),
-      Permission.update(Role.user(userId)),
-      Permission.delete(Role.user(userId)),
-    ];
+  String _requireUserId() {
+    final String? userId = _auth.currentUser?.id;
+    if (userId == null) {
+      throw const supabase.AuthException(
+        'No active session.',
+        statusCode: '401',
+      );
+    }
+    return userId;
   }
 }

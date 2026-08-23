@@ -1,235 +1,180 @@
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as appwrite_models;
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:stay_alive/core/config/app_flavor.dart';
-import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/features/gamification/data/datasources/gamification_remote_data_source.dart';
+import 'package:stay_alive/features/gamification/data/models/gamification_overview_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
-class _MockAccount extends Mock implements Account {}
+class _MockGoTrueClient extends Mock implements GoTrueClient {}
 
-class _MockDatabases extends Mock implements Databases {}
-
-const String _logsCollection = 'daily_logs';
-const String _itemsCollection = 'daily_log_items';
-const String _eventsCollection = 'gamification_events';
-const String _profilesCollection = 'gamification_profiles';
-
-const EnvConfig _envConfig = EnvConfig(
-  appFlavor: AppFlavor.development,
-  appwriteEndpoint: '',
-  appwriteProjectId: '',
-  appwriteDatabaseId: 'db',
-  usersCollectionId: 'users',
-  categoryDefinitionsCollectionId: 'categories',
-  dailyLogsCollectionId: _logsCollection,
-  dailyLogItemsCollectionId: _itemsCollection,
-  subscriptionsCollectionId: 'subscriptions',
-  analyticsEventsCollectionId: 'analytics',
-  gamificationProfilesCollectionId: _profilesCollection,
-  gamificationEventsCollectionId: _eventsCollection,
-  deleteUserFunctionId: '',
-  aiCoachFunctionId: '',
-  widgetAppGroupId: '',
-  revenueCatAndroidApiKey: '',
-  revenueCatIosApiKey: '',
-  revenueCatEntitlementId: 'premium',
-  revenueCatOfferingId: 'default',
-  allowSelfSigned: false,
-  sentryDsn: '',
-  sentryEnvironment: 'test',
+final User _user = User(
+  id: 'user-1',
+  appMetadata: const <String, dynamic>{},
+  userMetadata: const <String, dynamic>{},
+  aud: 'authenticated',
+  createdAt: DateTime.utc(2026).toIso8601String(),
 );
 
-appwrite_models.Document _document(
-  String id,
-  Map<String, dynamic> data, {
-  String collectionId = _itemsCollection,
-}) {
-  return appwrite_models.Document(
-    $id: id,
-    $sequence: 0,
-    $collectionId: collectionId,
-    $databaseId: 'db',
-    $createdAt: '2026-06-01T00:00:00.000Z',
-    $updatedAt: '2026-06-01T00:00:00.000Z',
-    $permissions: const <String>[],
-    data: data,
-  );
-}
+/// Runs the datasource against a canned PostgREST so tests can assert on the
+/// actual requests (paths, filters, headers) the Supabase client emits.
+class _FakePostgrest {
+  final List<http.Request> requests = <http.Request>[];
 
-appwrite_models.DocumentList _list(List<appwrite_models.Document> documents) {
-  return appwrite_models.DocumentList(
-    total: documents.length,
-    documents: documents,
+  late final SupabaseClient client = SupabaseClient(
+    'http://localhost:54321',
+    'test-key',
+    httpClient: MockClient(_handle),
   );
+
+  Future<http.Response> _handle(http.Request request) async {
+    requests.add(request);
+    final String path = request.url.path;
+    final bool wantsSingleObject =
+        request.headers['Accept']?.contains('vnd.pgrst.object') ?? false;
+
+    if (path.endsWith('/gamification_profiles')) {
+      if (request.method == 'GET') {
+        // No persisted profile yet: PostgREST answers a single-object request
+        // with PGRST116, which maybeSingle() converts to null.
+        if (wantsSingleObject) {
+          return http.Response(
+            jsonEncode(<String, dynamic>{
+              'code': 'PGRST116',
+              'message': 'JSON object requested, multiple (or no) rows',
+              'details': 'The result contains 0 rows',
+              'hint': null,
+            }),
+            406,
+            headers: <String, String>{'Content-Type': 'application/json'},
+            request: request,
+          );
+        }
+        return _jsonList(request, const <Map<String, dynamic>>[]);
+      }
+      return http.Response('', 201, request: request);
+    }
+
+    if (path.endsWith('/daily_logs')) {
+      return _jsonList(request, <Map<String, dynamic>>[
+        <String, dynamic>{
+          'id': 'log-1',
+          'user_id': 'user-1',
+          'log_date': '2026-08-20',
+          'total_completed': 3,
+          'total_target': 24,
+          'completion_percentage': 12.5,
+          'is_fully_completed': false,
+          'created_at': '2026-08-20T00:00:00Z',
+          'updated_at': '2026-08-20T10:00:00Z',
+          'daily_log_items': <Map<String, dynamic>>[
+            <String, dynamic>{
+              'id': 'item-1',
+              'log_id': 'log-1',
+              'user_id': 'user-1',
+              'category_id': 'beans',
+              'category_title': 'Beans / Legumes',
+              'target_count': 3,
+              'display_order': 1,
+              'icon_key': 'beans',
+              'is_active': true,
+              'completed_count': 3,
+              'created_at': '2026-08-20T00:00:00Z',
+              'updated_at': '2026-08-20T10:00:00Z',
+            },
+          ],
+        },
+      ]);
+    }
+
+    if (path.endsWith('/gamification_events')) {
+      if (request.method == 'GET') {
+        return _jsonList(request, const <Map<String, dynamic>>[]);
+      }
+      return http.Response('', 201, request: request);
+    }
+
+    fail('Unexpected request: ${request.method} ${request.url}');
+  }
+
+  http.Response _jsonList(http.Request request, List<Map<String, dynamic>> rows) {
+    return http.Response(
+      jsonEncode(rows),
+      200,
+      headers: <String, String>{'Content-Type': 'application/json'},
+      request: request,
+    );
+  }
+
+  Iterable<http.Request> to(String table, {String? method}) => requests.where(
+        (http.Request request) =>
+            request.url.path.endsWith('/$table') &&
+            (method == null || request.method == method),
+      );
 }
 
 void main() {
-  late _MockAccount account;
-  late _MockDatabases databases;
-  late AppwriteGamificationRemoteDataSource dataSource;
-
-  /// Every `queries` list the items collection was asked for, in order.
-  late List<List<String>> itemQueries;
-
-  setUpAll(() {
-    registerFallbackValue(<String>[]);
-  });
+  late _FakePostgrest postgrest;
+  late _MockGoTrueClient auth;
+  late SupabaseGamificationRemoteDataSource dataSource;
 
   setUp(() {
-    account = _MockAccount();
-    databases = _MockDatabases();
-    itemQueries = <List<String>>[];
-
-    when(() => account.get()).thenAnswer(
-      (_) async => appwrite_models.User(
-        $id: 'user_1',
-        $createdAt: '2026-01-01T00:00:00.000Z',
-        $updatedAt: '2026-01-01T00:00:00.000Z',
-        name: 'Test',
-        registration: '2026-01-01T00:00:00.000Z',
-        status: true,
-        labels: const <String>[],
-        passwordUpdate: '',
-        email: 't@example.com',
-        phone: '',
-        emailVerification: true,
-        phoneVerification: false,
-        mfa: false,
-        prefs: appwrite_models.Preferences(data: const <String, dynamic>{}),
-        targets: const <appwrite_models.Target>[],
-        accessedAt: '2026-01-01T00:00:00.000Z',
-      ),
-    );
-
-    // No persisted profile yet.
-    when(
-      () => databases.getDocument(
-        databaseId: any(named: 'databaseId'),
-        collectionId: any(named: 'collectionId'),
-        documentId: any(named: 'documentId'),
-      ),
-    ).thenThrow(AppwriteException('not found', 404));
-
-    when(
-      () => databases.updateDocument(
-        databaseId: any(named: 'databaseId'),
-        collectionId: any(named: 'collectionId'),
-        documentId: any(named: 'documentId'),
-        data: any(named: 'data'),
-      ),
-    ).thenAnswer((_) async => _document('written', <String, dynamic>{}));
-
-    when(
-      () => databases.createDocument(
-        databaseId: any(named: 'databaseId'),
-        collectionId: any(named: 'collectionId'),
-        documentId: any(named: 'documentId'),
-        data: any(named: 'data'),
-        permissions: any(named: 'permissions'),
-      ),
-    ).thenAnswer((_) async => _document('written', <String, dynamic>{}));
-
-    dataSource = AppwriteGamificationRemoteDataSource(
-      account: account,
-      databases: databases,
-      envConfig: _envConfig,
+    postgrest = _FakePostgrest();
+    auth = _MockGoTrueClient();
+    when(() => auth.currentUser).thenReturn(_user);
+    dataSource = SupabaseGamificationRemoteDataSource(
+      client: postgrest.client,
+      auth: auth,
     );
   });
 
-  /// 120 items for one log — more than one page, so a non-paging
-  /// implementation returns a truncated set.
-  void stubOneLogWith120Items() {
-    const String logId = 'user_1_2026-06-01';
-    final List<appwrite_models.Document> allItems = List.generate(
-      120,
-      (int index) => _document('item_$index', <String, dynamic>{
-        'log_document_id': logId,
-        'category_id': 'greens',
-        'completed_count': 1,
-      }),
-    );
+  test('loads logs with embedded items in one filtered request', () async {
+    final GamificationOverviewModel overview =
+        await dataSource.reconcileOverview(isPremium: false);
 
-    when(
-      () => databases.listDocuments(
-        databaseId: any(named: 'databaseId'),
-        collectionId: any(named: 'collectionId'),
-        queries: any(named: 'queries'),
-      ),
-    ).thenAnswer((Invocation invocation) async {
-      final String collectionId =
-          invocation.namedArguments[#collectionId] as String;
-      final List<String> queries =
-          (invocation.namedArguments[#queries] as List<String>?) ??
-          const <String>[];
+    final http.Request logsRequest = postgrest.to('daily_logs').single;
+    final String query = Uri.decodeComponent(logsRequest.url.query);
+    // Embedded select replaces the old two-phase load: one request, filtered
+    // by owner and date window, items included.
+    expect(query, contains('select=*,daily_log_items(*)'));
+    expect(query, contains('user_id=eq.user-1'));
+    expect(query, contains('log_date=gte.'));
+    expect(postgrest.to('daily_log_items'), isEmpty);
 
-      switch (collectionId) {
-        case _logsCollection:
-          return _list(<appwrite_models.Document>[
-            _document(logId, <String, dynamic>{
-              'log_date': '2026-06-01',
-              'user_id': 'user_1',
-            }, collectionId: _logsCollection),
-          ]);
-        case _itemsCollection:
-          itemQueries.add(queries);
-          final bool isSecondPage = queries.any(
-            (String query) => query.contains('cursorAfter'),
-          );
-          return _list(
-            isSecondPage ? allItems.sublist(100) : allItems.sublist(0, 100),
-          );
-        default:
-          return _list(const <appwrite_models.Document>[]);
-      }
-    });
-  }
-
-  test('filters daily-log items server-side instead of scanning the collection',
-      () async {
-    stubOneLogWith120Items();
-
-    await dataSource.reconcileOverview(isPremium: false);
-
-    expect(itemQueries, isNotEmpty);
-    expect(
-      itemQueries.first.any(
-        (String query) => query.contains('log_document_id'),
-      ),
-      isTrue,
-      reason: 'items must be filtered by log id, not fetched collection-wide',
-    );
+    expect(overview.profile.totalCategoriesCompleted, greaterThan(0));
   });
 
-  test('pages past the first full page so the newest items are not dropped',
-      () async {
-    stubOneLogWith120Items();
-
+  test('recent XP events are ordered by server insert time', () async {
     await dataSource.reconcileOverview(isPremium: false);
 
-    expect(
-      itemQueries.length,
-      greaterThanOrEqualTo(2),
-      reason: 'a saturated first page must be followed by a cursor request',
-    );
-    expect(
-      itemQueries.last.any((String query) => query.contains('cursorAfter')),
-      isTrue,
-      reason: 'the follow-up page must continue from the last document',
-    );
+    final http.Request eventsRequest =
+        postgrest.to('gamification_events', method: 'GET').first;
+    final String query = Uri.decodeComponent(eventsRequest.url.query);
+    // `created_at` is client-set and backdated for badge events; ordering must
+    // use the server-side `inserted_at` for parity with Appwrite `$createdAt`.
+    expect(query, contains('order=inserted_at.desc'));
+    expect(query, contains('limit=50'));
+    expect(query, contains('user_id=eq.user-1'));
   });
 
-  test('never issues an unbounded limit that silently truncates', () async {
-    stubOneLogWith120Items();
-
+  test('profile is upserted onto the user_id key in one request', () async {
     await dataSource.reconcileOverview(isPremium: false);
 
-    for (final List<String> queries in itemQueries) {
-      expect(
-        queries.any((String query) => query.contains('5000')),
-        isFalse,
-        reason: 'limit(5000) drops the newest rows once a user exceeds it',
-      );
-    }
+    final http.Request upsert =
+        postgrest.to('gamification_profiles', method: 'POST').single;
+    expect(
+      Uri.decodeComponent(upsert.url.query),
+      contains('on_conflict=user_id'),
+    );
+    expect(upsert.headers['Prefer'], contains('resolution=merge-duplicates'));
+
+    final Map<String, dynamic> payload =
+        jsonDecode(upsert.body) as Map<String, dynamic>;
+    expect(payload['user_id'], 'user-1');
+    // created_at is never sent: the column default stamps it on insert and an
+    // upsert must not overwrite it on update.
+    expect(payload.containsKey('created_at'), isFalse);
   });
 }

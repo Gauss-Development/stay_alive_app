@@ -1,11 +1,8 @@
-import 'dart:convert';
-
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
+import 'package:stay_alive/core/supabase/supabase_tables.dart';
 import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
 import 'package:stay_alive/features/coach/domain/services/coach_local_fallback.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 abstract class CoachRemoteDataSource {
   Future<CoachResponse> invoke({
@@ -17,15 +14,12 @@ abstract class CoachRemoteDataSource {
 
 class CoachRemoteDataSourceImpl implements CoachRemoteDataSource {
   CoachRemoteDataSourceImpl({
-    required Functions functions,
-    required EnvConfig envConfig,
+    required supabase.FunctionsClient functions,
     required AppLogger logger,
-  }) : _functions = functions,
-       _envConfig = envConfig,
-       _logger = logger;
+  })  : _functions = functions,
+        _logger = logger;
 
-  final Functions _functions;
-  final EnvConfig _envConfig;
+  final supabase.FunctionsClient _functions;
   final AppLogger _logger;
 
   @override
@@ -34,41 +28,19 @@ class CoachRemoteDataSourceImpl implements CoachRemoteDataSource {
     required CoachContextPayload context,
     required bool isPremium,
   }) async {
-    final String functionId = _envConfig.aiCoachFunctionId;
-    if (functionId.isEmpty) {
-      _logger.info('AI coach function unset — using local fallback');
-      return CoachLocalFallback.respond(mode: mode, context: context);
-    }
-
+    // Any failure (function not deployed, 503 without an OpenAI key, network)
+    // degrades to the local heuristic — the coach never hard-fails.
     try {
-      final appwrite_models.Execution execution = await _functions
-          .createExecution(
-            functionId: functionId,
-            body: jsonEncode(<String, dynamic>{
-              'mode': mode.name,
-              'isPremium': isPremium,
-              'context': context.toJson(),
-            }),
-            xasync: false,
-          );
+      final supabase.FunctionResponse response = await _functions.invoke(
+        SupabaseFunctions.aiCoach,
+        body: <String, dynamic>{
+          'mode': mode.name,
+          'isPremium': isPremium,
+          'context': context.toJson(),
+        },
+      );
 
-      final bool ok =
-          execution.status == 'completed' &&
-          execution.responseStatusCode >= 200 &&
-          execution.responseStatusCode < 300;
-      if (!ok) {
-        _logger.warning(
-          'AI coach execution failed — fallback',
-          data: <String, Object?>{
-            'status': execution.status,
-            'code': execution.responseStatusCode,
-            'errors': execution.errors,
-          },
-        );
-        return CoachLocalFallback.respond(mode: mode, context: context);
-      }
-
-      final Object? decoded = jsonDecode(execution.responseBody);
+      final Object? decoded = response.data;
       if (decoded is Map<String, dynamic>) {
         return CoachResponse.fromJson(decoded);
       }
@@ -77,10 +49,12 @@ class CoachRemoteDataSourceImpl implements CoachRemoteDataSource {
       }
       return CoachLocalFallback.respond(mode: mode, context: context);
     } catch (error, stackTrace) {
-      _logger.error(
-        'AI coach invoke error — fallback',
-        error: error,
-        data: <String, Object?>{'stack': stackTrace.toString()},
+      _logger.warning(
+        'AI coach invoke failed — fallback',
+        data: <String, Object?>{
+          'error': error.toString(),
+          'stack': stackTrace.toString(),
+        },
       );
       return CoachLocalFallback.respond(mode: mode, context: context);
     }

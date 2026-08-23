@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Flutter declares INTERNET only in the debug and profile manifests, so
-         release builds ship without it unless it is declared here. Appwrite,
+         release builds ship without it unless it is declared here. Supabase,
          RevenueCat and Sentry all fail at runtime without it, while debug
          builds keep working — see GAU-378. -->
     <uses-permission android:name="android.permission.INTERNET"/>
@@ -30,15 +30,13 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-        </activity>
-        <activity
-            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
-            android:exported="true">
-            <intent-filter android:label="flutter_web_auth_2">
+            <!-- Supabase OAuth deep link (handled by app_links via
+                 supabase_flutter): stayalive://login-callback -->
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="${appwriteCallbackScheme}" />
+                <data android:scheme="stayalive" android:host="login-callback" />
             </intent-filter>
         </activity>
         <receiver

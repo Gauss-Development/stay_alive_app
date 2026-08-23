@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/features/gamification/domain/entities/gamification_xp_event.dart';
 
 class GamificationXpEventModel extends GamificationXpEvent {
@@ -13,25 +12,21 @@ class GamificationXpEventModel extends GamificationXpEvent {
     required super.createdAt,
   });
 
-  factory GamificationXpEventModel.fromDocument(
-    appwrite_models.Document document,
-  ) {
-    final Map<String, dynamic> data = document.data;
+  factory GamificationXpEventModel.fromRow(Map<String, dynamic> data) {
     return GamificationXpEventModel(
-      eventId: data['event_id']?.toString() ?? document.$id,
+      eventId: data['event_id']?.toString() ?? data['id']?.toString() ?? '',
       eventType: data['event_type']?.toString() ?? '',
       label: _labelForEventType(data['event_type']?.toString() ?? ''),
       xpDelta: (data['xp_delta'] as num?)?.toInt() ?? 0,
-      logDate: _logDateFromDocument(document),
+      logDate: _logDateFromRow(data),
       createdAt:
           DateTime.tryParse(data['created_at']?.toString() ?? '') ??
-          DateTime.tryParse(document.$createdAt) ??
+          DateTime.tryParse(data['inserted_at']?.toString() ?? '') ??
           DateTime.now().toUtc(),
     );
   }
 
-  static String _logDateFromDocument(appwrite_models.Document document) {
-    final Map<String, dynamic> data = document.data;
+  static String _logDateFromRow(Map<String, dynamic> data) {
     final String? storedDate = data['log_date']?.toString();
     if (storedDate != null && storedDate.isNotEmpty) {
       return storedDate;

@@ -32,10 +32,11 @@
 				<key>CFBundleTypeRole</key>
 				<string>Editor</string>
 				<key>CFBundleURLName</key>
-				<string>io.appwrite</string>
+				<string>com.gaussdev.stayalive</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>appwrite-callback-$(APPWRITE_PROJECT_ID)</string>
+					<!-- Supabase OAuth deep link: stayalive://login-callback -->
+					<string>stayalive</string>
 				</array>
 			</dict>
 		</array>

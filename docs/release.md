@@ -74,30 +74,29 @@ The app code's plan resolver (`SubscriptionPlan.fromRevenueCatIdentifier`) match
 3. Add to `scripts/release.env` as `SENTRY_DSN=...`.
 4. App-side wiring already done in `lib/bootstrap.dart`. When DSN is empty, Sentry is skipped (used for local dev).
 
-## 6. Appwrite account-deletion function (store requirement)
+## 6. Supabase backend (store requirement: account deletion)
 
-Both stores require full account deletion. The client deletes the user's
-documents and sessions, but the Appwrite auth record itself must be removed
-server-side by the `functions/delete_user` function (ticket GAU-316).
+Both stores require full account deletion. The app calls the `delete_user`
+edge function, which verifies the caller's JWT and deletes the auth record;
+every table references `auth.users ON DELETE CASCADE`, so all user rows go
+with it — no client-side sweep.
 
-1. Deploy it (needs an Appwrite API key with `users.write`):
+Deploy the backend to the production project (one-time; see
+`docs/supabase_backend_setup.md` for the full runbook + dashboard checklist):
 
-   ```sh
-   appwrite functions create \
-     --function-id delete_user --name "delete_user" \
-     --runtime node-22 --execute '["users"]'
+```sh
+supabase link --project-ref <prod-ref>
+supabase db push
+supabase functions deploy delete_user
+supabase functions deploy ai_coach
+supabase secrets set OPENAI_API_KEY=sk-...   # optional: live AI coach
+```
 
-   appwrite functions create-deployment \
-     --function-id delete_user --entrypoint "src/main.js" \
-     --code functions/delete_user --activate true
-   ```
-
-2. Enable a **dynamic API key** with scope `users.write` on the function.
-3. Set the id in `scripts/release.env`: `APPWRITE_DELETE_USER_FUNCTION_ID=delete_user`.
-
-When this id is empty, the app clears documents/sessions and signs the user out
-but skips the auth-record deletion (dev fallback — **not** store-compliant).
-Details: `functions/delete_user/README.md`.
+Then set `SUPABASE_URL` + `SUPABASE_ANON_KEY` in `scripts/release.env` (local
+builds) and as GitHub secrets (CI). Production builds **fail closed** at
+bootstrap if these are missing, so a release can never silently point at the
+dev backend. If `delete_user` is not deployed, in-app account deletion logs an
+error and signs the user out — **not** store-compliant until deployed.
 
 ## 7. Android signing
 
@@ -136,7 +135,8 @@ Before every release:
 
 - [ ] `flutter analyze` returns no issues
 - [ ] `flutter test` passes
-- [ ] `scripts/release.env` has real RevenueCat keys + `APPWRITE_DELETE_USER_FUNCTION_ID=delete_user`
+- [ ] `scripts/release.env` has real RevenueCat keys + production `SUPABASE_URL`/`SUPABASE_ANON_KEY`
+- [ ] `supabase db push` + `functions deploy delete_user` done on the prod project
 - [ ] `lib/core/constants/legal_urls.dart` points at the live hosted legal URLs
 - [ ] `./scripts/build-prod.sh apk` succeeds and the APK installs on a real Android device
 - [ ] Manual smoke: sign up → log a day → open paywall → see Monthly + Annual → sandbox purchase → entitlement activates

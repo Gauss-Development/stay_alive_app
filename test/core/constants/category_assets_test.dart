@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:stay_alive/core/constants/category_assets.dart';
 
-/// The categories seeded by `AppwriteDailyTrackerRemoteDataSource`.
+/// The categories bundled as the datasource fallback and seeded by the schema migration.
 const List<String> _seededIconKeys = <String>[
   'beans',
   'berries',

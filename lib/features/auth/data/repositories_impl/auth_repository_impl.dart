@@ -1,9 +1,8 @@
 import 'package:dartz/dartz.dart';
-import 'package:stay_alive/core/error/appwrite_failure_mapper.dart';
 import 'package:stay_alive/core/error/failures.dart';
+import 'package:stay_alive/core/error/supabase_failure_mapper.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/result/result.dart';
-import 'package:appwrite/enums.dart' as appwrite_enums;
 import 'package:stay_alive/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_session.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
@@ -67,7 +66,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }) async {
     try {
       final AuthSession session = await _remoteDataSource.loginWithOAuth(
-        provider: _mapProvider(provider),
+        provider: provider,
       );
       return Right<Failure, AuthSession>(session);
     } catch (exception, stackTrace) {
@@ -175,15 +174,6 @@ class AuthRepositoryImpl implements AuthRepository {
         stackTrace: stackTrace,
       );
       return Left<Failure, AuthUser>(mapExceptionToFailure(exception));
-    }
-  }
-
-  appwrite_enums.OAuthProvider _mapProvider(OAuthSignInProvider provider) {
-    switch (provider) {
-      case OAuthSignInProvider.google:
-        return appwrite_enums.OAuthProvider.google;
-      case OAuthSignInProvider.apple:
-        return appwrite_enums.OAuthProvider.apple;
     }
   }
 }

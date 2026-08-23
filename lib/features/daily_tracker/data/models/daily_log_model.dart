@@ -1,5 +1,3 @@
-import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
@@ -31,29 +29,23 @@ class DailyLogModel extends DailyLog {
     );
   }
 
-  factory DailyLogModel.fromDocument({
-    required appwrite_models.Document document,
+  factory DailyLogModel.fromRow({
+    required Map<String, dynamic> row,
     required List<DailyLogItemModel> items,
   }) {
-    final Map<String, dynamic> data = document.data;
-    final String? dateKey =
-        DailyLogDocumentIds.dateKeyFromLogDocumentId(document.$id) ??
-        data['log_date']?.toString();
-    final String userId =
-        DailyLogDocumentIds.userIdFromLogDocumentId(document.$id) ??
-        data['user_id']?.toString() ??
-        '';
+    // Postgres `date` serializes as 'yyyy-MM-dd'.
+    final String dateKey = row['log_date']?.toString() ?? '1970-01-01';
 
     return DailyLogModel(
-      id: document.$id,
-      userId: userId,
-      logDate: DateTime.parse('${dateKey ?? '1970-01-01'}T00:00:00Z'),
+      id: row['id']?.toString() ?? '',
+      userId: row['user_id']?.toString() ?? '',
+      logDate: DateTime.parse('${dateKey}T00:00:00Z'),
       items: items,
-      totalCompleted: (data['total_completed'] as num?)?.toInt() ?? 0,
-      totalTarget: (data['total_target'] as num?)?.toInt() ?? 0,
+      totalCompleted: (row['total_completed'] as num?)?.toInt() ?? 0,
+      totalTarget: (row['total_target'] as num?)?.toInt() ?? 0,
       completionPercentage:
-          (data['completion_percentage'] as num?)?.toDouble() ?? 0,
-      isFullyCompleted: data['is_fully_completed'] as bool? ?? false,
+          (row['completion_percentage'] as num?)?.toDouble() ?? 0,
+      isFullyCompleted: row['is_fully_completed'] as bool? ?? false,
     );
   }
 
@@ -80,7 +72,8 @@ class DailyLogModel extends DailyLog {
     );
   }
 
-  /// Payload for the `stay_alive_v1` `daily_logs` collection.
+  /// Insert payload for `daily_logs`. `id` comes from the column default,
+  /// `user_id` from `default auth.uid()`.
   Map<String, dynamic> toCreateData() {
     return <String, dynamic>{
       'log_date': dateKey,

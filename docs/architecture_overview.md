@@ -54,47 +54,41 @@ lib/
 
 ## Environment Configuration
 
-The app reads Appwrite configuration from compile-time `--dart-define` values.
+The app reads backend configuration from compile-time `--dart-define` values
+(with `assets/env/*.env` fallbacks; see `lib/core/env/env_config.dart`).
 
-Required keys:
+Keys:
 
-- `APPWRITE_ENDPOINT`
-- `APPWRITE_PROJECT_ID`
-- `APPWRITE_DATABASE_ID`
-- `APPWRITE_USERS_COLLECTION_ID`
-- `APPWRITE_CATEGORY_DEFINITIONS_COLLECTION_ID`
-- `APPWRITE_DAILY_LOGS_COLLECTION_ID`
-- `APPWRITE_DAILY_LOG_ITEMS_COLLECTION_ID`
-- `APPWRITE_SUBSCRIPTIONS_COLLECTION_ID`
-- `APPWRITE_ANALYTICS_EVENTS_COLLECTION_ID`
-- `APPWRITE_GAMIFICATION_PROFILES_COLLECTION_ID`
-- `APPWRITE_GAMIFICATION_EVENTS_COLLECTION_ID`
-- `APPWRITE_DELETE_USER_FUNCTION_ID` (optional in local/dev)
-- `APPWRITE_AI_COACH_FUNCTION_ID` (optional; empty → local coach heuristics)
+- `SUPABASE_URL` — dev falls back to the local `supabase start` stack;
+  **prod fails closed** (bootstrap throws) when not injected
+- `SUPABASE_ANON_KEY` — publishable key; same fail-closed rule
 - `REVENUECAT_ANDROID_API_KEY`
 - `REVENUECAT_IOS_API_KEY`
 - `REVENUECAT_ENTITLEMENT_ID`
 - `REVENUECAT_OFFERING_ID`
 - `DAILY_GOAL_WIDGET_APP_GROUP_ID`
-- `APPWRITE_SELF_SIGNED`
+- `SENTRY_DSN` / `SENTRY_ENVIRONMENT`
+
+Table names and edge-function names are code constants
+(`lib/core/supabase/supabase_tables.dart`), not configuration.
 
 Example:
 
 ```bash
-flutter run \
-  --dart-define=APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1 \
-  --dart-define=APPWRITE_PROJECT_ID=6a53570100147968d1f6 \
-  --dart-define=APPWRITE_DATABASE_ID=daily_dozen_db
+flutter run --flavor dev -t lib/main_dev.dart \
+  --dart-define=SUPABASE_URL=https://<ref>.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=sb_publishable_...
 ```
 
 ## Deployment Notes
 
-- Use separate Appwrite projects for `dev` and `prod`.
-- Provision Appwrite resources with `python3 scripts/appwrite_provision.py`
-  and an API key that can manage databases and storage.
-- Keep OAuth callback scheme aligned with the active project ID:
-  - Android: `appwrite-callback-<PROJECT_ID>` in `AndroidManifest.xml`
-  - iOS: `appwrite-callback-<PROJECT_ID>` in `Info.plist`
+- Use separate Supabase projects for `dev` and `prod`.
+- The schema, RLS policies, seed data and both edge functions live in
+  `supabase/`; apply with `supabase db push` + `supabase functions deploy`.
+  See `docs/supabase_backend_setup.md`.
+- OAuth returns via the `stayalive://login-callback` deep link, registered in
+  `AndroidManifest.xml` and `ios/Runner/Info.plist`, and listed in the
+  Supabase auth redirect URLs.
 - Configure CI/CD to pass environment-specific `--dart-define` values.
 - The Android and iOS daily goal widgets read shared values written by
   `DailyGoalWidgetService`. iOS requires the App Group in
