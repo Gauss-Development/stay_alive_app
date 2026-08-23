@@ -1,4 +1,3 @@
-import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/features/user/domain/entities/user_profile.dart';
 
 class UserProfileModel extends UserProfile {
@@ -18,12 +17,10 @@ class UserProfileModel extends UserProfile {
     super.updatedAt,
   });
 
-  factory UserProfileModel.fromDocument(appwrite_models.Document document) {
+  factory UserProfileModel.fromRow(Map<String, dynamic> row) {
     return UserProfileModel.fromData(
-      id: document.$id,
-      data: document.data,
-      createdAt: document.$createdAt,
-      updatedAt: document.$updatedAt,
+      id: row['id']?.toString() ?? '',
+      data: row,
     );
   }
 

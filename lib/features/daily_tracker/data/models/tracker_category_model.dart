@@ -1,4 +1,3 @@
-import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
 
 class TrackerCategoryModel extends TrackerCategory {
@@ -34,10 +33,10 @@ class TrackerCategoryModel extends TrackerCategory {
     );
   }
 
-  factory TrackerCategoryModel.fromDocument(appwrite_models.Document document) {
+  factory TrackerCategoryModel.fromRow(Map<String, dynamic> row) {
     return TrackerCategoryModel.fromJson(<String, dynamic>{
-      ...document.data,
-      'category_id': document.data['category_id'] ?? document.$id,
+      ...row,
+      'category_id': row['category_id'] ?? row['id'],
     });
   }
 

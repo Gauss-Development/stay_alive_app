@@ -3,7 +3,7 @@ import 'package:stay_alive/features/user/data/models/user_profile_model.dart';
 
 void main() {
   group('UserProfileModel.fromData', () {
-    test('maps snake_case Appwrite user document data', () {
+    test('maps snake_case profile row data', () {
       final UserProfileModel profile = UserProfileModel.fromData(
         id: 'user_1',
         data: <String, dynamic>{

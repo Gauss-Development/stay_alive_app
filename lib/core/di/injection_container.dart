@@ -1,11 +1,10 @@
-import 'package:appwrite/appwrite.dart';
 import 'package:get_it/get_it.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/logger/logger_service.dart';
-import 'package:stay_alive/core/services/appwrite_client_provider.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:stay_alive/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:stay_alive/features/auth/data/repositories_impl/auth_repository_impl.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
@@ -85,12 +84,12 @@ void _registerCore() {
   sl
     ..registerLazySingleton<EnvConfig>(() => EnvConfig.fromEnv(sl<AppFlavor>()))
     ..registerLazySingleton<AppLogger>(() => const LoggerService())
-    ..registerLazySingleton<Client>(
-      () => AppwriteClientProvider(sl<EnvConfig>()).build(),
+    // Supabase.initialize() runs in bootstrap before configureDependencies.
+    ..registerLazySingleton<SupabaseClient>(() => Supabase.instance.client)
+    ..registerLazySingleton<GoTrueClient>(() => sl<SupabaseClient>().auth)
+    ..registerLazySingleton<FunctionsClient>(
+      () => sl<SupabaseClient>().functions,
     )
-    ..registerLazySingleton<Account>(() => Account(sl<Client>()))
-    ..registerLazySingleton<Databases>(() => Databases(sl<Client>()))
-    ..registerLazySingleton<Functions>(() => Functions(sl<Client>()))
     ..registerLazySingleton<HomeWidgetGateway>(
       () => const HomeWidgetPluginGateway(),
     )
@@ -105,11 +104,10 @@ void _registerCore() {
 void _registerAuthFeature() {
   sl
     ..registerLazySingleton<AuthRemoteDataSource>(
-      () => AppwriteAuthRemoteDataSource(
-        account: sl<Account>(),
-        databases: sl<Databases>(),
-        functions: sl<Functions>(),
-        envConfig: sl<EnvConfig>(),
+      () => SupabaseAuthRemoteDataSource(
+        client: sl<SupabaseClient>(),
+        auth: sl<GoTrueClient>(),
+        functions: sl<FunctionsClient>(),
         logger: sl<AppLogger>(),
       ),
     )
@@ -167,10 +165,9 @@ void _registerAuthFeature() {
 void _registerDailyTrackerFeature() {
   sl
     ..registerLazySingleton<DailyTrackerRemoteDataSource>(
-      () => AppwriteDailyTrackerRemoteDataSource(
-        account: sl<Account>(),
-        databases: sl<Databases>(),
-        envConfig: sl<EnvConfig>(),
+      () => SupabaseDailyTrackerRemoteDataSource(
+        client: sl<SupabaseClient>(),
+        auth: sl<GoTrueClient>(),
         logger: sl<AppLogger>(),
       ),
     )
@@ -213,10 +210,9 @@ void _registerDailyTrackerFeature() {
 void _registerUserFeature() {
   sl
     ..registerLazySingleton<UserRemoteDataSource>(
-      () => AppwriteUserRemoteDataSource(
-        account: sl<Account>(),
-        databases: sl<Databases>(),
-        envConfig: sl<EnvConfig>(),
+      () => SupabaseUserRemoteDataSource(
+        client: sl<SupabaseClient>(),
+        auth: sl<GoTrueClient>(),
         logger: sl<AppLogger>(),
       ),
     )
@@ -235,10 +231,9 @@ void _registerUserFeature() {
 void _registerGamificationFeature() {
   sl
     ..registerLazySingleton<GamificationRemoteDataSource>(
-      () => AppwriteGamificationRemoteDataSource(
-        account: sl<Account>(),
-        databases: sl<Databases>(),
-        envConfig: sl<EnvConfig>(),
+      () => SupabaseGamificationRemoteDataSource(
+        client: sl<SupabaseClient>(),
+        auth: sl<GoTrueClient>(),
       ),
     )
     ..registerLazySingleton<GamificationRepository>(
@@ -264,8 +259,7 @@ void _registerCoachFeature() {
   sl
     ..registerLazySingleton<CoachRemoteDataSource>(
       () => CoachRemoteDataSourceImpl(
-        functions: sl<Functions>(),
-        envConfig: sl<EnvConfig>(),
+        functions: sl<FunctionsClient>(),
         logger: sl<AppLogger>(),
       ),
     )
@@ -283,10 +277,9 @@ void _registerCoachFeature() {
 void _registerHistoryFeature() {
   sl
     ..registerLazySingleton<HistoryRemoteDataSource>(
-      () => AppwriteHistoryRemoteDataSource(
-        account: sl<Account>(),
-        databases: sl<Databases>(),
-        envConfig: sl<EnvConfig>(),
+      () => SupabaseHistoryRemoteDataSource(
+        client: sl<SupabaseClient>(),
+        auth: sl<GoTrueClient>(),
       ),
     )
     ..registerLazySingleton<HistoryRepository>(
@@ -305,10 +298,9 @@ void _registerHistoryFeature() {
 void _registerAnalyticsFeature() {
   sl
     ..registerLazySingleton<AnalyticsRemoteDataSource>(
-      () => AppwriteAnalyticsRemoteDataSource(
-        account: sl<Account>(),
-        databases: sl<Databases>(),
-        envConfig: sl<EnvConfig>(),
+      () => SupabaseAnalyticsRemoteDataSource(
+        client: sl<SupabaseClient>(),
+        auth: sl<GoTrueClient>(),
       ),
     )
     ..registerLazySingleton<AnalyticsRepository>(
@@ -330,7 +322,7 @@ void _registerSubscriptionFeature() {
     ..registerLazySingleton<SubscriptionRemoteDataSource>(
       () => RevenueCatSubscriptionRemoteDataSource(
         revenueCatGateway: sl<RevenueCatGateway>(),
-        account: sl<Account>(),
+        auth: sl<GoTrueClient>(),
         envConfig: sl<EnvConfig>(),
         logger: sl<AppLogger>(),
       ),

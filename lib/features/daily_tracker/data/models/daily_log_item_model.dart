@@ -1,4 +1,3 @@
-import 'package:appwrite/models.dart' as appwrite_models;
 import 'package:stay_alive/features/daily_tracker/data/models/tracker_category_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/tracker_category.dart';
@@ -31,45 +30,27 @@ class DailyLogItemModel extends DailyLogItem {
     );
   }
 
-  factory DailyLogItemModel.fromDocument({
-    required appwrite_models.Document document,
-    required TrackerCategory category,
-  }) {
-    final Map<String, dynamic> data = document.data;
+  /// Builds an item from a `daily_log_items` row; the embedded category is
+  /// reconstructed from the denormalized columns.
+  factory DailyLogItemModel.fromRow(Map<String, dynamic> row) {
     final DateTime now = DateTime.now().toUtc();
     return DailyLogItemModel(
-      id: document.$id,
-      category: category,
-      completedCount: (data['completed_count'] as num?)?.toInt() ?? 0,
-      createdAt:
-          DateTime.tryParse(data['created_at']?.toString() ?? '') ??
-          DateTime.tryParse(document.$createdAt) ??
-          now,
-      updatedAt:
-          DateTime.tryParse(data['updated_at']?.toString() ?? '') ??
-          DateTime.tryParse(document.$updatedAt) ??
-          now,
-    );
-  }
-
-  factory DailyLogItemModel.fromDocumentWithoutCategory(
-    appwrite_models.Document document,
-  ) {
-    final Map<String, dynamic> data = document.data;
-    return DailyLogItemModel.fromDocument(
-      document: document,
+      id: row['id']?.toString() ?? '',
       category: TrackerCategoryModel(
-        id: data['category_id']?.toString() ?? '',
+        id: row['category_id']?.toString() ?? '',
         title:
-            data['category_title']?.toString() ??
-            data['category_id']?.toString() ??
+            row['category_title']?.toString() ??
+            row['category_id']?.toString() ??
             'Category',
-        description: data['description']?.toString() ?? '',
-        targetCount: (data['target_count'] as num?)?.toInt() ?? 0,
-        displayOrder: (data['display_order'] as num?)?.toInt() ?? 0,
-        iconKey: data['icon_key']?.toString() ?? 'default',
-        isActive: data['is_active'] as bool? ?? true,
+        description: row['description']?.toString() ?? '',
+        targetCount: (row['target_count'] as num?)?.toInt() ?? 0,
+        displayOrder: (row['display_order'] as num?)?.toInt() ?? 0,
+        iconKey: row['icon_key']?.toString() ?? 'default',
+        isActive: row['is_active'] as bool? ?? true,
       ),
+      completedCount: (row['completed_count'] as num?)?.toInt() ?? 0,
+      createdAt: DateTime.tryParse(row['created_at']?.toString() ?? '') ?? now,
+      updatedAt: DateTime.tryParse(row['updated_at']?.toString() ?? '') ?? now,
     );
   }
 
@@ -115,9 +96,11 @@ class DailyLogItemModel extends DailyLogItem {
     };
   }
 
-  Map<String, dynamic> toCreateData({required String logDocumentId}) {
+  /// Insert payload for `daily_log_items`. `id` comes from the column
+  /// default, `user_id` from `default auth.uid()`.
+  Map<String, dynamic> toCreateData({required String logId}) {
     return <String, dynamic>{
-      'log_document_id': logDocumentId,
+      'log_id': logId,
       'category_id': category.id,
       'category_title': category.title,
       'description': category.description,

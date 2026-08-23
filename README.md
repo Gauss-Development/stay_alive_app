@@ -1,38 +1,34 @@
 # Stay Alive
 
 Stay Alive is a Flutter nutrition tracker for daily healthy eating goals. The
-app uses Appwrite for authentication, per-user progress storage, analytics,
-history, gamification progress, and storage buckets.
+app uses Supabase for authentication, per-user progress storage, analytics,
+history and gamification progress.
 
 ## Architecture
 
 The app follows feature-first Clean Architecture:
 
-- `lib/core` — environment, Appwrite client setup, DI, errors, shared services
-- `lib/features/auth` — Appwrite Account authentication and profile bootstrap
-- `lib/features/daily_tracker` — daily serving checklist backed by Appwrite
+- `lib/core` — environment, Supabase wiring, DI, errors, shared services
+- `lib/features/auth` — Supabase Auth (email, Google/Apple OAuth, guest)
+- `lib/features/daily_tracker` — daily serving checklist backed by Postgres
 - `lib/features/gamification` — XP, levels, streaks, and badges
-- `lib/features/history` — Appwrite-backed progress summaries
-- `lib/features/analytics` — Appwrite analytics event persistence
+- `lib/features/history` — progress summaries over `daily_logs`
+- `lib/features/analytics` — analytics event persistence
 - `lib/features/subscription` — RevenueCat premium subscriptions and paywall
 
-## Appwrite setup
+## Supabase setup
 
-Provision a project with:
+The whole backend is reproducible from `supabase/` (schema, RLS, seed, edge
+functions):
 
 ```bash
-APPWRITE_ENDPOINT=https://nyc.cloud.appwrite.io/v1 \
-APPWRITE_PROJECT_ID=6a53570100147968d1f6 \
-APPWRITE_DATABASE_ID=stay_alive_v1 \
-APPWRITE_API_KEY=<server-api-key> \
-./scripts/provision_fresh_db.sh
-
-APPWRITE_API_KEY=<server-api-key> python3 scripts/appwrite_verify.py
+supabase start            # local stack; the dev flavor uses it with zero config
+supabase db reset         # applies migrations + Daily Dozen category seed
+supabase functions serve  # delete_user + ai_coach
 ```
 
-The script is idempotent and creates the database, collections, indexes,
-storage buckets, and default Daily Dozen category documents. See
-`docs/appwrite_backend_setup.md` for the full schema and OAuth setup notes.
+For a hosted project: `supabase link`, `db push`, `functions deploy`. Full
+runbook and dashboard checklist: `docs/supabase_backend_setup.md`.
 
 ## Home screen widgets
 

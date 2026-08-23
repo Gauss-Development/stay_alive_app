@@ -21,11 +21,27 @@ void main() {
     expect(dev.revenueCatIosApiKey, startsWith('test_'));
   });
 
+  test('production refuses the committed local Supabase fallbacks', () {
+    // A prod build without injected SUPABASE_* must resolve to empty so
+    // bootstrap fails loudly instead of silently talking to a dev backend.
+    final EnvConfig prod = EnvConfig.fromEnv(AppFlavor.production);
+
+    expect(prod.supabaseUrl, isEmpty);
+    expect(prod.supabaseAnonKey, isEmpty);
+  });
+
+  test('development falls back to the local supabase start stack', () {
+    final EnvConfig dev = EnvConfig.fromEnv(AppFlavor.development);
+
+    expect(dev.supabaseUrl, 'http://127.0.0.1:54321');
+    expect(dev.supabaseAnonKey, isNotEmpty);
+  });
+
   test('non-credential defaults are untouched by the production guard', () {
     final EnvConfig prod = EnvConfig.fromEnv(AppFlavor.production);
 
     expect(prod.revenueCatEntitlementId, 'Stay Alive Pro');
     expect(prod.revenueCatOfferingId, 'default');
-    expect(prod.appwriteDatabaseId, isNotEmpty);
+    expect(prod.widgetAppGroupId, isNotEmpty);
   });
 }

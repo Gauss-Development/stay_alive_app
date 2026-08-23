@@ -1,10 +1,6 @@
 import 'dart:convert';
 
-import 'package:appwrite/appwrite.dart';
-import 'package:appwrite/models.dart' as appwrite_models;
-import 'package:collection/collection.dart';
-import 'package:stay_alive/core/env/env_config.dart';
-import 'package:stay_alive/features/daily_tracker/data/daily_log_document_ids.dart';
+import 'package:stay_alive/core/supabase/supabase_tables.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_item_model.dart';
 import 'package:stay_alive/features/daily_tracker/data/models/daily_log_model.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
@@ -19,6 +15,7 @@ import 'package:stay_alive/features/gamification/domain/entities/personalized_ch
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_engine.dart';
 import 'package:stay_alive/features/gamification/domain/services/gamification_overview_builder.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 abstract class GamificationRemoteDataSource {
   Future<GamificationOverviewModel> reconcileOverview({
@@ -33,50 +30,40 @@ abstract class GamificationRemoteDataSource {
   });
 }
 
-class AppwriteGamificationRemoteDataSource
+class SupabaseGamificationRemoteDataSource
     implements GamificationRemoteDataSource {
-  AppwriteGamificationRemoteDataSource({
-    required Account account,
-    required Databases databases,
-    required EnvConfig envConfig,
+  SupabaseGamificationRemoteDataSource({
+    required supabase.SupabaseClient client,
+    required supabase.GoTrueClient auth,
     GamificationEngine? engine,
     GamificationOverviewBuilder? overviewBuilder,
-  }) : _account = account,
-       _databases = databases,
-       _envConfig = envConfig,
-       _overviewBuilder =
-           overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
+  })  : _client = client,
+        _auth = auth,
+        _overviewBuilder =
+            overviewBuilder ?? GamificationOverviewBuilder(engine: engine);
 
-  final Account _account;
-  final Databases _databases;
-  final EnvConfig _envConfig;
+  final supabase.SupabaseClient _client;
+  final supabase.GoTrueClient _auth;
   final GamificationOverviewBuilder _overviewBuilder;
 
   static const int _fullReconcileDayWindow = 365;
   static const int _todayReconcileDayWindow = 45;
-
-  /// Rows fetched per request while paging. Appwrite imposes no hard ceiling,
-  /// but large pages degrade list performance.
-  static const int _pageSize = 100;
-
-  /// Log IDs per `Query.equal` filter — Appwrite caps values in one query.
-  static const int _idsPerQuery = 100;
 
   @override
   Future<GamificationOverviewModel> reconcileOverview({
     required bool isPremium,
     PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
-    final appwrite_models.User user = await _account.get();
+    final String userId = _requireUserId();
     // Independent reads run concurrently — reconcile is on the home-screen path.
     final List<Object?> reads = await Future.wait(<Future<Object?>>[
-      _loadPersistedProfile(user.$id),
-      _loadLogsWithItems(user.$id, dayWindow: _fullReconcileDayWindow),
-      _fetchXpEvents(user.$id),
+      _loadPersistedProfile(userId),
+      _loadLogsWithItems(userId, dayWindow: _fullReconcileDayWindow),
+      _fetchXpEvents(userId),
     ]);
 
     return _buildAndPersist(
-      userId: user.$id,
+      userId: userId,
       logs: reads[1]! as List<DailyLogModel>,
       persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
@@ -91,12 +78,12 @@ class AppwriteGamificationRemoteDataSource
     required bool isPremium,
     PersonalizedChallengeDraft? personalizedDailyDraft,
   }) async {
-    final appwrite_models.User user = await _account.get();
+    final String userId = _requireUserId();
     // Independent reads run concurrently — reconcile is on the home-screen path.
     final List<Object?> reads = await Future.wait(<Future<Object?>>[
-      _loadPersistedProfile(user.$id),
-      _loadLogsWithItems(user.$id, dayWindow: _todayReconcileDayWindow),
-      _fetchXpEvents(user.$id),
+      _loadPersistedProfile(userId),
+      _loadLogsWithItems(userId, dayWindow: _todayReconcileDayWindow),
+      _fetchXpEvents(userId),
     ]);
     final List<DailyLogModel> mergedLogs = _mergeTodayLog(
       reads[1]! as List<DailyLogModel>,
@@ -104,7 +91,7 @@ class AppwriteGamificationRemoteDataSource
     );
 
     return _buildAndPersist(
-      userId: user.$id,
+      userId: userId,
       logs: mergedLogs,
       persistedEvents: reads[2]! as List<GamificationXpEventModel>,
       isPremium: isPremium,
@@ -135,8 +122,8 @@ class AppwriteGamificationRemoteDataSource
     final UserGameProfileModel profileModel = UserGameProfileModel.fromProfile(
       overview.profile,
     );
-    // These writes target distinct documents and don't read each other's
-    // results (dedup uses the pre-write persistedEvents snapshot), so they run
+    // These writes target distinct rows and don't read each other's results
+    // (dedup uses the pre-write persistedEvents snapshot), so they run
     // concurrently; all complete before the event re-fetch below.
     await Future.wait(<Future<void>>[
       _upsertProfile(profileModel),
@@ -180,19 +167,15 @@ class AppwriteGamificationRemoteDataSource
   }
 
   Future<UserGameProfileModel?> _loadPersistedProfile(String userId) async {
-    try {
-      final appwrite_models.Document document = await _databases.getDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.gamificationProfilesCollectionId,
-        documentId: userId,
-      );
-      return UserGameProfileModel.fromDocument(document);
-    } on AppwriteException catch (exception) {
-      if (exception.code == 404) {
-        return null;
-      }
-      rethrow;
+    final Map<String, dynamic>? row = await _client
+        .from(SupabaseTables.gamificationProfiles)
+        .select()
+        .eq('user_id', userId)
+        .maybeSingle();
+    if (row == null) {
+      return null;
     }
+    return UserGameProfileModel.fromRow(row);
   }
 
   List<DailyLogModel> _mergeTodayLog(
@@ -209,15 +192,18 @@ class AppwriteGamificationRemoteDataSource
   }
 
   Future<List<GamificationXpEventModel>> _fetchXpEvents(String userId) async {
-    final appwrite_models.DocumentList documents = await _databases
-        .listDocuments(
-          databaseId: _envConfig.appwriteDatabaseId,
-          collectionId: _envConfig.gamificationEventsCollectionId,
-          queries: <String>[Query.orderDesc('\$createdAt'), Query.limit(50)],
-        );
+    // Ordered by the server insert time (`inserted_at`), not the client-set
+    // `created_at`, which is backdated for badge events — parity with the old
+    // `$createdAt` ordering.
+    final List<Map<String, dynamic>> rows = await _client
+        .from(SupabaseTables.gamificationEvents)
+        .select()
+        .eq('user_id', userId)
+        .order('inserted_at', ascending: false)
+        .limit(50);
 
-    return documents.documents
-        .map(GamificationXpEventModel.fromDocument)
+    return rows
+        .map(GamificationXpEventModel.fromRow)
         .toList(growable: false);
   }
 
@@ -230,159 +216,40 @@ class AppwriteGamificationRemoteDataSource
     );
     final String cutoffKey = _dateKey(cutoff);
 
-    final appwrite_models.DocumentList documents = await _databases
-        .listDocuments(
-          databaseId: _envConfig.appwriteDatabaseId,
-          collectionId: _envConfig.dailyLogsCollectionId,
-          queries: <String>[
-            Query.greaterThanEqual('log_date', cutoffKey),
-            Query.orderAsc('log_date'),
-            // Range is inclusive of both ends → dayWindow + 1 distinct dates;
-            // limit(dayWindow) would drop the newest (today) at saturation.
-            Query.limit(dayWindow + 1),
-          ],
-        );
+    // One embedded select replaces the old two-phase load (logs, then items
+    // chunked by log id with cursor pagination).
+    final List<Map<String, dynamic>> rows = await _client
+        .from(SupabaseTables.dailyLogs)
+        .select('*, ${SupabaseTables.dailyLogItems}(*)')
+        .eq('user_id', userId)
+        .gte('log_date', cutoffKey)
+        .order('log_date', ascending: true)
+        // Range is inclusive of both ends → dayWindow + 1 distinct dates;
+        // limit(dayWindow) would drop the newest (today) at saturation.
+        .limit(dayWindow + 1);
 
-    final List<String> logIds = documents.documents
-        .map((appwrite_models.Document document) => document.$id)
-        .toList(growable: false);
-    final Map<String, List<DailyLogItemModel>> itemsByLogId =
-        await _loadItemsByLogIds(userId, logIds);
-
-    return documents.documents
-        .map((appwrite_models.Document document) {
-          final String logId = document.$id;
-          return DailyLogModel.fromDocument(
-            document: document,
-            items: itemsByLogId[logId] ?? const <DailyLogItemModel>[],
-          );
+    return rows
+        .map((Map<String, dynamic> row) {
+          final List<DailyLogItemModel> items =
+              ((row[SupabaseTables.dailyLogItems] as List<dynamic>?) ??
+                      const <dynamic>[])
+                  .map(
+                    (dynamic itemRow) => DailyLogItemModel.fromRow(
+                      itemRow as Map<String, dynamic>,
+                    ),
+                  )
+                  .toList(growable: false);
+          return DailyLogModel.fromRow(row: row, items: items);
         })
         .toList(growable: false);
   }
 
-  /// Pages through every document matching [queries], following the cursor
-  /// until a short page ends the scan.
-  ///
-  /// A bare `Query.limit(n)` silently truncates once the match count passes
-  /// `n`, and without an explicit sort the rows that survive are the oldest —
-  /// so the newest data is what goes missing. Paging has no such ceiling.
-  Future<List<appwrite_models.Document>> _listAllDocuments({
-    required String collectionId,
-    required List<String> queries,
-  }) async {
-    final List<appwrite_models.Document> all = <appwrite_models.Document>[];
-    String? cursor;
-    while (true) {
-      final appwrite_models.DocumentList page = await _databases.listDocuments(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: collectionId,
-        queries: <String>[
-          ...queries,
-          Query.limit(_pageSize),
-          if (cursor != null) Query.cursorAfter(cursor),
-        ],
-      );
-      all.addAll(page.documents);
-      if (page.documents.length < _pageSize) {
-        return all;
-      }
-      final String nextCursor = page.documents.last.$id;
-      // A cursor that does not advance means the server returned the same page
-      // again; continuing would loop forever and grow `all` without bound.
-      if (nextCursor == cursor) {
-        return all;
-      }
-      cursor = nextCursor;
-    }
-  }
-
-  Future<Map<String, List<DailyLogItemModel>>> _loadItemsByLogIds(
-    String userId,
-    List<String> logIds,
-  ) async {
-    if (logIds.isEmpty) {
-      return const <String, List<DailyLogItemModel>>{};
-    }
-
-    // Filter server-side, chunked because `Query.equal` caps how many values
-    // one query may carry. The previous `Query.limit(5000)` was unfiltered: it
-    // pulled the entire collection and, with no ordering, dropped the newest
-    // rows once a user passed 5000 items (~14 months at 12 categories/day).
-    final List<List<appwrite_models.Document>> chunkResults = await Future.wait(
-      logIds.slices(_idsPerQuery).map((List<String> chunk) {
-        return _listAllDocuments(
-          collectionId: _envConfig.dailyLogItemsCollectionId,
-          queries: <String>[Query.equal('log_document_id', chunk)],
-        );
-      }),
-    );
-    List<appwrite_models.Document> documents = chunkResults
-        .expand((List<appwrite_models.Document> chunk) => chunk)
-        .toList(growable: false);
-
-    // Legacy rows predate the `log_document_id` attribute and are matched by
-    // document-ID prefix instead, so they can only be found by a full scan.
-    if (documents.isEmpty) {
-      documents = await _listAllDocuments(
-        collectionId: _envConfig.dailyLogItemsCollectionId,
-        queries: const <String>[],
-      );
-    }
-
-    final Map<String, List<DailyLogItemModel>> itemsByLogId =
-        <String, List<DailyLogItemModel>>{};
-    for (final appwrite_models.Document document in documents) {
-      final String? logDocumentIdFromData = document.data['log_document_id']
-          ?.toString();
-      String? matchedLogId;
-      if (logDocumentIdFromData != null &&
-          logDocumentIdFromData.isNotEmpty &&
-          logIds.contains(logDocumentIdFromData)) {
-        matchedLogId = logDocumentIdFromData;
-      } else {
-        for (final String logId in logIds) {
-          if (DailyLogDocumentIds.isLegacyItemForLog(document.$id, logId)) {
-            matchedLogId = logId;
-            break;
-          }
-        }
-      }
-      if (matchedLogId == null) {
-        continue;
-      }
-      itemsByLogId
-          .putIfAbsent(matchedLogId, () => <DailyLogItemModel>[])
-          .add(DailyLogItemModel.fromDocumentWithoutCategory(document));
-    }
-    return itemsByLogId;
-  }
-
   Future<void> _upsertProfile(UserGameProfileModel profile) async {
     final String now = DateTime.now().toUtc().toIso8601String();
-    final Map<String, dynamic> data = profile.toDocumentData(now: now);
-    try {
-      await _databases.updateDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.gamificationProfilesCollectionId,
-        documentId: profile.userId,
-        data: data,
-      );
-    } on AppwriteException catch (exception) {
-      if (exception.code != 404) {
-        rethrow;
-      }
-      await _databases.createDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.gamificationProfilesCollectionId,
-        documentId: profile.userId,
-        data: <String, dynamic>{...data, 'created_at': now},
-        permissions: <String>[
-          Permission.read(Role.user(profile.userId)),
-          Permission.update(Role.user(profile.userId)),
-          Permission.delete(Role.user(profile.userId)),
-        ],
-      );
-    }
+    await _client.from(SupabaseTables.gamificationProfiles).upsert(
+          profile.toRowData(now: now),
+          onConflict: 'user_id',
+        );
   }
 
   Future<void> _upsertBadgeEvents(UserGameProfileModel profile) async {
@@ -475,47 +342,41 @@ class AppwriteGamificationRemoteDataSource
     required DateTime createdAt,
     required Map<String, Object?> metadata,
   }) async {
-    final appwrite_models.DocumentList existing = await _databases
-        .listDocuments(
-          databaseId: _envConfig.appwriteDatabaseId,
-          collectionId: _envConfig.gamificationEventsCollectionId,
-          queries: <String>[
-            Query.equal('event_type', eventType),
-            Query.equal('log_date', logDate),
-            Query.limit(1),
-          ],
-        );
-    if (existing.documents.isNotEmpty) {
+    // Pre-check keeps the old read-then-insert behaviour; the unique
+    // (user_id, event_type, log_date) key + DO NOTHING makes races harmless.
+    final List<Map<String, dynamic>> existing = await _client
+        .from(SupabaseTables.gamificationEvents)
+        .select('id')
+        .eq('user_id', userId)
+        .eq('event_type', eventType)
+        .eq('log_date', logDate)
+        .limit(1);
+    if (existing.isNotEmpty) {
       return;
     }
 
-    try {
-      final String documentId = ID.unique();
-      await _databases.createDocument(
-        databaseId: _envConfig.appwriteDatabaseId,
-        collectionId: _envConfig.gamificationEventsCollectionId,
-        documentId: documentId,
-        data: <String, dynamic>{
-          'event_type': eventType,
-          'xp_delta': xpDelta,
-          'log_date': logDate,
-          'metadata_json': jsonEncode(metadata),
-          'created_at': createdAt.toIso8601String(),
-        },
-        // Delete permission is required: account deletion iterates this
-        // collection, and a read-only document is listable but not deletable,
-        // which stalls the deletion flow. Matches every other collection.
-        permissions: <String>[
-          Permission.read(Role.user(userId)),
-          Permission.update(Role.user(userId)),
-          Permission.delete(Role.user(userId)),
-        ],
+    await _client.from(SupabaseTables.gamificationEvents).upsert(
+      <String, dynamic>{
+        'event_type': eventType,
+        'xp_delta': xpDelta,
+        'log_date': logDate,
+        'metadata_json': jsonEncode(metadata),
+        'created_at': createdAt.toIso8601String(),
+      },
+      onConflict: 'user_id,event_type,log_date',
+      ignoreDuplicates: true,
+    );
+  }
+
+  String _requireUserId() {
+    final String? userId = _auth.currentUser?.id;
+    if (userId == null) {
+      throw const supabase.AuthException(
+        'No active session.',
+        statusCode: '401',
       );
-    } on AppwriteException catch (exception) {
-      if (exception.code != 409) {
-        rethrow;
-      }
     }
+    return userId;
   }
 
   String _dateKey(DateTime date) {

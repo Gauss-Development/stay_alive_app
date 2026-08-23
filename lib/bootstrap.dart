@@ -8,6 +8,7 @@ import 'package:stay_alive/core/di/injection_container.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/env/load_env.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Shared startup for all entrypoints ([main_dev], [main_prod], default [main]).
 Future<void> bootstrap(AppFlavor flavor) async {
@@ -20,6 +21,22 @@ Future<void> bootstrap(AppFlavor flavor) async {
   await initializeDateFormatting('ru');
 
   await loadEnvForFlavor(flavor);
+
+  final EnvConfig bootEnv = EnvConfig.fromEnv(flavor);
+  if (bootEnv.supabaseUrl.isEmpty || bootEnv.supabaseAnonKey.isEmpty) {
+    // Production resolves the committed dev fallbacks to '' (fail closed) —
+    // a release build without injected SUPABASE_* must never ship silently
+    // pointed at a dev backend.
+    throw StateError(
+      'SUPABASE_URL / SUPABASE_ANON_KEY are not configured for the '
+      '${flavor.name} flavor. Inject them via --dart-define or assets/env.',
+    );
+  }
+  await Supabase.initialize(
+    url: bootEnv.supabaseUrl,
+    publishableKey: bootEnv.supabaseAnonKey,
+  );
+
   await configureDependencies(flavor);
   await sl<DailyGoalWidgetService>().initialize();
 

@@ -84,24 +84,30 @@ else
          "Crash reporting is inert without SENTRY_DSN (bootstrap.dart skips init)."
   fi
 
-  if grep -qE '^APPWRITE_DELETE_USER_FUNCTION_ID=.+' "${ENV_FILE}"; then
-    pass "Account-deletion function id set"
+  if grep -qE '^SUPABASE_URL=https://.+' "${ENV_FILE}"; then
+    pass "Production Supabase URL set"
   else
-    fail "Account-deletion function id empty" \
-         "Apple requires server-side account deletion. Deploy functions/delete_user and set the id."
+    fail "Production Supabase URL missing" \
+         "SUPABASE_URL in scripts/release.env must point at the hosted project (https://<ref>.supabase.co). Local/empty values make prod bootstrap throw."
+  fi
+
+  if grep -qE '^SUPABASE_ANON_KEY=.+' "${ENV_FILE}"; then
+    pass "Production Supabase anon key set"
+  else
+    fail "Production Supabase anon key missing" \
+         "Set SUPABASE_ANON_KEY (publishable key) in scripts/release.env."
   fi
 fi
 
-# --- Appwrite environment separation ------------------------------------
-# docs/architecture_overview.md requires separate dev and prod projects; the
-# OAuth callback scheme is the visible tell when they have been left equal.
-DEV_SCHEME=$(grep -A 8 'create("dev")' android/app/build.gradle.kts | grep -o 'appwrite-callback-[a-z0-9]*' | head -1)
-PROD_SCHEME=$(grep -A 8 'create("prod")' android/app/build.gradle.kts | grep -o 'appwrite-callback-[a-z0-9]*' | head -1)
-if [[ -n "${PROD_SCHEME}" && "${DEV_SCHEME}" == "${PROD_SCHEME}" ]]; then
-  fail "dev and prod share one Appwrite project" \
-       "Both flavors use ${PROD_SCHEME}. Point prod at its own project and update AndroidManifest + Info.plist."
+# --- Supabase OAuth deep link ---------------------------------------------
+# signInWithOAuth returns through stayalive://login-callback; both platforms
+# must register the scheme or Google/Apple sign-in never completes.
+if grep -q 'android:scheme="stayalive"' android/app/src/main/AndroidManifest.xml \
+   && grep -q '<string>stayalive</string>' ios/Runner/Info.plist; then
+  pass "OAuth deep-link scheme registered on both platforms"
 else
-  pass "dev and prod use separate Appwrite projects"
+  fail "OAuth deep-link scheme missing" \
+       "Register the stayalive:// scheme in AndroidManifest.xml and ios/Runner/Info.plist."
 fi
 
 # --- Network permission (GAU-378) ---------------------------------------
@@ -111,7 +117,7 @@ if grep -q 'android.permission.INTERNET' android/app/src/main/AndroidManifest.xm
   pass "INTERNET permission declared for release builds"
 else
   fail "Release builds have no INTERNET permission" \
-       "android/app/src/main/AndroidManifest.xml lacks uses-permission INTERNET — Appwrite, RevenueCat and Sentry all fail in release while debug works."
+       "android/app/src/main/AndroidManifest.xml lacks uses-permission INTERNET — Supabase, RevenueCat and Sentry all fail in release while debug works."
 fi
 
 # --- Date locale ---------------------------------------------------------
