@@ -1,0 +1,19 @@
+{
+  "size": "1024x1024",
+  "format": "png",
+  "background": "transparent",
+  "locked_state": "apply desaturation and opacity in code",
+  "badges": [
+    {"id": "firstStep", "file": "firstStep.png", "meaning": "first step"},
+    {"id": "perfectDay", "file": "perfectDay.png", "meaning": "perfect day"},
+    {"id": "sevenDayStreak", "file": "sevenDayStreak.png", "meaning": "7-day streak"},
+    {"id": "thirtyDayIronWill", "file": "thirtyDayIronWill.png", "meaning": "30-day iron will"},
+    {"id": "earlyBird", "file": "earlyBird.png", "meaning": "early bird"},
+    {"id": "hundredDaysCenturion", "file": "hundredDaysCenturion.png", "meaning": "100 days centurion"},
+    {"id": "winterWellness", "file": "winterWellness.png", "meaning": "winter wellness"},
+    {"id": "secretKeeper", "file": "secretKeeper.png", "meaning": "secret keeper"},
+    {"id": "premiumPatron", "file": "premiumPatron.png", "meaning": "premium patron"},
+    {"id": "firstBloom", "file": "firstBloom.png", "meaning": "first bloom"},
+    {"id": "streakGardener", "file": "streakGardener.png", "meaning": "streak gardener"}
+  ]
+}

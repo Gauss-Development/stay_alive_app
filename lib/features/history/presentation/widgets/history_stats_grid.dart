@@ -12,10 +12,7 @@ class HistoryStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (BuildContext context, BoxConstraints constraints) {
-        final bool isWide = constraints.maxWidth >= 560;
-        final List<_StatCardData> cards = <_StatCardData>[
+    final List<_StatCardData> cards = <_StatCardData>[
           _StatCardData(
             icon: Icons.calendar_month_outlined,
             tint: AppColors.mutedGreen,
@@ -46,33 +43,18 @@ class HistoryStatsGrid extends StatelessWidget {
             value: '${summary.weeklyCompletionPercent.toStringAsFixed(1)}%',
             subtitle: 'среднее за неделю',
           ),
-        ];
+    ];
 
-        if (isWide) {
-          return GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            mainAxisSpacing: AppSpacing.md,
-            crossAxisSpacing: AppSpacing.md,
-            childAspectRatio: 2.2,
-            children: cards
-                .map((_StatCardData card) => _HistoryStatCard(data: card))
-                .toList(growable: false),
-          );
-        }
-
-        return Column(
-          children: cards
-              .map(
-                (_StatCardData card) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                  child: _HistoryStatCard(data: card),
-                ),
-              )
-              .toList(growable: false),
-        );
-      },
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: AppSpacing.sm,
+      crossAxisSpacing: AppSpacing.sm,
+      childAspectRatio: 1.45,
+      children: cards
+          .map((_StatCardData card) => _HistoryStatCard(data: card))
+          .toList(growable: false),
     );
   }
 }
@@ -101,31 +83,46 @@ class _HistoryStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: data.tint.withValues(alpha: 0.55),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(data.icon, size: 20, color: AppColors.textPrimary),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(data.label, style: AppTextStyles.labelMedium),
-                const SizedBox(height: 4),
-                Text(
-                  data.value,
-                  style: AppTextStyles.headlineMedium.copyWith(fontSize: 22),
+          Row(
+            children: <Widget>[
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: data.tint.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
                 ),
-                Text(data.subtitle, style: AppTextStyles.bodySmall),
-              ],
-            ),
+                child: Icon(data.icon, size: 18, color: AppColors.textPrimary),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  data.label,
+                  style: AppTextStyles.labelMedium,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                data.value,
+                style: AppTextStyles.headlineMedium.copyWith(fontSize: 22),
+              ),
+              Text(
+                data.subtitle,
+                style: AppTextStyles.bodySmall,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ],
       ),

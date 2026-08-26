@@ -1,11 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/features/history/domain/entities/daily_history_point.dart';
 
+/// «Карта дней» — календарь текущего месяца в стиле Rostok: клетки дней
+/// заливаются зелёным по мере приближения к цели, сегодня обведено,
+/// будущее приглушено.
 class DailyCompletionHeatmap extends StatelessWidget {
   const DailyCompletionHeatmap({required this.points, super.key});
 
   final List<DailyHistoryPoint> points;
+
+  static const List<String> _weekdays = <String>[
+    'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС',
+  ];
+
+  static const List<String> _months = <String>[
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -14,103 +27,174 @@ class DailyCompletionHeatmap extends StatelessWidget {
     }
 
     final ThemeData theme = Theme.of(context);
-    final ColorScheme colors = theme.colorScheme;
+    final DateTime today = DateTime.now();
+    // Календарь показывает месяц самой свежей точки (обычно текущий).
+    final DateTime anchor = points.last.date;
+    final DateTime firstDay = DateTime(anchor.year, anchor.month);
+    final int daysInMonth = DateTime(anchor.year, anchor.month + 1, 0).day;
+    final int leadingBlanks = firstDay.weekday - 1; // Пн = 0 пустых
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              'Карта дней',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Каждая клетка — насколько день был близок к цели',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: points
-                  .map((DailyHistoryPoint point) {
-                    return _HeatmapCell(point: point);
-                  })
-                  .toList(growable: false),
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: <Widget>[
-                const _LegendItem(
-                  color: AppColors.green,
-                  label: 'Цель выполнена',
+    final Map<String, DailyHistoryPoint> byDateKey =
+        <String, DailyHistoryPoint>{
+      for (final DailyHistoryPoint point in points) point.dateKey: point,
+    };
+
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: <Widget>[
+              Text(
+                'Карта дней',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
                 ),
-                const _LegendItem(color: AppColors.lime, label: 'В процессе'),
-                _LegendItem(
-                  color: colors.outlineVariant.withValues(alpha: 0.35),
-                  label: 'Нет записи',
+              ),
+              Text(
+                '${_months[anchor.month - 1]} ${anchor.year}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: _weekdays
+                .map(
+                  (String day) => Expanded(
+                    child: Center(
+                      child: Text(
+                        day,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: AppColors.textMuted,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+                .toList(growable: false),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          GridView.count(
+            crossAxisCount: 7,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
+            children: <Widget>[
+              for (int i = 0; i < leadingBlanks; i++) const SizedBox.shrink(),
+              for (int day = 1; day <= daysInMonth; day++)
+                _DayCell(
+                  date: DateTime(anchor.year, anchor.month, day),
+                  point: byDateKey[_dateKey(anchor.year, anchor.month, day)],
+                  isToday: today.year == anchor.year &&
+                      today.month == anchor.month &&
+                      today.day == day,
+                  isFuture: DateTime(anchor.year, anchor.month, day)
+                      .isAfter(DateTime(today.year, today.month, today.day)),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.xs,
+            children: const <Widget>[
+              _LegendItem(color: AppColors.green, label: 'Цель выполнена'),
+              _LegendItem(color: AppColors.mutedGreen, label: 'Частично'),
+              _LegendItem(color: AppColors.background, label: 'Нет записи'),
+            ],
+          ),
+        ],
       ),
     );
   }
+
+  static String _dateKey(int year, int month, int day) {
+    final String m = month.toString().padLeft(2, '0');
+    final String d = day.toString().padLeft(2, '0');
+    return '$year-$m-$d';
+  }
 }
 
-class _HeatmapCell extends StatelessWidget {
-  const _HeatmapCell({required this.point});
+class _DayCell extends StatelessWidget {
+  const _DayCell({
+    required this.date,
+    required this.point,
+    required this.isToday,
+    required this.isFuture,
+  });
 
-  final DailyHistoryPoint point;
+  final DateTime date;
+  final DailyHistoryPoint? point;
+  final bool isToday;
+  final bool isFuture;
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
-    final Color backgroundColor = !point.hasLog
-        ? colors.outlineVariant.withValues(alpha: 0.25)
-        : point.isFullyCompleted
-        ? AppColors.green
-        : Color.lerp(
-                AppColors.lime.withValues(alpha: 0.25),
-                AppColors.lime,
-                (point.completionPercentage / 100).clamp(0, 1),
-              ) ??
-              AppColors.lime;
+    final double fraction = point == null || !point!.hasLog
+        ? 0
+        : (point!.completionPercentage / 100).clamp(0.0, 1.0);
+    final bool completed = point?.isFullyCompleted ?? false;
 
-    return Tooltip(
-      message:
-          '${point.dateKey}: '
-          '${point.totalCompleted}/${point.totalTarget} порций '
-          '(${point.completionPercentage.toStringAsFixed(0)}%)',
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          '${point.date.day}',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: point.isFullyCompleted
-                ? AppColors.white
-                : colors.onSurface.withValues(alpha: 0.75),
-          ),
+    final Color background;
+    final Color textColor;
+    if (isFuture) {
+      background = Colors.transparent;
+      textColor = AppColors.textMuted.withValues(alpha: 0.45);
+    } else if (completed) {
+      background = AppColors.green;
+      textColor = AppColors.white;
+    } else if (fraction > 0) {
+      background =
+          Color.lerp(AppColors.mutedGreen, AppColors.green, fraction) ??
+              AppColors.mutedGreen;
+      textColor = fraction > 0.6 ? AppColors.white : AppColors.textPrimary;
+    } else {
+      background = AppColors.background;
+      textColor = AppColors.textMuted;
+    }
+
+    final Widget cell = Container(
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: isToday
+            ? Border.all(color: AppColors.dark, width: 1.5)
+            : null,
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        '${date.day}',
+        style: TextStyle(
+          fontSize: 12,
+          fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
+          color: textColor,
         ),
       ),
+    );
+
+    final DailyHistoryPoint? data = point;
+    if (data == null || !data.hasLog || isFuture) {
+      return cell;
+    }
+    return Tooltip(
+      message: '${data.dateKey}: ${data.totalCompleted}/${data.totalTarget} '
+          'порций (${data.completionPercentage.toStringAsFixed(0)}%)',
+      child: cell,
     );
   }
 }
@@ -131,7 +215,8 @@ class _LegendItem extends StatelessWidget {
           height: 12,
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(3),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: AppColors.border),
           ),
         ),
         const SizedBox(width: 6),

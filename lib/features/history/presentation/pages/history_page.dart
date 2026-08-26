@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/di/injection_container.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
-import 'package:stay_alive/core/widgets/animations/green_sprout_rive.dart';
+import 'package:stay_alive/core/widgets/sprout_image.dart';
 import 'package:stay_alive/core/widgets/app_button.dart';
 import 'package:stay_alive/core/widgets/app_states.dart';
 import 'package:stay_alive/features/analytics/presentation/cubit/analytics_cubit.dart';
@@ -19,7 +21,6 @@ import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dar
 import 'package:stay_alive/features/history/presentation/cubit/history_state.dart';
 import 'package:stay_alive/features/history/presentation/widgets/completion_trend_chart.dart';
 import 'package:stay_alive/features/history/presentation/widgets/daily_completion_heatmap.dart';
-import 'package:stay_alive/features/history/presentation/widgets/daily_servings_chart.dart';
 import 'package:stay_alive/features/history/presentation/widgets/history_stats_grid.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_state.dart';
@@ -58,7 +59,12 @@ class _HistoryPageState extends State<HistoryPage> {
               return const AppLoadingState();
             }
 
-            if (!subscriptionState.isPremiumActive) {
+            // TODO(GAU-416): временный dev-обход для осмотра premium-статистики;
+            // убрать `!isDevelopment` перед проверкой пейволла в dev.
+            final bool paywallTemporarilyDisabled =
+                sl<AppFlavor>().isDevelopment;
+            if (!subscriptionState.isPremiumActive &&
+                !paywallTemporarilyDisabled) {
               return _HistoryPaywallPrompt(
                 message: subscriptionState.errorMessage,
               );
@@ -143,6 +149,8 @@ class _HistoryBodyState extends State<_HistoryBody> {
                 child: HistoryStatsGrid(summary: summary),
               ),
               const SizedBox(height: AppSpacing.lg),
+              DailyCompletionHeatmap(points: monthlyPoints),
+              const SizedBox(height: AppSpacing.lg),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 180),
                 child: WeeklyInsightSection(
@@ -178,10 +186,6 @@ class _HistoryBodyState extends State<_HistoryBody> {
                 points: monthlyPoints,
                 title: 'Последние 30 дней',
               ),
-              const SizedBox(height: AppSpacing.lg),
-              DailyServingsChart(points: monthlyPoints),
-              const SizedBox(height: AppSpacing.lg),
-              DailyCompletionHeatmap(points: monthlyPoints),
             ],
           ),
         );
@@ -201,7 +205,7 @@ class _HistoryPaywallPrompt extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.xl),
       children: <Widget>[
         const SizedBox(height: AppSpacing.xl),
-        const Center(child: GreenSproutRiveEmblem(size: 120)),
+        const Center(child: SproutImage(mood: SproutMood.cheer, size: 120)),
         const SizedBox(height: AppSpacing.lg),
         Text(
           'Полная статистика — в Premium',
@@ -230,7 +234,9 @@ class _HistoryPaywallPrompt extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.sm),
         TextButton(
-          onPressed: () => context.read<SubscriptionCubit>().load(),
+          // Restore, not just a status re-read: recovers a real purchase in
+          // prod and activates the mock store's premium in dev.
+          onPressed: () => context.read<SubscriptionCubit>().restore(),
           child: const Text('Я уже подписан — обновить'),
         ),
       ],

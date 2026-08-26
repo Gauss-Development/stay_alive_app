@@ -60,7 +60,7 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
       ],
       child: MaterialApp.router(
         title: 'Росток',
-        debugShowCheckedModeBanner: widget.flavor.isDevelopment,
+        debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         routerConfig: _router,

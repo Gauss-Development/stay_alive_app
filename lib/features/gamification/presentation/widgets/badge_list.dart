@@ -4,6 +4,7 @@ import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/features/gamification/domain/entities/badge.dart';
+import 'package:stay_alive/features/gamification/presentation/widgets/badge_art.dart';
 
 class BadgeList extends StatelessWidget {
   const BadgeList({required this.badges, super.key});
@@ -58,7 +59,7 @@ class _BadgeTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           child: Center(
-            child: Text(def.emoji, style: const TextStyle(fontSize: 24)),
+            child: BadgeArt(id: def.id, fallbackEmoji: def.emoji, size: 36),
           ),
         ),
         const SizedBox(width: AppSpacing.md),

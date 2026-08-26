@@ -47,7 +47,6 @@ dependencies:
   sentry_flutter: ^9.7.0
   fl_chart: ^1.0.0
   google_fonts: ^6.2.1
-  rive: ^0.14.9
   url_launcher: ^6.3.2
 
 dev_dependencies:
@@ -73,7 +72,8 @@ flutter:
     - assets/env/app.env.example
     - assets/env/app.dev.env
     - assets/env/app.prod.env
-    - assets/animations/green_sprout.riv
+    - assets/sprout/
+    - assets/badges/
     - assets/beans.png
     - assets/berries.png
     - assets/cruciferous_vegetables.png

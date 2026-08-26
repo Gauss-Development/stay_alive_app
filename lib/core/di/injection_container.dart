@@ -50,6 +50,7 @@ import 'package:stay_alive/features/history/data/repositories_impl/history_repos
 import 'package:stay_alive/features/history/domain/repositories/history_repository.dart';
 import 'package:stay_alive/features/history/domain/usecases/get_history_summary_usecase.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
+import 'package:stay_alive/features/subscription/data/datasources/mock_subscription_data_source.dart';
 import 'package:stay_alive/features/subscription/data/datasources/revenue_cat_subscription_data_source.dart';
 import 'package:stay_alive/features/subscription/data/repositories_impl/subscription_repository_impl.dart';
 import 'package:stay_alive/features/subscription/domain/repositories/subscription_repository.dart';
@@ -319,14 +320,25 @@ void _registerSubscriptionFeature() {
     ..registerLazySingleton<RevenueCatGateway>(
       () => const PurchasesRevenueCatGateway(),
     )
-    ..registerLazySingleton<SubscriptionRemoteDataSource>(
-      () => RevenueCatSubscriptionRemoteDataSource(
+    ..registerLazySingleton<SubscriptionRemoteDataSource>(() {
+      final EnvConfig envConfig = sl<EnvConfig>();
+      // Dev on the committed test_ keys = no real store reachable → simulate
+      // the store so the paywall/purchase flow is testable on simulators.
+      final bool mockStore = envConfig.appFlavor.isDevelopment &&
+          envConfig.revenueCatIosApiKey.startsWith('test_');
+      if (mockStore) {
+        return MockSubscriptionRemoteDataSource(
+          auth: sl<GoTrueClient>(),
+          logger: sl<AppLogger>(),
+        );
+      }
+      return RevenueCatSubscriptionRemoteDataSource(
         revenueCatGateway: sl<RevenueCatGateway>(),
         auth: sl<GoTrueClient>(),
         envConfig: sl<EnvConfig>(),
         logger: sl<AppLogger>(),
-      ),
-    )
+      );
+    })
     ..registerLazySingleton<SubscriptionRepository>(
       () => SubscriptionRepositoryImpl(sl<SubscriptionRemoteDataSource>()),
     )

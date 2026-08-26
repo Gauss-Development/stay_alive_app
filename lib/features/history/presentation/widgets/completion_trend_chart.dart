@@ -26,7 +26,7 @@ class CompletionTrendChart extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
@@ -36,16 +36,9 @@ class CompletionTrendChart extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Процент выполнения по дням',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             SizedBox(
-              height: 200,
+              height: 120,
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
@@ -54,7 +47,7 @@ class CompletionTrendChart extends StatelessWidget {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    horizontalInterval: 25,
+                    horizontalInterval: 50,
                     getDrawingHorizontalLine: (double value) => FlLine(
                       color: colors.outlineVariant.withValues(alpha: 0.35),
                       strokeWidth: 1,
@@ -67,10 +60,10 @@ class CompletionTrendChart extends StatelessWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 34,
-                        interval: 25,
+                        reservedSize: 30,
+                        interval: 50,
                         getTitlesWidget: (double value, TitleMeta meta) {
-                          if (value % 25 != 0) {
+                          if (value % 50 != 0) {
                             return const SizedBox.shrink();
                           }
                           return Text(
@@ -100,7 +93,7 @@ class CompletionTrendChart extends StatelessWidget {
                             return const SizedBox.shrink();
                           }
                           return Padding(
-                            padding: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               labelFormat.format(points[index].date),
                               style: theme.textTheme.labelSmall?.copyWith(
