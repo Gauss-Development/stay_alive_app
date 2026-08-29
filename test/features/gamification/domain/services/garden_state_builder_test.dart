@@ -58,5 +58,76 @@ void main() {
       expect(garden.todayGrowth, 0.5);
       expect(garden.wilting, isFalse);
     });
+
+    group('mood', () {
+      SproutMood moodAt(DateTime reference, {DailyLog? todayLog}) {
+        return const GardenStateBuilder()
+            .build(
+              profile: UserGameProfile.empty().copyWith(userId: 'u1'),
+              recentLogs: <DailyLog>[],
+              todayLog: todayLog,
+              referenceDate: reference,
+            )
+            .mood;
+      }
+
+      test('sleeps at night even when the day is finished', () {
+        final DateTime night = DateTime(2026, 8, 5, 23);
+        expect(
+          moodAt(night, todayLog: logWith(night, completed: 2, target: 2)),
+          SproutMood.sleeping,
+        );
+      });
+
+      test('celebrates a completed day', () {
+        final DateTime noon = DateTime(2026, 8, 5, 12);
+        expect(
+          moodAt(noon, todayLog: logWith(noon, completed: 2, target: 2)),
+          SproutMood.celebrating,
+        );
+      });
+
+      test('waits — never sulks — when the day is untouched', () {
+        expect(moodAt(DateTime(2026, 8, 5, 12)), SproutMood.waiting);
+      });
+
+      test('is happy with partial progress', () {
+        final DateTime noon = DateTime(2026, 8, 5, 12);
+        expect(
+          moodAt(noon, todayLog: logWith(noon, completed: 1, target: 2)),
+          SproutMood.happy,
+        );
+      });
+    });
   });
+}
+
+DailyLog logWith(DateTime date, {required int completed, required int target}) {
+  const TrackerCategory greens = TrackerCategory(
+    id: 'greens',
+    title: 'Greens',
+    description: 'Greens',
+    targetCount: 2,
+    displayOrder: 1,
+    iconKey: 'greens',
+    isActive: true,
+  );
+  return DailyLog(
+    id: '1',
+    userId: 'u1',
+    logDate: date,
+    items: <DailyLogItem>[
+      DailyLogItem(
+        id: 'i1',
+        category: greens,
+        completedCount: completed,
+        createdAt: date,
+        updatedAt: date,
+      ),
+    ],
+    totalCompleted: completed,
+    totalTarget: target,
+    completionPercentage: target == 0 ? 0 : completed / target * 100,
+    isFullyCompleted: completed >= target,
+  );
 }

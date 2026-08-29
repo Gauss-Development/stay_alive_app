@@ -57,13 +57,19 @@ class _MainShellPageState extends State<MainShellPage> {
 
   @override
   Widget build(BuildContext context) {
+    final List<Widget> tabs = <Widget>[
+      _homePage ?? const SizedBox.shrink(),
+      _historyPage ?? const SizedBox.shrink(),
+      _profilePage ?? const SizedBox.shrink(),
+    ];
     return Scaffold(
       body: IndexedStack(
         index: _tabIndex,
         children: <Widget>[
-          _homePage ?? const SizedBox.shrink(),
-          _historyPage ?? const SizedBox.shrink(),
-          _profilePage ?? const SizedBox.shrink(),
+          // IndexedStack keeps every tab mounted, so a hidden tab's tickers
+          // would otherwise animate forever against an invisible surface.
+          for (int i = 0; i < tabs.length; i++)
+            TickerMode(enabled: i == _tabIndex, child: tabs[i]),
         ],
       ),
       bottomNavigationBar: _RostokNavBar(

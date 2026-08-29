@@ -10,10 +10,24 @@ enum GardenStage {
   bloom,
 }
 
+/// What the sprout is feeling right now.
+///
+/// The sprout never wilts or blames: an untouched day reads as [waiting]
+/// (patient hope), never as sadness. GAU-416 adds a distinct `missedYou`
+/// mood for return-after-skip; until that loop exists, [celebrating] is the
+/// only reunion-flavoured state and it fires on a completed day.
+enum SproutMood {
+  happy,
+  waiting,
+  sleeping,
+  celebrating,
+}
+
 /// Client-computed visual projection of gamification + today's log.
 class GardenState extends Equatable {
   const GardenState({
     required this.stage,
+    required this.mood,
     required this.health,
     required this.wilting,
     required this.todayGrowth,
@@ -23,6 +37,7 @@ class GardenState extends Equatable {
 
   factory GardenState.seedling() => const GardenState(
         stage: GardenStage.seed,
+        mood: SproutMood.waiting,
         health: 0.4,
         wilting: false,
         todayGrowth: 0,
@@ -31,6 +46,7 @@ class GardenState extends Equatable {
       );
 
   final GardenStage stage;
+  final SproutMood mood;
   final double health;
   final bool wilting;
   final double todayGrowth;
@@ -63,6 +79,7 @@ class GardenState extends Equatable {
   @override
   List<Object?> get props => <Object?>[
         stage,
+        mood,
         health,
         wilting,
         todayGrowth,

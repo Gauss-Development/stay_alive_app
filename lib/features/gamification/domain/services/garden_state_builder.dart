@@ -12,15 +12,45 @@ class GardenStateBuilder {
     DailyLog? todayLog,
     DateTime? referenceDate,
   }) {
-    final DateTime reference = _dateOnly(referenceDate ?? DateTime.now());
+    // `now` keeps the time of day (mood needs the hour); `reference` is the
+    // date-only key used by streak/health lookups.
+    final DateTime now = referenceDate ?? DateTime.now();
+    final DateTime reference = _dateOnly(now);
+    final bool wilting = _isWilting(profile, reference);
+    final double todayGrowth = _todayGrowth(todayLog);
     return GardenState(
       stage: GardenState.stageForLevel(profile.currentLevel),
+      mood: _moodFor(
+        hour: now.hour,
+        wilting: wilting,
+        todayGrowth: todayGrowth,
+      ),
       health: _healthFromLogs(recentLogs, reference),
-      wilting: _isWilting(profile, reference),
-      todayGrowth: _todayGrowth(todayLog),
+      wilting: wilting,
+      todayGrowth: todayGrowth,
       levelTitle: profile.currentLevel.title,
       level: profile.currentLevel.level,
     );
+  }
+
+  /// Mood is a pure projection of clock + progress. It lives here rather than
+  /// in the widget so that a rebuild for an unrelated reason can never flip
+  /// the sprout's face mid-frame.
+  SproutMood _moodFor({
+    required int hour,
+    required bool wilting,
+    required double todayGrowth,
+  }) {
+    if (hour >= 22 || hour < 6) {
+      return SproutMood.sleeping;
+    }
+    if (todayGrowth >= 1.0) {
+      return SproutMood.celebrating;
+    }
+    if (wilting || todayGrowth == 0) {
+      return SproutMood.waiting;
+    }
+    return SproutMood.happy;
   }
 
   double _todayGrowth(DailyLog? todayLog) {

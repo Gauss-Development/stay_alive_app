@@ -36,8 +36,8 @@ void main() {
     Widget build(SproutMood mood) =>
         MaterialApp(home: SproutImage(mood: mood, size: 96));
 
-    await tester.pumpWidget(build(SproutMood.curious));
-    await tester.pumpWidget(build(SproutMood.cheer));
+    await tester.pumpWidget(build(SproutMood.waiting));
+    await tester.pumpWidget(build(SproutMood.celebrating));
     // Mid-transition both images live inside the AnimatedSwitcher.
     await tester.pump(const Duration(milliseconds: 150));
     expect(find.byType(Image), findsNWidgets(2));
@@ -46,7 +46,7 @@ void main() {
     final Image image = tester.widget<Image>(find.byType(Image));
     expect(
       (image.image as AssetImage).assetName,
-      SproutMood.cheer.assetPath,
+      SproutMood.celebrating.assetPath,
     );
   });
 }

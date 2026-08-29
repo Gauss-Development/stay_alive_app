@@ -205,7 +205,9 @@ class _HistoryPaywallPrompt extends StatelessWidget {
       padding: const EdgeInsets.all(AppSpacing.xl),
       children: <Widget>[
         const SizedBox(height: AppSpacing.xl),
-        const Center(child: SproutImage(mood: SproutMood.cheer, size: 120)),
+        const Center(
+          child: SproutImage(mood: SproutMood.celebrating, size: 120),
+        ),
         const SizedBox(height: AppSpacing.lg),
         Text(
           'Полная статистика — в Premium',
