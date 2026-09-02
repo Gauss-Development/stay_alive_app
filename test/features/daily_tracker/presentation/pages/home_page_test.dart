@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/env/env_config.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/completion_summary.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log.dart';
@@ -248,6 +249,11 @@ void main() {
 
   Widget buildWidget() {
     return MaterialApp(
+      // Pin the locale so the expectations below stay deterministic; the
+      // strings themselves are read back through `AppLocalizations`.
+      locale: const Locale('ru'),
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: supportedLocales,
       home: MultiBlocProvider(
         providers: <BlocProvider<dynamic>>[
           BlocProvider<DailyTrackerCubit>.value(value: cubit),
@@ -261,6 +267,9 @@ void main() {
     );
   }
 
+  AppLocalizations l10nOf(WidgetTester tester) =>
+      AppLocalizations.of(tester.element(find.byType(HomePage)));
+
   testWidgets('renders checklist items when tracker is loaded', (
     WidgetTester tester,
   ) async {
@@ -268,7 +277,8 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    final Finder checklistHeading = find.text('Съедено сегодня');
+    final AppLocalizations l10n = l10nOf(tester);
+    final Finder checklistHeading = find.text(l10n.homeEatenToday);
     await tester.scrollUntilVisible(
       checklistHeading,
       120,
@@ -279,7 +289,9 @@ void main() {
     expect(checklistHeading, findsOneWidget);
     expect(find.text('Beans / Legumes'), findsOneWidget);
     expect(
-      find.bySemanticsLabel('Добавить порцию: Beans / Legumes (1 из 3)'),
+      find.bySemanticsLabel(
+        l10n.homeAddServingSemantics('Beans / Legumes', 1, 3),
+      ),
       findsOneWidget,
     );
   });
@@ -292,7 +304,7 @@ void main() {
     await tester.pump();
 
     final Finder incrementButton = find.bySemanticsLabel(
-      'Добавить порцию: Beans / Legumes (1 из 3)',
+      l10nOf(tester).homeAddServingSemantics('Beans / Legumes', 1, 3),
     );
     await tester.scrollUntilVisible(
       incrementButton,

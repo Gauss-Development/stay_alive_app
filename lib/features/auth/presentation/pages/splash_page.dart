@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/app_states.dart';
@@ -43,14 +44,14 @@ class SplashPage extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Text(
-                    state.message ?? 'Не получилось запустить приложение.',
+                    state.message ?? context.l10n.splashStartupError,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyMedium,
+                    style: context.text.bodyMedium,
                   ),
                 );
               }
 
-              return const AppLoadingState(message: 'Растим твой росток...');
+              return AppLoadingState(message: context.l10n.splashLoading);
             },
           ),
         ),

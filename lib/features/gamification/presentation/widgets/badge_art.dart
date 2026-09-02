@@ -11,6 +11,11 @@ extension BadgeAsset on BadgeId {
       BadgeId.ironWill => 'thirtyDayIronWill',
       BadgeId.centurion => 'hundredDaysCenturion',
       BadgeId.patron => 'premiumPatron',
+      // Borrowed art until dedicated illustrations land (see manifest.json).
+      // Drop rainbowPlate.png / nightOwl.png into assets/badges/ and delete
+      // these two lines — the default arm picks them up by enum name.
+      BadgeId.rainbowPlate => 'perfectDay',
+      BadgeId.nightOwl => 'earlyBird',
       _ => name,
     };
     return 'assets/badges/$file.png';

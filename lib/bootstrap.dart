@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:stay_alive/app.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/di/injection_container.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/env/load_env.dart';
@@ -14,11 +15,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 Future<void> bootstrap(AppFlavor flavor) async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // The UI is Russian throughout. Without an explicit locale `DateFormat`
-  // falls back to en_US and renders "3 Aug" on the history charts and badge
-  // list, inside otherwise Russian screens.
-  Intl.defaultLocale = 'ru';
-  await initializeDateFormatting('ru');
+  // Date symbols for every shipped locale. `MaterialApp.builder` then pins
+  // `Intl.defaultLocale` to whichever one Flutter resolves, so charts and
+  // badge dates never fall back to en_US inside a translated screen.
+  await initializeDateFormatting();
+  Intl.defaultLocale = supportedLocales.first.languageCode;
 
   await loadEnvForFlavor(flavor);
 

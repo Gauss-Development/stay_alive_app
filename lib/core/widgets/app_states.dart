@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/motion/motion_config.dart';
-import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/animations/fade_slide_in.dart';
@@ -64,7 +64,7 @@ class _AppLoadingStateState extends State<AppLoadingState>
             Text(
               widget.message!,
               textAlign: TextAlign.center,
-              style: AppTextStyles.bodyMedium,
+              style: context.text.bodyMedium,
             ),
           ],
         ],
@@ -103,7 +103,7 @@ class AppEmptyState extends StatelessWidget {
               child: Text(
                 title,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.titleMedium,
+                style: context.text.titleMedium,
               ),
             ),
             if (message != null) ...<Widget>[
@@ -113,7 +113,7 @@ class AppEmptyState extends StatelessWidget {
                 child: Text(
                   message!,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyMedium,
+                  style: context.text.bodyMedium,
                 ),
               ),
             ],
@@ -137,20 +137,22 @@ class AppEmptyState extends StatelessWidget {
 /// Calm error state: soft card, human copy and a retry button.
 class AppErrorState extends StatelessWidget {
   const AppErrorState({
-    this.title = 'Не получилось загрузить',
-    this.message = 'Проверь соединение и попробуй ещё раз',
+    this.title,
+    this.message,
     this.onRetry,
-    this.retryLabel = 'Повторить',
+    this.retryLabel,
     super.key,
   });
 
-  final String title;
-  final String message;
+  /// All three default to the generic `common*` strings when left null.
+  final String? title;
+  final String? message;
   final VoidCallback? onRetry;
-  final String retryLabel;
+  final String? retryLabel;
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -165,30 +167,35 @@ class AppErrorState extends StatelessWidget {
                   width: 56,
                   height: 56,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
-                    color: AppColors.surface,
+                  decoration: BoxDecoration(
+                    color:
+                        theme.chipTheme.backgroundColor ??
+                        theme.colorScheme.surface,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.cloud_off_rounded,
-                    color: AppColors.textSecondary,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
-                  title,
+                  title ?? context.l10n.commonErrorTitle,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.titleMedium,
+                  style: context.text.titleMedium,
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  message,
+                  message ?? context.l10n.commonErrorMessage,
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.bodyMedium,
+                  style: context.text.bodyMedium,
                 ),
                 if (onRetry != null) ...<Widget>[
                   const SizedBox(height: AppSpacing.xl),
-                  AppButton(text: retryLabel, onPressed: onRetry),
+                  AppButton(
+                    text: retryLabel ?? context.l10n.commonRetry,
+                    onPressed: onRetry,
+                  ),
                 ],
               ],
             ),
@@ -231,6 +238,7 @@ class _AppSkeletonState extends State<AppSkeleton>
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     return FadeTransition(
       opacity: Tween<double>(
         begin: 0.55,
@@ -240,7 +248,7 @@ class _AppSkeletonState extends State<AppSkeleton>
         height: widget.height,
         width: widget.width,
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: theme.chipTheme.backgroundColor ?? theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(widget.radius),
         ),
       ),

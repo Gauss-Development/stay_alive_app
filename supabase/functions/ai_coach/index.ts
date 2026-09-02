@@ -1,6 +1,6 @@
 // ai_coach — OpenAI proxy. Without OPENAI_API_KEY the client uses CoachLocalFallback.
 //
-// Contract (unchanged from the old Appwrite function):
+// Response contract:
 //   401 unauthenticated | 400 invalid_json | 403 premium_required
 //   503 llm_unavailable | 502 llm_failed   | 200 coach payload JSON
 import { createClient } from 'npm:@supabase/supabase-js@2';

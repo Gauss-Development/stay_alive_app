@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -15,10 +16,7 @@ class CategoryMasteryList extends StatelessWidget {
     if (items.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        child: Text(
-          'Отмечай продукты — и прокачивай категории.',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-        ),
+        child: Text(context.l10n.masteryEmpty, style: context.text.bodySmall),
       );
     }
 
@@ -45,7 +43,7 @@ class _CategoryMasteryTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
@@ -58,7 +56,7 @@ class _CategoryMasteryTile extends StatelessWidget {
                   mastery.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodyLarge.copyWith(fontSize: 14),
+                  style: context.text.bodyLarge?.copyWith(fontSize: 14),
                 ),
               ),
               _TierChip(tier: mastery.tier),
@@ -69,10 +67,12 @@ class _CategoryMasteryTile extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             mastery.tier == MasteryTier.platinum
-                ? '${mastery.totalServings} порций отмечено'
-                : '${mastery.totalServings}/${mastery.nextTierThreshold} '
-                      'порций до следующего уровня',
-            style: AppTextStyles.labelSmall,
+                ? context.l10n.masteryServingsLogged(mastery.totalServings)
+                : context.l10n.masteryServingsToNextTier(
+                    mastery.totalServings,
+                    mastery.nextTierThreshold,
+                  ),
+            style: context.text.labelSmall,
           ),
         ],
       ),
@@ -92,10 +92,13 @@ class _TierChip extends StatelessWidget {
     }
 
     final (String label, Color tint) = switch (tier) {
-      MasteryTier.bronze => ('Бронза', AppColors.orange),
-      MasteryTier.silver => ('Серебро', AppColors.blue),
-      MasteryTier.gold => ('Золото', AppColors.softYellow),
-      MasteryTier.platinum => ('Платина', AppColors.purple),
+      MasteryTier.bronze => (context.l10n.masteryTierBronze, AppColors.orange),
+      MasteryTier.silver => (context.l10n.masteryTierSilver, AppColors.blue),
+      MasteryTier.gold => (context.l10n.masteryTierGold, AppColors.softYellow),
+      MasteryTier.platinum => (
+        context.l10n.masteryTierPlatinum,
+        AppColors.purple,
+      ),
       MasteryTier.none => ('', AppColors.border),
     };
 
@@ -107,7 +110,9 @@ class _TierChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTextStyles.labelMedium.copyWith(color: AppColors.textPrimary),
+        style: context.text.labelMedium?.copyWith(
+          color: context.colors.onSurface,
+        ),
       ),
     );
   }

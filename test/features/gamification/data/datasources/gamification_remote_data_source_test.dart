@@ -153,7 +153,7 @@ void main() {
         postgrest.to('gamification_events', method: 'GET').first;
     final String query = Uri.decodeComponent(eventsRequest.url.query);
     // `created_at` is client-set and backdated for badge events; ordering must
-    // use the server-side `inserted_at` for parity with Appwrite `$createdAt`.
+    // use the server-side `inserted_at` so the feed order stays stable.
     expect(query, contains('order=inserted_at.desc'));
     expect(query, contains('limit=50'));
     expect(query, contains('user_id=eq.user-1'));

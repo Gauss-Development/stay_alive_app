@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/app_progress_bar.dart';
@@ -17,9 +18,11 @@ class XpLevelBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final level = profile.currentLevel;
     final double progress = level.progressFraction(profile.totalXp);
+    // `dark` means "on a fixed dark brand panel", not "dark theme": those
+    // colours stay pinned, the rest follows the active theme.
     final Color labelColor = dark
         ? AppColors.textMuted
-        : AppColors.textSecondary;
+        : context.colors.onSurfaceVariant;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,11 +33,11 @@ class XpLevelBar extends StatelessWidget {
           children: <Widget>[
             Flexible(
               child: Text(
-                'Уровень ${level.level} · ${level.title}',
+                context.l10n.progressLevelWithTitle(level.level, level.title),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: dark ? AppColors.white : AppColors.textPrimary,
+                style: context.text.labelMedium?.copyWith(
+                  color: dark ? AppColors.white : context.colors.onSurface,
                 ),
               ),
             ),
@@ -43,7 +46,7 @@ class XpLevelBar extends StatelessWidget {
               level.isMaxLevel
                   ? 'MAX'
                   : '${profile.totalXp} / ${level.xpForNext}',
-              style: AppTextStyles.labelMedium.copyWith(color: labelColor),
+              style: context.text.labelMedium?.copyWith(color: labelColor),
             ),
           ],
         ),
@@ -51,7 +54,8 @@ class XpLevelBar extends StatelessWidget {
         AppProgressBar(
           value: progress,
           height: 10,
-          backgroundColor: dark ? AppColors.darkChip : AppColors.border,
+          // null → the theme's hairline tone.
+          backgroundColor: dark ? AppColors.darkChip : null,
         ),
       ],
     );

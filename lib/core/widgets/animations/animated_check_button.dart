@@ -77,6 +77,7 @@ class _AnimatedCheckButtonState extends State<AnimatedCheckButton>
   Widget build(BuildContext context) {
     final bool completed = widget.completed;
     final double size = widget.size;
+    final ThemeData theme = Theme.of(context);
 
     return SizedBox(
       width: size,
@@ -116,10 +117,13 @@ class _AnimatedCheckButtonState extends State<AnimatedCheckButton>
             width: size,
             height: size,
             decoration: BoxDecoration(
-              color: completed ? AppColors.dark : AppColors.white,
+              // Completed stays the branded dark disc in both themes.
+              color: completed
+                  ? AppColors.dark
+                  : theme.cardTheme.color ?? theme.colorScheme.surface,
               shape: BoxShape.circle,
               border: Border.all(
-                color: completed ? AppColors.dark : AppColors.border,
+                color: completed ? AppColors.dark : theme.colorScheme.outline,
                 width: 2,
               ),
             ),
@@ -135,7 +139,8 @@ class _AnimatedCheckButtonState extends State<AnimatedCheckButton>
                 : Icon(
                     Icons.add_rounded,
                     size: size * 0.48,
-                    color: AppColors.textMuted,
+                    // labelSmall carries the palette's muted ink.
+                    color: theme.textTheme.labelSmall?.color,
                   ),
           ),
         ],

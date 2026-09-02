@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
 import 'package:stay_alive/core/constants/legal_urls.dart';
+import 'package:stay_alive/features/user/presentation/widgets/settings_menu.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -14,8 +16,6 @@ import 'package:stay_alive/core/widgets/app_card.dart';
 import 'package:stay_alive/core/widgets/app_progress_bar.dart';
 import 'package:stay_alive/core/widgets/app_section_header.dart';
 import 'package:stay_alive/core/widgets/app_states.dart';
-import 'package:stay_alive/features/auth/presentation/cubit/auth_cubit.dart';
-import 'package:stay_alive/features/auth/presentation/cubit/auth_state.dart';
 import 'package:stay_alive/features/gamification/domain/entities/game_level.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_overview.dart';
 import 'package:stay_alive/features/gamification/domain/entities/user_game_profile.dart';
@@ -26,16 +26,6 @@ import 'package:stay_alive/features/subscription/presentation/cubit/subscription
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_state.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const List<String> _weekLabels = <String>[
-  'Пн',
-  'Вт',
-  'Ср',
-  'Чт',
-  'Пт',
-  'Сб',
-  'Вс',
-];
 
 /// Profile as a progress screen: avatar + level, stat cards, level progress,
 /// achievements and weekly activity.
@@ -107,8 +97,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         FadeSlideIn(
                           child: Center(
                             child: Text(
-                              'Профиль',
-                              style: AppTextStyles.titleLarge,
+                              context.l10n.navProfile,
+                              style: context.text.titleLarge,
                             ),
                           ),
                         ),
@@ -151,10 +141,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: AppColors.lime,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.flag_rounded,
                                   size: 20,
-                                  color: AppColors.dark,
+                                  color: context.colors.onTertiary,
                                 ),
                               ),
                               const SizedBox(width: AppSpacing.md),
@@ -163,39 +153,34 @@ class _ProfilePageState extends State<ProfilePage> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
                                     Text(
-                                      'Челленджи и награды',
-                                      style: AppTextStyles.bodyLarge.copyWith(
+                                      context.l10n.profileChallengesTitle,
+                                      style: context.text.bodyLarge?.copyWith(
                                         fontSize: 15,
                                       ),
                                     ),
                                     Text(
-                                      'Квесты, серии и все достижения',
-                                      style: AppTextStyles.bodySmall,
+                                      context.l10n.profileChallengesSubtitle,
+                                      style: context.text.bodySmall,
                                     ),
                                   ],
                                 ),
                               ),
-                              const Icon(
+                              Icon(
                                 Icons.chevron_right_rounded,
-                                color: AppColors.textMuted,
+                                color: context.colors.onSurfaceVariant,
                               ),
                             ],
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xl),
+                        const SettingsMenu(),
+                        const SizedBox(height: AppSpacing.xl),
                         if (email.isNotEmpty)
                           Center(
-                            child: Text(
-                              email,
-                              style: AppTextStyles.bodySmall.copyWith(
-                                color: AppColors.textMuted,
-                              ),
-                            ),
+                            child: Text(email, style: context.text.bodySmall),
                           ),
                         const SizedBox(height: AppSpacing.lg),
                         const _LegalLinks(),
-                        const SizedBox(height: AppSpacing.sm),
-                        const _DeleteAccountButton(),
                       ],
                     );
                   },
@@ -230,7 +215,12 @@ class _ProfileAvatar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.mutedGreen,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.white, width: 4),
+                  border: Border.all(
+                    color:
+                        Theme.of(context).cardTheme.color ??
+                        context.colors.surface,
+                    width: 4,
+                  ),
                   boxShadow: <BoxShadow>[
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.06),
@@ -239,10 +229,11 @@ class _ProfileAvatar extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: const Icon(
+                // Dark ink on the fixed green plate in both themes.
+                child: Icon(
                   Icons.eco_rounded,
                   size: 38,
-                  color: AppColors.textPrimary,
+                  color: context.colors.onTertiary,
                 ),
               ),
               Positioned(
@@ -255,11 +246,17 @@ class _ProfileAvatar extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.lime,
                     shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.background, width: 3),
+                    border: Border.all(
+                      color: Theme.of(context).scaffoldBackgroundColor,
+                      width: 3,
+                    ),
                   ),
                   child: Text(
                     '${profile.currentLevel.level}',
-                    style: AppTextStyles.labelLarge.copyWith(fontSize: 13),
+                    style: context.text.labelLarge?.copyWith(
+                      fontSize: 13,
+                      color: context.colors.onTertiary,
+                    ),
                   ),
                 ),
               ),
@@ -270,13 +267,15 @@ class _ProfileAvatar extends StatelessWidget {
         Text(
           name,
           textAlign: TextAlign.center,
-          style: AppTextStyles.headlineMedium,
+          style: context.text.headlineMedium,
         ),
         const SizedBox(height: AppSpacing.xs),
         Text(
-          'Уровень ${profile.currentLevel.level} · '
-          '${profile.currentLevel.title} 🌱',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
+          context.l10n.profileLevelCaption(
+            profile.currentLevel.level,
+            profile.currentLevel.title,
+          ),
+          style: context.text.bodyMedium,
         ),
       ],
     );
@@ -299,7 +298,7 @@ class _StatsRow extends StatelessWidget {
             child: _StatCard(
               animatedValue: profile.totalXp,
               value: '${profile.totalXp}',
-              label: 'всего очков',
+              label: context.l10n.profileStatTotalPoints,
               dark: true,
             ),
           ),
@@ -311,7 +310,7 @@ class _StatsRow extends StatelessWidget {
             baseDelay: const Duration(milliseconds: 200),
             child: _StatCard(
               value: '${profile.currentStreak}',
-              label: '🔥 дней серия',
+              label: context.l10n.profileStatStreakDays(profile.currentStreak),
             ),
           ),
         ),
@@ -322,7 +321,7 @@ class _StatsRow extends StatelessWidget {
             baseDelay: const Duration(milliseconds: 200),
             child: _StatCard(
               value: '${profile.longestStreak}',
-              label: '🏆 рекорд',
+              label: context.l10n.profileStatRecord,
             ),
           ),
         ),
@@ -351,7 +350,9 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
       decoration: BoxDecoration(
-        color: dark ? AppColors.dark : AppColors.white,
+        // [dark] is the deliberately dark hero tile — it stays dark in both
+        // themes; the plain tile follows the theme's card colour.
+        color: dark ? AppColors.dark : Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: dark
             ? null
@@ -369,9 +370,9 @@ class _StatCard extends StatelessWidget {
             AnimatedPointsCounter(
               value: animatedValue!,
               showFloatingDelta: false,
-              style: AppTextStyles.headlineMedium.copyWith(
+              style: context.text.headlineMedium?.copyWith(
                 fontSize: 22,
-                color: dark ? AppColors.lime : AppColors.textPrimary,
+                color: dark ? AppColors.lime : context.colors.onSurface,
               ),
             )
           else
@@ -379,9 +380,9 @@ class _StatCard extends StatelessWidget {
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.headlineMedium.copyWith(
+              style: context.text.headlineMedium?.copyWith(
                 fontSize: 22,
-                color: dark ? AppColors.lime : AppColors.textPrimary,
+                color: dark ? AppColors.lime : context.colors.onSurface,
               ),
             ),
           const SizedBox(height: 3),
@@ -390,8 +391,10 @@ class _StatCard extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.labelSmall.copyWith(
-              color: dark ? AppColors.textMuted : AppColors.textSecondary,
+            style: context.text.labelSmall?.copyWith(
+              color: dark
+                  ? AppColors.textMuted
+                  : context.colors.onSurfaceVariant,
             ),
           ),
         ],
@@ -430,12 +433,14 @@ class _LevelProgressCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   level.isMaxLevel
-                      ? 'Максимальный уровень'
-                      : 'До уровня ${level.level + 1} · '
-                            '${_nextTitle(level.level)}',
+                      ? context.l10n.profileMaxLevel
+                      : context.l10n.profileNextLevel(
+                          level.level + 1,
+                          _nextTitle(level.level),
+                        ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.labelLarge,
+                  style: context.text.labelLarge,
                 ),
               ),
               const SizedBox(width: AppSpacing.sm),
@@ -443,9 +448,7 @@ class _LevelProgressCard extends StatelessWidget {
                 level.isMaxLevel
                     ? 'MAX'
                     : '${profile.totalXp} / ${level.xpForNext}',
-                style: AppTextStyles.labelMedium.copyWith(
-                  color: AppColors.textMuted,
-                ),
+                style: context.text.labelMedium,
               ),
             ],
           ),
@@ -481,12 +484,10 @@ class _AchievementsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         AppSectionHeader(
-          title: 'Достижения',
+          title: context.l10n.profileAchievements,
           trailing: Text(
-            '$unlocked из ${gallery.length}',
-            style: AppTextStyles.labelMedium.copyWith(
-              color: AppColors.textMuted,
-            ),
+            context.l10n.profileAchievementsCount(unlocked, gallery.length),
+            style: context.text.labelMedium,
           ),
         ),
         const SizedBox(height: AppSpacing.md),
@@ -513,13 +514,23 @@ class _WeeklyActivityCard extends StatelessWidget {
     final DateTime today = DateTime(now.year, now.month, now.day);
     final DateTime monday = today.subtract(Duration(days: today.weekday - 1));
     final Set<String> done = profile.completedDates.toSet();
+    final AppLocalizations l10n = context.l10n;
+    final List<String> weekLabels = <String>[
+      l10n.profileWeekdayMon,
+      l10n.profileWeekdayTue,
+      l10n.profileWeekdayWed,
+      l10n.profileWeekdayThu,
+      l10n.profileWeekdayFri,
+      l10n.profileWeekdaySat,
+      l10n.profileWeekdaySun,
+    ];
 
     return AppCard(
       radius: AppRadius.xl,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text('Активность недели', style: AppTextStyles.labelLarge),
+          Text(l10n.profileWeeklyActivity, style: context.text.labelLarge),
           const SizedBox(height: AppSpacing.lg),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -528,7 +539,7 @@ class _WeeklyActivityCard extends StatelessWidget {
               final bool isDone = done.contains(_dateKey(date));
               final Duration delay = Duration(milliseconds: 40 * i);
               final Widget dot = _WeekDot(
-                label: _weekLabels[i],
+                label: weekLabels[i],
                 done: isDone,
                 isToday: date == today,
               );
@@ -557,9 +568,14 @@ class _WeekDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Today's dot is a deliberately dark chip in both themes; the empty dot is
+    // an inset pill, so it follows the theme's chip colour.
     final Color background = isToday
         ? AppColors.dark
-        : (done ? AppColors.lime : AppColors.surface);
+        : (done
+              ? AppColors.lime
+              : (Theme.of(context).chipTheme.backgroundColor ??
+                    context.colors.surface));
 
     return Column(
       children: <Widget>[
@@ -579,9 +595,11 @@ class _WeekDot extends StatelessWidget {
         const SizedBox(height: AppSpacing.sm),
         Text(
           label,
-          style: AppTextStyles.labelSmall.copyWith(
-            color: isToday ? AppColors.textPrimary : AppColors.textMuted,
-          ),
+          style: isToday
+              ? context.text.labelSmall?.copyWith(
+                  color: context.colors.onSurface,
+                )
+              : context.text.labelSmall,
         ),
       ],
     );
@@ -599,11 +617,11 @@ class _LegalLinks extends StatelessWidget {
         spacing: AppSpacing.lg,
         children: <Widget>[
           _LegalLink(
-            label: 'Политика конфиденциальности',
+            label: context.l10n.profilePrivacyPolicy,
             url: LegalUrls.privacyPolicy,
           ),
           _LegalLink(
-            label: 'Условия использования',
+            label: context.l10n.profileTermsOfService,
             url: LegalUrls.termsOfService,
           ),
         ],
@@ -625,7 +643,7 @@ class _LegalLink extends StatelessWidget {
     );
     if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Не удалось открыть ссылку')),
+        SnackBar(content: Text(context.l10n.profileLinkOpenFailed)),
       );
     }
   }
@@ -634,71 +652,7 @@ class _LegalLink extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton(
       onPressed: () => _open(context),
-      child: Text(
-        label,
-        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
-      ),
+      child: Text(label, style: context.text.bodySmall),
     );
-  }
-}
-
-class _DeleteAccountButton extends StatelessWidget {
-  const _DeleteAccountButton();
-
-  @override
-  Widget build(BuildContext context) {
-    return BlocListener<AuthCubit, AuthState>(
-      listenWhen: (AuthState previous, AuthState current) =>
-          previous != current &&
-          (current is AuthError || current is AuthUnauthenticated),
-      listener: (BuildContext context, AuthState state) {
-        if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Не удалось удалить аккаунт: ${state.message}'),
-            ),
-          );
-        }
-      },
-      child: Center(
-        child: TextButton(
-          onPressed: () => _confirm(context),
-          child: Text(
-            'Удалить аккаунт',
-            style: AppTextStyles.labelMedium.copyWith(color: AppColors.error),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _confirm(BuildContext context) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Удалить аккаунт?'),
-          content: const Text(
-            'Это навсегда удалит профиль, дневные записи, историю, прогресс '
-            'и данные подписки. Отменить это будет нельзя.\n\n'
-            'Активные подписки App Store / Play Store при удалении аккаунта '
-            'не отменяются — управляй ими в настройках подписок магазина.',
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Отмена'),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: AppColors.error),
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Удалить'),
-            ),
-          ],
-        );
-      },
-    );
-    if (confirmed != true || !context.mounted) return;
-    await context.read<AuthCubit>().deleteAccount();
   }
 }

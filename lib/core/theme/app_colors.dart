@@ -29,6 +29,16 @@ abstract final class AppColors {
   static const Color textSecondary = Color(0xFF6B7061);
   static const Color textMuted = Color(0xFF9AA08E);
 
+  // Text on dark surfaces — the dark theme and dark hero panels.
+  // Deliberately not pure white: [textPrimaryDark] is the light [background]
+  // tone, so the two themes trade the same two colours.
+  static const Color textPrimaryDark = Color(0xFFEEF0E7);
+  static const Color textSecondaryDark = Color(0xFFA8AE9C);
+  static const Color textMutedDark = Color(0xFF878D7C);
+
+  /// Hairlines, dividers and tracks on dark surfaces.
+  static const Color borderDark = Color(0xFF333A29);
+
   // Decorative palette — achievements, rewards, badges, soft categories only.
   static const Color orange = Color(0xFFFFA63D);
   static const Color blue = Color(0xFF7FB7FF);

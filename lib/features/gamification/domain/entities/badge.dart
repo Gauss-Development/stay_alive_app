@@ -12,6 +12,8 @@ enum BadgeId {
   patron,
   firstBloom,
   streakGardener,
+  rainbowPlate,
+  nightOwl,
 }
 
 class BadgeDefinition {
@@ -127,6 +129,18 @@ class BadgeDefinition {
       name: 'Streak Gardener',
       description: 'Keep an activity streak of 7 days.',
       emoji: '🪴',
+    ),
+    BadgeId.rainbowPlate: BadgeDefinition(
+      id: BadgeId.rainbowPlate,
+      name: 'Rainbow Plate',
+      description: 'Complete every Daily Dozen category at least once.',
+      emoji: '🌈',
+    ),
+    BadgeId.nightOwl: BadgeDefinition(
+      id: BadgeId.nightOwl,
+      name: 'Night Owl',
+      description: 'Log after 9 PM on 5 different days.',
+      emoji: '🦉',
     ),
   };
 }

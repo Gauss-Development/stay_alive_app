@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/features/subscription/presentation/paywall.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -38,26 +38,26 @@ class WeeklyInsightSection extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    'Недельный разбор',
-                    style: AppTextStyles.titleMedium,
+                    context.l10n.coachWeeklyTitle,
+                    style: context.text.titleMedium,
                   ),
                 ),
                 if (isPremium)
                   TextButton(
                     onPressed: onRequestInsights,
-                    child: const Text('Обновить'),
+                    child: Text(context.l10n.coachWeeklyRefresh),
                   ),
               ],
             ),
             const SizedBox(height: AppSpacing.sm),
             if (!isPremium)
               AppButton(
-                text: 'Инсайты в Stay Alive Pro',
-                onPressed: () => context.push(AppRoutes.premium),
+                text: context.l10n.coachWeeklyPremiumCta,
+                onPressed: () => showPaywall(context),
               )
             else if (cards.isEmpty)
               AppButton(
-                text: 'Получить разбор недели',
+                text: context.l10n.coachWeeklyRequestCta,
                 onPressed: onRequestInsights,
               )
             else
@@ -67,21 +67,26 @@ class WeeklyInsightSection extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: context.colors.surface,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: context.colors.outlineVariant),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(card.title, style: AppTextStyles.titleMedium),
+                        Text(
+                          card.title.isEmpty
+                              ? context.l10n.coachInsightUntitled
+                              : card.title,
+                          style: context.text.titleMedium,
+                        ),
                         const SizedBox(height: 4),
-                        Text(card.body, style: AppTextStyles.bodyMedium),
+                        Text(card.body, style: context.text.bodyMedium),
                         if (card.emphasis != null) ...<Widget>[
                           const SizedBox(height: 6),
                           Text(
                             card.emphasis!,
-                            style: AppTextStyles.labelMedium.copyWith(
+                            style: context.text.labelMedium?.copyWith(
                               color: AppColors.green,
                             ),
                           ),
@@ -95,7 +100,7 @@ class WeeklyInsightSection extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 error,
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+                style: context.text.bodySmall?.copyWith(color: AppColors.error),
               ),
             ],
           ],

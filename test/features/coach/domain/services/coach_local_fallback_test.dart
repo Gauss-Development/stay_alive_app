@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:stay_alive/features/coach/coach_l10n.dart';
 import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
 import 'package:stay_alive/features/coach/domain/services/coach_local_fallback.dart';
+import 'package:stay_alive/l10n/app_localizations_ru.dart';
 
 void main() {
   test('local fallback nudge mentions incomplete category', () {
@@ -18,6 +20,7 @@ void main() {
     final CoachResponse response = CoachLocalFallback.respond(
       mode: CoachMode.nudge,
       context: context,
+      strings: coachFallbackStrings(AppLocalizationsRu()),
     );
 
     expect(response.message, contains('greens'));

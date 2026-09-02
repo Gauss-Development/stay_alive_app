@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -29,7 +30,7 @@ class CoachNudgeBanner extends StatelessWidget {
         }
         final CoachResponse nudge = state.lastNudge!;
         return Material(
-          color: AppColors.surface,
+          color: context.colors.surface,
           borderRadius: BorderRadius.circular(16),
           child: Padding(
             padding: const EdgeInsets.all(AppSpacing.md),
@@ -41,7 +42,10 @@ class CoachNudgeBanner extends StatelessWidget {
                     const Icon(Icons.spa_rounded, color: AppColors.green),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text('Коуч Ростка', style: AppTextStyles.titleMedium),
+                      child: Text(
+                        context.l10n.coachNudgeTitle,
+                        style: context.text.titleMedium,
+                      ),
                     ),
                     IconButton(
                       visualDensity: VisualDensity.compact,
@@ -50,13 +54,13 @@ class CoachNudgeBanner extends StatelessWidget {
                     ),
                   ],
                 ),
-                Text(nudge.message, style: AppTextStyles.bodyMedium),
+                Text(nudge.message, style: context.text.bodyMedium),
                 const SizedBox(height: AppSpacing.sm),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => context.push(AppRoutes.coach),
-                    child: const Text('Открыть чат'),
+                    child: Text(context.l10n.coachNudgeOpenChat),
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/features/gamification/domain/entities/gamification_effect.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_cubit.dart';
 import 'package:stay_alive/features/gamification/presentation/cubit/gamification_state.dart';
@@ -66,7 +67,10 @@ class _GamificationCelebrationHostState
 
     if (effect is ChallengeCompletedEffect) {
       _showChallengeSnackBar(
-        'Квест дня выполнен: ${effect.challenge.title} (+${effect.challenge.xpReward} очков)',
+        context.l10n.challengeDailyCompletedToast(
+          effect.challenge.title,
+          effect.challenge.xpReward,
+        ),
       );
       context.read<GamificationCubit>().dismissEffect(effect);
       return;
@@ -74,7 +78,10 @@ class _GamificationCelebrationHostState
 
     if (effect is WeeklyChallengeCompletedEffect) {
       _showChallengeSnackBar(
-        'Челлендж недели выполнен: ${effect.challenge.title} (+${effect.challenge.xpReward} очков)',
+        context.l10n.challengeWeeklyCompletedToast(
+          effect.challenge.title,
+          effect.challenge.xpReward,
+        ),
       );
       context.read<GamificationCubit>().dismissEffect(effect);
       return;
@@ -91,7 +98,9 @@ class _GamificationCelebrationHostState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text('${badge.emoji} Новая награда: ${badge.name}'),
+          content: Text(
+            context.l10n.badgeUnlockedToast(badge.emoji, badge.name),
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -16,8 +17,8 @@ class XpEventTimeline extends StatelessWidget {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         child: Text(
-          'Здесь появится история твоих очков.',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
+          context.l10n.progressXpHistoryEmpty,
+          style: context.text.bodySmall,
         ),
       );
     }
@@ -40,14 +41,14 @@ class XpEventTimeline extends StatelessWidget {
                   children: <Widget>[
                     Text(
                       event.label,
-                      style: AppTextStyles.bodyLarge.copyWith(fontSize: 14),
+                      style: context.text.bodyLarge?.copyWith(fontSize: 14),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       DateFormat(
                         'd.MM.yyyy · HH:mm',
                       ).format(event.createdAt.toLocal()),
-                      style: AppTextStyles.labelSmall,
+                      style: context.text.labelSmall,
                     ),
                   ],
                 ),
@@ -55,7 +56,7 @@ class XpEventTimeline extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 event.xpDelta > 0 ? '+${event.xpDelta}' : '—',
-                style: AppTextStyles.titleMedium.copyWith(
+                style: context.text.titleMedium?.copyWith(
                   color: AppColors.green,
                 ),
               ),

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 
 /// Typography compatibility layer for the `rostok` feature screens.
 ///
-/// Delegates to Manrope (the app-wide family) so the whole product shares a
+/// Delegates to Nunito (the app-wide family) so the whole product shares a
 /// single type system.
 abstract final class RostokText {
   /// Headings, numbers, brand wordmark.
@@ -15,7 +15,8 @@ abstract final class RostokText {
     double height = 1.15,
     double? letterSpacing,
   }) {
-    return GoogleFonts.manrope(
+    return TextStyle(
+      fontFamily: AppTextStyles.fontFamily,
       fontSize: size,
       // Display text in Росток is always bold and confident.
       fontWeight: weight.value < FontWeight.w700.value
@@ -36,7 +37,8 @@ abstract final class RostokText {
     double? letterSpacing,
     TextDecoration? decoration,
   }) {
-    return GoogleFonts.manrope(
+    return TextStyle(
+      fontFamily: AppTextStyles.fontFamily,
       fontSize: size,
       fontWeight: weight,
       color: color,

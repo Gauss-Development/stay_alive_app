@@ -66,7 +66,7 @@ Single migration `supabase/migrations/*_initial_schema.sql`. Tables
 
 | Table | Ownership | Notes |
 |---|---|---|
-| `profiles` | `id` = auth user id | mirrors Appwrite's old `users` collection |
+| `profiles` | `id` = auth user id | one row per auth user, upserted on sign-in |
 | `category_definitions` | public read | seeded with the 12 Daily Dozen rows |
 | `daily_logs` | `user_id`, unique `(user_id, log_date)` | one log per user per day |
 | `daily_log_items` | `user_id`, unique `(log_id, category_id)` | denormalized category fields |

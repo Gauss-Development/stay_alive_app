@@ -21,7 +21,7 @@ class AnimatedPointsCounter extends StatefulWidget {
   final int value;
   final TextStyle? style;
 
-  /// Appended after the number, e.g. ' очков'.
+  /// Appended after the number, e.g. ' pts'. Callers pass a localized value.
   final String suffix;
 
   /// Show the floating `+N` label on increases.
@@ -126,7 +126,7 @@ class _AnimatedPointsCounterState extends State<AnimatedPointsCounter>
                     ),
                     child: Text(
                       '+$_delta',
-                      style: AppTextStyles.labelLarge.copyWith(
+                      style: context.text.labelLarge?.copyWith(
                         color: widget.deltaColor,
                         fontSize: 15,
                       ),

@@ -1,0 +1,1103 @@
+{
+  "@@locale": "ru",
+  "appTitle": "Росток",
+  "@appTitle": {
+    "description": "Application name shown in the OS task switcher"
+  },
+  "navHome": "Главная",
+  "@navHome": {
+    "description": "Bottom navigation label for the daily tracker tab"
+  },
+  "navStats": "Статистика",
+  "@navStats": {
+    "description": "Bottom navigation label for the history tab"
+  },
+  "navProfile": "Профиль",
+  "@navProfile": {
+    "description": "Bottom navigation label for the profile tab"
+  },
+  "coachTitle": "AI-коуч",
+  "@coachTitle": {
+    "description": "AppBar title of the AI coach chat screen"
+  },
+  "coachPaywallTitle": "Чат с коучем — часть Stay Alive Pro",
+  "@coachPaywallTitle": {
+    "description": "Headline shown to free users on the coach chat screen"
+  },
+  "coachPaywallDescription": "Персональные советы, разборы недели и квесты сада. Это мотивация по Daily Dozen, не медицинские рекомендации.",
+  "@coachPaywallDescription": {
+    "description": "Paywall body on the coach screen; keeps the 'not medical advice' disclaimer"
+  },
+  "coachPaywallCta": "Открыть Premium",
+  "@coachPaywallCta": {
+    "description": "Button that opens the paywall from the coach screen"
+  },
+  "coachChatDisclaimer": "Коуч помогает с привычкой Daily Dozen. Не заменяет врача.",
+  "@coachChatDisclaimer": {
+    "description": "Compliance disclaimer above the coach chat; must stay in every locale"
+  },
+  "coachChatEmptyHint": "Спроси, что добрать сегодня или как удержать серию.",
+  "@coachChatEmptyHint": {
+    "description": "Placeholder shown when the coach chat has no messages yet"
+  },
+  "coachChatInputHint": "Напиши коучу…",
+  "@coachChatInputHint": {
+    "description": "Hint text of the coach chat input field"
+  },
+  "coachWeeklyTitle": "Недельный разбор",
+  "@coachWeeklyTitle": {
+    "description": "Section title of the weekly insights block"
+  },
+  "coachWeeklyRefresh": "Обновить",
+  "@coachWeeklyRefresh": {
+    "description": "Text button that re-requests the weekly insights"
+  },
+  "coachWeeklyPremiumCta": "Инсайты в Stay Alive Pro",
+  "@coachWeeklyPremiumCta": {
+    "description": "Button shown to free users instead of weekly insights"
+  },
+  "coachWeeklyRequestCta": "Получить разбор недели",
+  "@coachWeeklyRequestCta": {
+    "description": "Button that requests the first weekly review"
+  },
+  "coachInsightUntitled": "Инсайт",
+  "@coachInsightUntitled": {
+    "description": "Fallback title for a weekly insight card that arrived without one"
+  },
+  "coachNudgeTitle": "Коуч Ростка",
+  "@coachNudgeTitle": {
+    "description": "Title of the soft coach banner shown after logging a serving"
+  },
+  "coachNudgeOpenChat": "Открыть чат",
+  "@coachNudgeOpenChat": {
+    "description": "Banner action that opens the coach chat"
+  },
+  "coachNudgeLimitReached": "Дневной лимит подсказок исчерпан. Открой Pro-чат.",
+  "@coachNudgeLimitReached": {
+    "description": "Error shown when a free user runs out of daily coach nudges"
+  },
+  "coachFallbackNudgeWilting": "Росток слегка вянет — даже одна порция сегодня поддержит серию (сейчас {streak} дн.).",
+  "@coachFallbackNudgeWilting": {
+    "description": "Offline coach nudge when the plant is wilting",
+    "placeholders": {
+      "streak": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "coachFallbackNudgeNextStep": "Отличный прогресс: {completed}/{target}. Следующий шаг — {category}.",
+  "@coachFallbackNudgeNextStep": {
+    "description": "Offline coach nudge pointing at the next unfinished category",
+    "placeholders": {
+      "completed": {
+        "type": "int",
+        "example": "4"
+      },
+      "target": {
+        "type": "int",
+        "example": "24"
+      },
+      "category": {
+        "type": "String",
+        "example": "greens"
+      }
+    }
+  },
+  "coachFallbackNudgeAllDone": "День закрыт по всем категориям — росток благодарен!",
+  "@coachFallbackNudgeAllDone": {
+    "description": "Offline coach nudge when every category is complete"
+  },
+  "coachFallbackChatIntro": "Я коуч «Ростка». Спроси, что добрать сегодня, или как удержать серию (сейчас {streak} дн.). Я не ставлю диагнозов — только мотивацию по Daily Dozen.",
+  "@coachFallbackChatIntro": {
+    "description": "Offline coach reply to an empty question; keeps the 'no diagnoses' disclaimer",
+    "placeholders": {
+      "streak": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "coachFallbackChatGaps": "По твоим логам не хватает: {categories}. Выбери одну категорию и отметь порцию — маленькие шаги копят уровень {levelTitle}.",
+  "@coachFallbackChatGaps": {
+    "description": "Offline coach chat reply listing unfinished categories",
+    "placeholders": {
+      "categories": {
+        "type": "String",
+        "example": "greens, beans"
+      },
+      "levelTitle": {
+        "type": "String",
+        "example": "Sprout"
+      }
+    }
+  },
+  "coachFallbackChatAllDone": "Сегодня всё закрыто. Завтра сфокусируйся на раннем логе до 9:00 — это даёт бонусные очки и поддерживает росток.",
+  "@coachFallbackChatAllDone": {
+    "description": "Offline coach chat reply when nothing is left for today"
+  },
+  "coachFallbackWeeklyMessage": "Недельный разбор готов.",
+  "@coachFallbackWeeklyMessage": {
+    "description": "Offline coach message that accompanies the weekly insight cards"
+  },
+  "coachFallbackWeeklyStreakTitle": "Серия",
+  "@coachFallbackWeeklyStreakTitle": {
+    "description": "Title of the offline weekly insight card about streaks"
+  },
+  "coachFallbackWeeklyStreakBody": "Идеальная серия: {streak} дн., активность: {activityStreak} дн. Уровень {levelTitle}.",
+  "@coachFallbackWeeklyStreakBody": {
+    "description": "Body of the offline weekly streak card",
+    "placeholders": {
+      "streak": {
+        "type": "int",
+        "example": "5"
+      },
+      "activityStreak": {
+        "type": "int",
+        "example": "3"
+      },
+      "levelTitle": {
+        "type": "String",
+        "example": "Sprout"
+      }
+    }
+  },
+  "coachFallbackWeeklyStreakKeepRhythm": "держи ритм",
+  "@coachFallbackWeeklyStreakKeepRhythm": {
+    "description": "Emphasis line on the weekly streak card when the streak is alive"
+  },
+  "coachFallbackWeeklyStreakComeBack": "вернись сегодня",
+  "@coachFallbackWeeklyStreakComeBack": {
+    "description": "Emphasis line on the weekly streak card when the streak is broken"
+  },
+  "coachFallbackWeeklyGapsTitle": "Пробелы",
+  "@coachFallbackWeeklyGapsTitle": {
+    "description": "Title of the offline weekly insight card about missing categories"
+  },
+  "coachFallbackWeeklyGapsNone": "Категории сегодня закрыты — отличный ориентир на неделю.",
+  "@coachFallbackWeeklyGapsNone": {
+    "description": "Weekly gaps card body when nothing is missing"
+  },
+  "coachFallbackWeeklyGapsList": "Чаще всего остаются: {categories}.",
+  "@coachFallbackWeeklyGapsList": {
+    "description": "Weekly gaps card body listing the categories left open",
+    "placeholders": {
+      "categories": {
+        "type": "String",
+        "example": "greens, beans"
+      }
+    }
+  },
+  "coachFallbackWeeklyAdviceTitle": "Совет коуча",
+  "@coachFallbackWeeklyAdviceTitle": {
+    "description": "Title of the offline weekly insight card with the coach tip"
+  },
+  "coachFallbackWeeklyAdviceBody": "Планируй 1–2 «якоря» (зелень + бобы) в первой половине дня.",
+  "@coachFallbackWeeklyAdviceBody": {
+    "description": "Default weekly coach tip when the server sent no summary"
+  },
+  "coachFallbackChallengeMessage": "Персональный квест сада на сегодня.",
+  "@coachFallbackChallengeMessage": {
+    "description": "Offline coach message that accompanies a personalized challenge"
+  },
+  "coachFallbackChallengeTitle": "Фокус: {category}",
+  "@coachFallbackChallengeTitle": {
+    "description": "Title of the offline personalized challenge",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "greens"
+      }
+    }
+  },
+  "coachFallbackChallengeDescription": "Закрой категорию {category} сегодня — росток вырастет крепче.",
+  "@coachFallbackChallengeDescription": {
+    "description": "Description of the offline personalized challenge",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "greens"
+      }
+    }
+  },
+  "coachFallbackEducationTip": "Категория «{category}» — часть Daily Dozen. Добавляй порции постепенно, без жёстких диетических правил. Это привычка, не лечение.",
+  "@coachFallbackEducationTip": {
+    "description": "Offline education tip; keeps the 'habit, not treatment' disclaimer",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "greens"
+      }
+    }
+  },
+  "educationTitle": "Полезное",
+  "@educationTitle": {
+    "description": "AppBar title of the education screen"
+  },
+  "educationLoading": "Готовим подсказку…",
+  "@educationLoading": {
+    "description": "Loading message while the education tip is fetched"
+  },
+  "educationEmptyTitle": "Скоро здесь будет интересно",
+  "@educationEmptyTitle": {
+    "description": "Empty-state title on the education screen"
+  },
+  "educationEmptyMessage": "Материалы о категории «{category}» уже готовятся.",
+  "@educationEmptyMessage": {
+    "description": "Empty-state body on the education screen",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "greens"
+      }
+    }
+  },
+  "educationDisclaimer": "Подсказка коуча — мотивация по Daily Dozen, не медицинский совет.",
+  "@educationDisclaimer": {
+    "description": "Compliance disclaimer at the bottom of the education screen"
+  },
+  "progressLoading": "Загружаем квесты...",
+  "@progressLoading": {
+    "description": "Loading state message on the challenges/progress screen"
+  },
+  "progressTitle": "Челленджи",
+  "@progressTitle": {
+    "description": "Title of the challenges (progress) screen app bar"
+  },
+  "progressSectionDaily": "Ежедневные",
+  "@progressSectionDaily": {
+    "description": "Section header above the daily challenge card"
+  },
+  "progressPremiumActive": "Premium активен · {multiplier}x очков",
+  "@progressPremiumActive": {
+    "description": "Note under the XP bar telling the user their Premium XP multiplier is active",
+    "placeholders": {
+      "multiplier": {
+        "type": "num",
+        "example": "2.0"
+      }
+    }
+  },
+  "progressStreakPerfect": "Идеальная серия",
+  "@progressStreakPerfect": {
+    "description": "Stat chip label: consecutive days where every goal was met"
+  },
+  "progressStreakActive": "Активная серия",
+  "@progressStreakActive": {
+    "description": "Stat chip label: consecutive days with at least one logged serving"
+  },
+  "progressStreakRecord": "Рекорд",
+  "@progressStreakRecord": {
+    "description": "Stat chip label: longest streak ever reached"
+  },
+  "progressPerfectDays": "Идеальные дни",
+  "@progressPerfectDays": {
+    "description": "Stat chip label: total count of fully completed days"
+  },
+  "progressStreakFreezes": "Заморозки",
+  "@progressStreakFreezes": {
+    "description": "Stat chip label: remaining streak freezes that protect a missed day"
+  },
+  "progressSectionAchievements": "Достижения",
+  "@progressSectionAchievements": {
+    "description": "Section header above the badge gallery grid"
+  },
+  "progressSectionRecentBadges": "Недавние награды",
+  "@progressSectionRecentBadges": {
+    "description": "Section header above the list of recently earned badges"
+  },
+  "progressSectionCategories": "Прогресс по категориям",
+  "@progressSectionCategories": {
+    "description": "Section header above the per-category mastery list"
+  },
+  "progressSectionXpHistory": "История очков",
+  "@progressSectionXpHistory": {
+    "description": "Section header above the XP event timeline"
+  },
+  "progressGenerateQuest": "Сгенерировать квест сада",
+  "@progressGenerateQuest": {
+    "description": "Premium button that asks the AI coach to create a personalized daily quest"
+  },
+  "progressSproutWaiting": "Росток ждёт тебя сегодня",
+  "@progressSproutWaiting": {
+    "description": "Gentle, non-guilty hint under the garden sprout when nothing was logged today"
+  },
+  "progressXpHistoryEmpty": "Здесь появится история твоих очков.",
+  "@progressXpHistoryEmpty": {
+    "description": "Empty state for the XP event timeline"
+  },
+  "progressLevelWithTitle": "Уровень {level} · {title}",
+  "@progressLevelWithTitle": {
+    "description": "Label on the XP progress bar combining the level number and its English domain title (e.g. Sprout)",
+    "placeholders": {
+      "level": {
+        "type": "int",
+        "example": "3"
+      },
+      "title": {
+        "type": "String",
+        "example": "Grower"
+      }
+    }
+  },
+  "challengeBadgeDailyPremium": "Квест · Premium",
+  "@challengeBadgeDailyPremium": {
+    "description": "Pill on the daily challenge card when the quest is locked behind Premium"
+  },
+  "challengeBadgeDaily": "Квест дня",
+  "@challengeBadgeDaily": {
+    "description": "Pill on the daily challenge card when the quest is available"
+  },
+  "challengeLockedDaily": "Открой Premium, чтобы получать бонусные очки за этот квест.",
+  "@challengeLockedDaily": {
+    "description": "Description shown instead of the quest text when the daily challenge is Premium-only"
+  },
+  "challengeDone": "Готово!",
+  "@challengeDone": {
+    "description": "Short progress label on the daily challenge card once it is completed"
+  },
+  "challengeBadgeWeekly": "ЧЕЛЛЕНДЖ НЕДЕЛИ",
+  "@challengeBadgeWeekly": {
+    "description": "Uppercase pill on the dark weekly challenge hero card"
+  },
+  "challengeLockedWeekly": "Открой Premium, чтобы участвовать в недельном челлендже.",
+  "@challengeLockedWeekly": {
+    "description": "Description shown instead of the challenge text when the weekly challenge is Premium-only"
+  },
+  "challengeCompleted": "Выполнено!",
+  "@challengeCompleted": {
+    "description": "Progress label on the weekly challenge hero card once it is completed"
+  },
+  "challengeProgressOf": "{progress} из {target}",
+  "@challengeProgressOf": {
+    "description": "Progress readout on the weekly challenge hero card, e.g. 3 of 7",
+    "placeholders": {
+      "progress": {
+        "type": "int",
+        "example": "3"
+      },
+      "target": {
+        "type": "int",
+        "example": "7"
+      }
+    }
+  },
+  "challengeXpReward": "+{xp, plural, one{{xp} очко} few{{xp} очка} many{{xp} очков} other{{xp} очков}}",
+  "@challengeXpReward": {
+    "description": "XP reward shown on the weekly challenge hero card, always prefixed with a plus sign",
+    "placeholders": {
+      "xp": {
+        "type": "int",
+        "example": "50"
+      }
+    }
+  },
+  "challengeDailyCompletedToast": "Квест дня выполнен: {title} (+{xp, plural, one{{xp} очко} few{{xp} очка} many{{xp} очков} other{{xp} очков}})",
+  "@challengeDailyCompletedToast": {
+    "description": "Snack bar celebrating a completed daily quest. The title comes from the domain layer and is currently English",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Morning Momentum"
+      },
+      "xp": {
+        "type": "int",
+        "example": "20"
+      }
+    }
+  },
+  "challengeWeeklyCompletedToast": "Челлендж недели выполнен: {title} (+{xp, plural, one{{xp} очко} few{{xp} очка} many{{xp} очков} other{{xp} очков}})",
+  "@challengeWeeklyCompletedToast": {
+    "description": "Snack bar celebrating a completed weekly challenge. The title comes from the domain layer and is currently English",
+    "placeholders": {
+      "title": {
+        "type": "String",
+        "example": "Perfect Week"
+      },
+      "xp": {
+        "type": "int",
+        "example": "150"
+      }
+    }
+  },
+  "masteryEmpty": "Отмечай продукты — и прокачивай категории.",
+  "@masteryEmpty": {
+    "description": "Empty state for the category mastery list, encouraging the user to start logging"
+  },
+  "masteryServingsLogged": "{count, plural, one{{count} порция отмечена} few{{count} порции отмечено} many{{count} порций отмечено} other{{count} порций отмечено}}",
+  "@masteryServingsLogged": {
+    "description": "Caption under a category that already reached the top (platinum) tier",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "42"
+      }
+    }
+  },
+  "masteryServingsToNextTier": "{current}/{target, plural, one{{target} порция} few{{target} порции} many{{target} порций} other{{target} порций}} до следующего уровня",
+  "@masteryServingsToNextTier": {
+    "description": "Caption under a category progress bar, e.g. 12/25 servings to the next tier",
+    "placeholders": {
+      "current": {
+        "type": "int",
+        "example": "12"
+      },
+      "target": {
+        "type": "int",
+        "example": "25"
+      }
+    }
+  },
+  "masteryTierBronze": "Бронза",
+  "@masteryTierBronze": {
+    "description": "Category mastery tier chip: bronze"
+  },
+  "masteryTierSilver": "Серебро",
+  "@masteryTierSilver": {
+    "description": "Category mastery tier chip: silver"
+  },
+  "masteryTierGold": "Золото",
+  "@masteryTierGold": {
+    "description": "Category mastery tier chip: gold"
+  },
+  "masteryTierPlatinum": "Платина",
+  "@masteryTierPlatinum": {
+    "description": "Category mastery tier chip: platinum, the highest tier"
+  },
+  "levelUpBadge": "НОВЫЙ УРОВЕНЬ",
+  "@levelUpBadge": {
+    "description": "Uppercase pill at the top of the full-screen level-up celebration"
+  },
+  "levelUpLevel": "Уровень {level}",
+  "@levelUpLevel": {
+    "description": "Big level number headline on the level-up celebration screen",
+    "placeholders": {
+      "level": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "levelUpSubtitle": "Твой росток стал ещё сильнее",
+  "@levelUpSubtitle": {
+    "description": "Warm subtitle under the new level title on the level-up celebration screen"
+  },
+  "levelUpContinue": "Продолжить",
+  "@levelUpContinue": {
+    "description": "Button that dismisses the level-up celebration screen"
+  },
+  "badgeUnlockedToast": "{emoji} Новая награда: {name}",
+  "@badgeUnlockedToast": {
+    "description": "Snack bar shown when a badge is unlocked. Both the emoji and the name come from the domain layer",
+    "placeholders": {
+      "emoji": {
+        "type": "String",
+        "example": "🌱"
+      },
+      "name": {
+        "type": "String",
+        "example": "First Step"
+      }
+    }
+  },
+  "badgeLocked": "Закрыто",
+  "@badgeLocked": {
+    "description": "Placeholder name shown on a badge gallery tile that is not unlocked yet"
+  },
+  "badgeEmpty": "Пока нет наград — всё впереди!",
+  "@badgeEmpty": {
+    "description": "Encouraging empty state for the list of earned badges"
+  },
+  "historyLoading": "Считаем твой прогресс...",
+  "@historyLoading": {
+    "description": "Full-screen loading message on the history/stats tab while the summary is being computed"
+  },
+  "historyLastDays": "{count, plural, one{Последний {count} день} few{Последние {count} дня} many{Последние {count} дней} other{Последние {count} дня}}",
+  "@historyLastDays": {
+    "description": "Period heading on the history screen. Also reused as both trend chart titles and as the weekly stat card label. Replaces HistorySummary.periodLabel, which the data layer builds in hardcoded English.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "historySubtitle": "Смотри, как растёт твоя полезная привычка.",
+  "@historySubtitle": {
+    "description": "Encouraging subtitle right under the period heading on the history screen"
+  },
+  "historyPaywallTitle": "Полная статистика — в Premium",
+  "@historyPaywallTitle": {
+    "description": "Headline of the paywall prompt shown instead of the history screen to non-premium users"
+  },
+  "historyPaywallBody": "Отмечать полезные продукты можно бесплатно. С Premium ты увидишь тренды, серии, графики порций и прогресс за месяц.",
+  "@historyPaywallBody": {
+    "description": "Body text of the history paywall prompt explaining what Premium unlocks"
+  },
+  "historyPaywallCta": "Посмотреть Premium",
+  "@historyPaywallCta": {
+    "description": "Primary button on the history paywall prompt that opens the paywall sheet"
+  },
+  "historyPaywallRestore": "Я уже подписан — обновить",
+  "@historyPaywallRestore": {
+    "description": "Secondary text button on the history paywall prompt that restores an existing purchase"
+  },
+  "historyHeatmapTitle": "Карта дней",
+  "@historyHeatmapTitle": {
+    "description": "Title of the monthly calendar heatmap card on the history screen. The month and year next to it come from intl DateFormat, not from ARB."
+  },
+  "historyLegendGoalMet": "Цель выполнена",
+  "@historyLegendGoalMet": {
+    "description": "Heatmap legend label for days where the daily goal was fully reached"
+  },
+  "historyLegendPartial": "Частично",
+  "@historyLegendPartial": {
+    "description": "Heatmap legend label for days with some progress but the goal not reached"
+  },
+  "historyLegendNoEntry": "Нет записи",
+  "@historyLegendNoEntry": {
+    "description": "Heatmap legend label for days with no log at all"
+  },
+  "historyHeatmapTooltip": "{date}: {done}/{total} {total, plural, one{порция} few{порции} many{порций} other{порции}} ({percent}%)",
+  "@historyHeatmapTooltip": {
+    "description": "Tooltip shown when long-pressing a day cell in the heatmap. The date is already formatted by intl DateFormat.yMMMd; percent is pre-rounded to a whole number.",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "31 авг. 2026 г."
+      },
+      "done": {
+        "type": "int",
+        "example": "3"
+      },
+      "total": {
+        "type": "int",
+        "example": "5"
+      },
+      "percent": {
+        "type": "String",
+        "example": "60"
+      }
+    }
+  },
+  "historyAveragePeriod": "Среднее за период",
+  "@historyAveragePeriod": {
+    "description": "Stat card label for the average completion percentage across the whole period"
+  },
+  "historyFullDays": "{done}/{total} {total, plural, one{полный день} few{полных дня} many{полных дней} other{полных дня}}",
+  "@historyFullDays": {
+    "description": "Stat card subtitle: how many days out of the period hit the goal completely",
+    "placeholders": {
+      "done": {
+        "type": "int",
+        "example": "12"
+      },
+      "total": {
+        "type": "int",
+        "example": "30"
+      }
+    }
+  },
+  "historyCurrentStreak": "Текущая серия",
+  "@historyCurrentStreak": {
+    "description": "Stat card label for the ongoing streak of goal-completed days"
+  },
+  "historyDaysInARow": "{count, plural, one{день подряд} few{дня подряд} many{дней подряд} other{дня подряд}}",
+  "@historyDaysInARow": {
+    "description": "Stat card subtitle under the current streak number. The number itself is rendered separately as the card value, so it must not be repeated here — only the noun agrees with it.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "historyBestRecord": "Рекорд",
+  "@historyBestRecord": {
+    "description": "Stat card label for the all-time best streak"
+  },
+  "historyBestStreakSubtitle": "лучшая серия",
+  "@historyBestStreakSubtitle": {
+    "description": "Stat card subtitle under the best streak number"
+  },
+  "historyWeeklyAverage": "среднее за неделю",
+  "@historyWeeklyAverage": {
+    "description": "Stat card subtitle under the last-7-days average completion percentage"
+  },
+  "profileChallengesTitle": "Челленджи и награды",
+  "@profileChallengesTitle": {
+    "description": "Title of the card on the profile screen that opens the challenges/progress screen"
+  },
+  "profileChallengesSubtitle": "Квесты, серии и все достижения",
+  "@profileChallengesSubtitle": {
+    "description": "Supporting line under profileChallengesTitle listing what the challenges screen contains"
+  },
+  "profileLevelCaption": "Уровень {level} · {title} 🌱",
+  "@profileLevelCaption": {
+    "description": "Caption under the profile avatar: current level number and the level's name",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String",
+        "example": "Росток"
+      }
+    }
+  },
+  "profileStatTotalPoints": "всего очков",
+  "@profileStatTotalPoints": {
+    "description": "Label under the big total-XP number in the profile stat card row"
+  },
+  "profileStatStreakDays": "{count,plural, one{🔥 день серия} few{🔥 дня серия} many{🔥 дней серия} other{🔥 дня серия}}",
+  "@profileStatStreakDays": {
+    "description": "Label under the current-streak number in the profile stat card row. The number itself is rendered separately above the label, so it must not be repeated here — count only selects the plural form.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "profileStatRecord": "🏆 рекорд",
+  "@profileStatRecord": {
+    "description": "Label under the longest-streak number in the profile stat card row"
+  },
+  "profileMaxLevel": "Максимальный уровень",
+  "@profileMaxLevel": {
+    "description": "Shown on the level progress card when the user has reached the highest level"
+  },
+  "profileNextLevel": "До уровня {level} · {title}",
+  "@profileNextLevel": {
+    "description": "Level progress card heading: how far it is to the next level and what that level is called",
+    "placeholders": {
+      "level": {
+        "type": "int"
+      },
+      "title": {
+        "type": "String",
+        "example": "Деревце"
+      }
+    }
+  },
+  "profileAchievements": "Достижения",
+  "@profileAchievements": {
+    "description": "Section header above the badge gallery on the profile screen"
+  },
+  "profileAchievementsCount": "{unlocked} из {total}",
+  "@profileAchievementsCount": {
+    "description": "Trailing counter next to the achievements section header: unlocked badges out of the total",
+    "placeholders": {
+      "unlocked": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "profileWeeklyActivity": "Активность недели",
+  "@profileWeeklyActivity": {
+    "description": "Title of the card showing seven dots, one per day of the current week"
+  },
+  "profileWeekdayMon": "Пн",
+  "@profileWeekdayMon": {
+    "description": "Short weekday label under the Monday dot of the weekly activity card"
+  },
+  "profileWeekdayTue": "Вт",
+  "@profileWeekdayTue": {
+    "description": "Short weekday label under the Tuesday dot of the weekly activity card"
+  },
+  "profileWeekdayWed": "Ср",
+  "@profileWeekdayWed": {
+    "description": "Short weekday label under the Wednesday dot of the weekly activity card"
+  },
+  "profileWeekdayThu": "Чт",
+  "@profileWeekdayThu": {
+    "description": "Short weekday label under the Thursday dot of the weekly activity card"
+  },
+  "profileWeekdayFri": "Пт",
+  "@profileWeekdayFri": {
+    "description": "Short weekday label under the Friday dot of the weekly activity card"
+  },
+  "profileWeekdaySat": "Сб",
+  "@profileWeekdaySat": {
+    "description": "Short weekday label under the Saturday dot of the weekly activity card"
+  },
+  "profileWeekdaySun": "Вс",
+  "@profileWeekdaySun": {
+    "description": "Short weekday label under the Sunday dot of the weekly activity card"
+  },
+  "profilePrivacyPolicy": "Политика конфиденциальности",
+  "@profilePrivacyPolicy": {
+    "description": "Footer link on the profile screen that opens the privacy policy in a browser"
+  },
+  "profileTermsOfService": "Условия использования",
+  "@profileTermsOfService": {
+    "description": "Footer link on the profile screen that opens the terms of use in a browser"
+  },
+  "profileLinkOpenFailed": "Не удалось открыть ссылку",
+  "@profileLinkOpenFailed": {
+    "description": "Snackbar shown when a legal link could not be opened in the browser"
+  },
+  "profileDeleteAccount": "Удалить аккаунт",
+  "@profileDeleteAccount": {
+    "description": "Destructive text button at the bottom of the profile screen"
+  },
+  "profileDeleteAccountConfirmTitle": "Удалить аккаунт?",
+  "@profileDeleteAccountConfirmTitle": {
+    "description": "Title of the confirmation dialog for deleting the account"
+  },
+  "profileDeleteAccountConfirmBody": "Это навсегда удалит профиль, дневные записи, историю, прогресс и данные подписки. Отменить это будет нельзя.\n\nАктивные подписки App Store / Play Store при удалении аккаунта не отменяются — управляй ими в настройках подписок магазина.",
+  "@profileDeleteAccountConfirmBody": {
+    "description": "Body of the account deletion dialog. Two paragraphs separated by a blank line: what gets erased, and the reminder that store subscriptions are billed separately. Keep the store names App Store / Play Store untranslated."
+  },
+  "profileDeleteAccountFailed": "Не удалось удалить аккаунт: {message}",
+  "@profileDeleteAccountFailed": {
+    "description": "Snackbar shown when account deletion failed, followed by the raw error text from the backend",
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCancel": "Отмена",
+  "@commonCancel": {
+    "description": "Generic dismiss button in dialogs"
+  },
+  "commonDelete": "Удалить",
+  "@commonDelete": {
+    "description": "Generic destructive confirm button in dialogs"
+  },
+  "commonErrorTitle": "Не получилось загрузить",
+  "@commonErrorTitle": {
+    "description": "Default headline of the shared AppErrorState widget"
+  },
+  "commonErrorMessage": "Проверь соединение и попробуй ещё раз",
+  "@commonErrorMessage": {
+    "description": "Default supporting copy of the shared AppErrorState widget. Informal second person."
+  },
+  "commonRetry": "Повторить",
+  "@commonRetry": {
+    "description": "Default label of the retry button in the shared AppErrorState widget"
+  },
+  "homeLoading": "Готовим твой день...",
+  "@homeLoading": {
+    "description": "Full-screen loading message on the home tab while today's tracker log is being fetched"
+  },
+  "homeAiCoach": "AI-коуч",
+  "@homeAiCoach": {
+    "description": "Text button under the daily challenge card that opens the AI coach screen"
+  },
+  "homeEatenToday": "Съедено сегодня",
+  "@homeEatenToday": {
+    "description": "Section header above the list of Daily-Dozen category tiles on the home tab"
+  },
+  "homeEmptyTitle": "Пока пусто",
+  "@homeEmptyTitle": {
+    "description": "Empty-state title on the home tab when the active filter matches no categories"
+  },
+  "homeEmptyMessage": "Добавь первый полезный продукт и получи очки",
+  "@homeEmptyMessage": {
+    "description": "Empty-state body on the home tab inviting the user to log a first serving"
+  },
+  "homeResetDay": "Сбросить день",
+  "@homeResetDay": {
+    "description": "Text button at the bottom of the home tab that clears all servings logged today"
+  },
+  "homeFilterAll": "Все",
+  "@homeFilterAll": {
+    "description": "Filter chip on the home tab showing every category. Keep it short — chips sit in one row"
+  },
+  "homeFilterRemaining": "Осталось",
+  "@homeFilterRemaining": {
+    "description": "Filter chip on the home tab showing only categories that are not finished yet. Keep it short"
+  },
+  "homeFilterDone": "Готово",
+  "@homeFilterDone": {
+    "description": "Filter chip on the home tab showing only finished categories. Keep it short"
+  },
+  "homeGreeting": "Привет! 🌱",
+  "@homeGreeting": {
+    "description": "Home header greeting used when the user has not set a display name"
+  },
+  "homeGreetingNamed": "Привет, {name} 🌱",
+  "@homeGreetingNamed": {
+    "description": "Home header greeting used when the user has a display name",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Аня"
+      }
+    }
+  },
+  "homeGreetingQuestion": "Что съедим полезного?",
+  "@homeGreetingQuestion": {
+    "description": "Home header headline under the greeting, asking what healthy food the user will eat today"
+  },
+  "homeTileDone": "Готово · +очки",
+  "@homeTileDone": {
+    "description": "Subtitle of a single-serving category tile once the serving is logged"
+  },
+  "homeTileTapToMark": "Нажми, чтобы отметить",
+  "@homeTileTapToMark": {
+    "description": "Subtitle of a single-serving category tile prompting the user to tap the check button"
+  },
+  "homeRemoveServingSemantics": "Убрать порцию: {category}",
+  "@homeRemoveServingSemantics": {
+    "description": "Screen-reader label for the minus button on a category tile. Not visible on screen",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "Beans / Legumes"
+      }
+    }
+  },
+  "homeCategoryCompletedSemantics": "{category} — выполнено",
+  "@homeCategoryCompletedSemantics": {
+    "description": "Screen-reader label for the check button of a category whose target is already reached",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "Beans / Legumes"
+      }
+    }
+  },
+  "homeAddServingSemantics": "Добавить порцию: {category} ({completed} из {total})",
+  "@homeAddServingSemantics": {
+    "description": "Screen-reader label for the check button that logs one more serving, with current progress",
+    "placeholders": {
+      "category": {
+        "type": "String",
+        "example": "Beans / Legumes"
+      },
+      "completed": {
+        "type": "int",
+        "example": "1"
+      },
+      "total": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "homeProgressOfGoal": "из {goal}",
+  "@homeProgressOfGoal": {
+    "description": "Caption under the big number inside the daily progress ring, naming the daily target",
+    "placeholders": {
+      "goal": {
+        "type": "int",
+        "example": "24"
+      }
+    }
+  },
+  "homeLevelBadge": "Уровень {level} · {title}",
+  "@homeLevelBadge": {
+    "description": "Badge on the home hero card showing the gamification level number and its title",
+    "placeholders": {
+      "level": {
+        "type": "int",
+        "example": "3"
+      },
+      "title": {
+        "type": "String",
+        "example": "Росток"
+      }
+    }
+  },
+  "homeRemainingServings": "{count, plural, one{Осталось {count} порция до цели дня} few{Осталось {count} порции до цели дня} many{Осталось {count} порций до цели дня} other{Осталось {count} порции до цели дня}}",
+  "@homeRemainingServings": {
+    "description": "Home hero card line telling how many servings are still missing today. The number is highlighted in the UI, so keep the count as a standalone number in the sentence",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "24"
+      }
+    }
+  },
+  "homeGoalReached": "Цель дня выполнена!",
+  "@homeGoalReached": {
+    "description": "Home hero card line replacing the remaining-servings sentence once the daily goal is met"
+  },
+  "homeStreakDays": "{count, plural, one{🔥 {count} день подряд} few{🔥 {count} дня подряд} many{🔥 {count} дней подряд} other{🔥 {count} дня подряд}}",
+  "@homeStreakDays": {
+    "description": "Home hero card line showing the current daily streak",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "authBrandName": "росток",
+  "@authBrandName": {
+    "description": "Lowercase brand wordmark next to the dot logo on the auth and onboarding screens"
+  },
+  "authCreateAccountButton": "Создать аккаунт",
+  "@authCreateAccountButton": {
+    "description": "Primary submit button on the auth screen while it is in register mode"
+  },
+  "authSignInButton": "Войти",
+  "@authSignInButton": {
+    "description": "Primary submit button on the auth screen while it is in sign-in mode"
+  },
+  "authRegisterHeadline": "Создай аккаунт",
+  "@authRegisterHeadline": {
+    "description": "Headline of the auth screen in register mode"
+  },
+  "authSignInHeadline": "С возвращением!",
+  "@authSignInHeadline": {
+    "description": "Headline of the auth screen in sign-in mode, welcoming a returning user"
+  },
+  "authRegisterSubtitle": "Пара шагов — и начинаем игру.",
+  "@authRegisterSubtitle": {
+    "description": "Subtitle under the auth headline in register mode"
+  },
+  "authSignInSubtitle": "Продолжай прокачивать своего ростка.",
+  "@authSignInSubtitle": {
+    "description": "Subtitle under the auth headline in sign-in mode. 'Росток' is the sprout mascot the user grows"
+  },
+  "authModeSignIn": "Вход",
+  "@authModeSignIn": {
+    "description": "Left half of the segmented sign-in/register toggle. Keep it to one short word"
+  },
+  "authModeRegister": "Регистрация",
+  "@authModeRegister": {
+    "description": "Right half of the segmented sign-in/register toggle. Keep it to one short word"
+  },
+  "authNameLabel": "Имя",
+  "@authNameLabel": {
+    "description": "Placeholder of the display-name field on the auth screen, shown only in register mode"
+  },
+  "authNameError": "Введите имя",
+  "@authNameError": {
+    "description": "Inline validation error under the name field when it is empty or too short"
+  },
+  "authEmailLabel": "Электронная почта",
+  "@authEmailLabel": {
+    "description": "Placeholder of the email field on the auth screen"
+  },
+  "authEmailError": "Введите корректную почту",
+  "@authEmailError": {
+    "description": "Inline validation error under the email field when the address is malformed"
+  },
+  "authPasswordLabel": "Пароль",
+  "@authPasswordLabel": {
+    "description": "Placeholder of the password field on the auth screen"
+  },
+  "authPasswordError": "{count, plural, one{Минимум {count} символ} few{Минимум {count} символа} many{Минимум {count} символов} other{Минимум {count} символа}}",
+  "@authPasswordError": {
+    "description": "Inline validation error under the password field stating the minimum length",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "8"
+      }
+    }
+  },
+  "authShowPassword": "Показать пароль",
+  "@authShowPassword": {
+    "description": "Screen-reader label for the eye button that reveals the typed password"
+  },
+  "authHidePassword": "Скрыть пароль",
+  "@authHidePassword": {
+    "description": "Screen-reader label for the eye button that masks the typed password"
+  },
+  "authDividerOr": "или",
+  "@authDividerOr": {
+    "description": "Divider label between the email form and the Apple/Google buttons. Lowercase, one word"
+  },
+  "onboardingTitle": "Ешь полезное —\nнабирай очки",
+  "@onboardingTitle": {
+    "description": "Onboarding headline. The line break is intentional — keep both halves short and balanced"
+  },
+  "onboardingSubtitle": "Отмечай полезные продукты, выполняй квесты и выращивай свой уровень.",
+  "@onboardingSubtitle": {
+    "description": "Onboarding body copy explaining the loop: log foods, finish quests, level up"
+  },
+  "onboardingStartButton": "Начать игру",
+  "@onboardingStartButton": {
+    "description": "Primary button that finishes onboarding and opens the home tab"
+  },
+  "splashLoading": "Растим твой росток...",
+  "@splashLoading": {
+    "description": "Loading message on the splash screen while the app decides where to route the user"
+  },
+  "splashStartupError": "Не получилось запустить приложение.",
+  "@splashStartupError": {
+    "description": "Fallback message on the splash screen when startup fails and the backend gave no reason"
+  },
+  "settingsTitle": "Настройки",
+  "@settingsTitle": {
+    "description": "Header of the settings menu on the profile screen"
+  },
+  "settingsLanguage": "Язык",
+  "@settingsLanguage": {
+    "description": "Settings row that opens the language picker"
+  },
+  "settingsSystemDefault": "Как в системе",
+  "@settingsSystemDefault": {
+    "description": "Option meaning 'follow the device setting' for both language and theme"
+  },
+  "settingsTheme": "Тема",
+  "@settingsTheme": {
+    "description": "Settings row that opens the theme picker"
+  },
+  "settingsThemeLight": "Светлая",
+  "@settingsThemeLight": {
+    "description": "Light theme option"
+  },
+  "settingsThemeDark": "Тёмная",
+  "@settingsThemeDark": {
+    "description": "Dark theme option"
+  },
+  "settingsAccount": "Аккаунт",
+  "@settingsAccount": {
+    "description": "Settings row that opens account actions"
+  },
+  "settingsSubscription": "Подписка",
+  "@settingsSubscription": {
+    "description": "Settings row that opens subscription management"
+  },
+  "settingsSignOut": "Выйти",
+  "@settingsSignOut": {
+    "description": "Sign out action"
+  },
+  "settingsSignOutConfirmTitle": "Выйти из аккаунта?",
+  "@settingsSignOutConfirmTitle": {
+    "description": "Title of the sign-out confirmation dialog"
+  },
+  "settingsSignOutConfirmBody": "Прогресс останется на сервере — просто войди снова.",
+  "@settingsSignOutConfirmBody": {
+    "description": "Reassuring body of the sign-out confirmation dialog"
+  },
+  "settingsSubscriptionActive": "Stay Alive Pro активна",
+  "@settingsSubscriptionActive": {
+    "description": "Subscription status when premium is active"
+  },
+  "settingsSubscriptionFree": "Бесплатный план",
+  "@settingsSubscriptionFree": {
+    "description": "Subscription status when the user has no premium"
+  },
+  "settingsSubscriptionExpires": "Активна до {date}",
+  "@settingsSubscriptionExpires": {
+    "description": "Renewal or expiry date of an active subscription",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "31 Aug 2026"
+      }
+    }
+  },
+  "settingsManageSubscription": "Управлять подпиской",
+  "@settingsManageSubscription": {
+    "description": "Opens the store's subscription management page"
+  },
+  "settingsRestorePurchases": "Восстановить покупки",
+  "@settingsRestorePurchases": {
+    "description": "Restores an existing purchase on this device"
+  },
+  "settingsManageUnavailable": "Доступно после оформления подписки",
+  "@settingsManageUnavailable": {
+    "description": "Why the manage-subscription row is disabled for free users"
+  }
+}

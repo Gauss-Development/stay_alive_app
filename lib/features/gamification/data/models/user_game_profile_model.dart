@@ -114,6 +114,8 @@ class UserGameProfileModel extends UserGameProfile {
       'patron' => BadgeId.patron,
       'firstBloom' => BadgeId.firstBloom,
       'streakGardener' => BadgeId.streakGardener,
+      'rainbowPlate' => BadgeId.rainbowPlate,
+      'nightOwl' => BadgeId.nightOwl,
       'first_log' => BadgeId.firstStep,
       'perfect_day' => BadgeId.perfectDay,
       'three_day_streak' => null,

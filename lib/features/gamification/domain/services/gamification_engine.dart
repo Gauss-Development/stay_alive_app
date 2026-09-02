@@ -16,6 +16,12 @@ class GamificationEngine {
 
   /// Shared cutoff for early-bird XP, badge, and Morning Momentum challenge.
   static const int earlyBirdHourCutoff = 9;
+
+  /// Evening cutoff for the Night Owl badge (21:00 local).
+  static const int nightOwlHourCutoff = 21;
+
+  /// Size of the Daily Dozen catalog (see category_definitions seed).
+  static const int dailyDozenCategoryCount = 12;
   static const double premiumXpMultiplier = 1.25;
   static const int premiumStreakFreezeAllowance = 2;
 
@@ -31,6 +37,8 @@ class GamificationEngine {
     BadgeId.patron: 150,
     BadgeId.firstBloom: 200,
     BadgeId.streakGardener: 100,
+    BadgeId.rainbowPlate: 75,
+    BadgeId.nightOwl: 75,
   };
 
   UserGameProfile reconcile({
@@ -50,6 +58,7 @@ class GamificationEngine {
     String? previousPerfectDate;
     final List<String> completedDates = <String>[];
     final Set<String> earlyLogDates = <String>{};
+    final Set<String> lateLogDates = <String>{};
     final Set<String> completedCategoryIds = <String>{};
     final Map<BadgeId, DateTime> earnedBadges = <BadgeId, DateTime>{};
     int winterPerfectDays = 0;
@@ -73,6 +82,15 @@ class GamificationEngine {
           reference,
           isPremium: isPremium,
         );
+        if (completedCategoryIds.length >= dailyDozenCategoryCount) {
+          _awardBadgeIfAvailable(
+            earnedBadges,
+            BadgeId.rainbowPlate,
+            _dateOnly(log.logDate),
+            reference,
+            isPremium: isPremium,
+          );
+        }
       }
 
       xp += xpFirstLogOfDay;
@@ -94,6 +112,19 @@ class GamificationEngine {
           _awardBadgeIfAvailable(
             earnedBadges,
             BadgeId.earlyBird,
+            _dateOnly(log.logDate),
+            reference,
+            isPremium: isPremium,
+          );
+        }
+      }
+
+      if (_isNightOwlDay(log)) {
+        lateLogDates.add(log.dateKey);
+        if (lateLogDates.length >= 5) {
+          _awardBadgeIfAvailable(
+            earnedBadges,
+            BadgeId.nightOwl,
             _dateOnly(log.logDate),
             reference,
             isPremium: isPremium,
@@ -476,6 +507,19 @@ class GamificationEngine {
       }
       final DateTime local = item.updatedAt.toLocal();
       if (local.hour < earlyBirdHourCutoff) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool _isNightOwlDay(DailyLog log) {
+    for (final DailyLogItem item in log.items) {
+      if (item.completedCount <= 0) {
+        continue;
+      }
+      final DateTime local = item.updatedAt.toLocal();
+      if (local.hour >= nightOwlHourCutoff) {
         return true;
       }
     }

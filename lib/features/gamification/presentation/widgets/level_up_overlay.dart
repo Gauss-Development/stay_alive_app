@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/motion/app_curves.dart';
 import 'package:stay_alive/core/motion/motion_config.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
@@ -85,10 +86,10 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: <Widget>[
-                              const ScalePop(
-                                delay: Duration(milliseconds: 150),
+                              ScalePop(
+                                delay: const Duration(milliseconds: 150),
                                 child: AppBadge(
-                                  label: 'НОВЫЙ УРОВЕНЬ',
+                                  label: context.l10n.levelUpBadge,
                                   onDark: true,
                                 ),
                               ),
@@ -98,9 +99,9 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                               FadeSlideIn(
                                 delay: const Duration(milliseconds: 650),
                                 child: Text(
-                                  'Уровень ${widget.level.level}',
+                                  context.l10n.levelUpLevel(widget.level.level),
                                   textAlign: TextAlign.center,
-                                  style: AppTextStyles.headlineLarge.copyWith(
+                                  style: context.text.headlineLarge?.copyWith(
                                     color: AppColors.white,
                                     fontSize: 44,
                                   ),
@@ -124,9 +125,9 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                               FadeSlideIn(
                                 delay: const Duration(milliseconds: 1050),
                                 child: Text(
-                                  'Твой росток стал ещё сильнее',
+                                  context.l10n.levelUpSubtitle,
                                   textAlign: TextAlign.center,
-                                  style: AppTextStyles.bodyMedium.copyWith(
+                                  style: context.text.bodyMedium?.copyWith(
                                     color: AppColors.textMuted,
                                   ),
                                 ),
@@ -141,7 +142,7 @@ class _LevelUpOverlayState extends State<LevelUpOverlay>
                       offset: 24,
                       child: PressableScale(
                         child: AppButton(
-                          text: 'Продолжить',
+                          text: context.l10n.levelUpContinue,
                           variant: AppButtonVariant.lime,
                           onPressed: widget.onDismiss,
                         ),

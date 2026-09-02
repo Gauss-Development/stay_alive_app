@@ -1,5 +1,6 @@
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/supabase/supabase_tables.dart';
+import 'package:stay_alive/features/coach/coach_l10n.dart';
 import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
 import 'package:stay_alive/features/coach/domain/services/coach_local_fallback.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
@@ -47,7 +48,7 @@ class CoachRemoteDataSourceImpl implements CoachRemoteDataSource {
       if (decoded is Map) {
         return CoachResponse.fromJson(Map<String, dynamic>.from(decoded));
       }
-      return CoachLocalFallback.respond(mode: mode, context: context);
+      return _fallback(mode, context);
     } catch (error, stackTrace) {
       _logger.warning(
         'AI coach invoke failed — fallback',
@@ -56,7 +57,15 @@ class CoachRemoteDataSourceImpl implements CoachRemoteDataSource {
           'stack': stackTrace.toString(),
         },
       );
-      return CoachLocalFallback.respond(mode: mode, context: context);
+      return _fallback(mode, context);
     }
   }
+
+  // The domain fallback is Flutter-free, so the copy is resolved here.
+  CoachResponse _fallback(CoachMode mode, CoachContextPayload context) =>
+      CoachLocalFallback.respond(
+        mode: mode,
+        context: context,
+        strings: coachFallbackStrings(coachL10n()),
+      );
 }

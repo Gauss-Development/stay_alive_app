@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -12,37 +13,39 @@ class HistoryStatsGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = context.l10n;
     final List<_StatCardData> cards = <_StatCardData>[
-          _StatCardData(
-            icon: Icons.calendar_month_outlined,
-            tint: AppColors.mutedGreen,
-            label: 'Среднее за период',
-            value: '${summary.averageCompletionPercentage.toStringAsFixed(1)}%',
-            subtitle:
-                '${summary.completedDays}/${summary.totalDays} '
-                'полных дней',
-          ),
-          _StatCardData(
-            icon: Icons.local_fire_department_outlined,
-            tint: AppColors.softYellow,
-            label: 'Текущая серия',
-            value: '${summary.currentStreak}',
-            subtitle: 'дней подряд',
-          ),
-          _StatCardData(
-            icon: Icons.emoji_events_outlined,
-            tint: AppColors.purple,
-            label: 'Рекорд',
-            value: '${summary.bestStreak}',
-            subtitle: 'лучшая серия',
-          ),
-          _StatCardData(
-            icon: Icons.trending_up_rounded,
-            tint: AppColors.blue,
-            label: 'Последние 7 дней',
-            value: '${summary.weeklyCompletionPercent.toStringAsFixed(1)}%',
-            subtitle: 'среднее за неделю',
-          ),
+      _StatCardData(
+        icon: Icons.calendar_month_outlined,
+        tint: AppColors.mutedGreen,
+        label: l10n.historyAveragePeriod,
+        value: '${summary.averageCompletionPercentage.toStringAsFixed(1)}%',
+        subtitle: l10n.historyFullDays(
+          summary.completedDays,
+          summary.totalDays,
+        ),
+      ),
+      _StatCardData(
+        icon: Icons.local_fire_department_outlined,
+        tint: AppColors.softYellow,
+        label: l10n.historyCurrentStreak,
+        value: '${summary.currentStreak}',
+        subtitle: l10n.historyDaysInARow(summary.currentStreak),
+      ),
+      _StatCardData(
+        icon: Icons.emoji_events_outlined,
+        tint: AppColors.purple,
+        label: l10n.historyBestRecord,
+        value: '${summary.bestStreak}',
+        subtitle: l10n.historyBestStreakSubtitle,
+      ),
+      _StatCardData(
+        icon: Icons.trending_up_rounded,
+        tint: AppColors.blue,
+        label: l10n.historyLastDays(7),
+        value: '${summary.weeklyCompletionPercent.toStringAsFixed(1)}%',
+        subtitle: l10n.historyWeeklyAverage,
+      ),
     ];
 
     return GridView.count(
@@ -102,7 +105,7 @@ class _HistoryStatCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   data.label,
-                  style: AppTextStyles.labelMedium,
+                  style: context.text.labelMedium,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -114,11 +117,11 @@ class _HistoryStatCard extends StatelessWidget {
             children: <Widget>[
               Text(
                 data.value,
-                style: AppTextStyles.headlineMedium.copyWith(fontSize: 22),
+                style: context.text.headlineMedium?.copyWith(fontSize: 22),
               ),
               Text(
                 data.subtitle,
-                style: AppTextStyles.bodySmall,
+                style: context.text.bodySmall,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

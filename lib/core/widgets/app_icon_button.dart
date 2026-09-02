@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:stay_alive/core/theme/app_colors.dart';
 
 /// Circular soft icon button — back arrows, settings, profile shortcuts.
 class AppIconButton extends StatelessWidget {
@@ -7,21 +6,26 @@ class AppIconButton extends StatelessWidget {
     required this.icon,
     this.onTap,
     this.size = 44,
-    this.background = AppColors.white,
-    this.iconColor = AppColors.textPrimary,
+    this.background,
+    this.iconColor,
     super.key,
   });
 
   final IconData icon;
   final VoidCallback? onTap;
   final double size;
-  final Color background;
-  final Color iconColor;
+
+  /// Defaults to the theme's card surface.
+  final Color? background;
+
+  /// Defaults to the theme's primary ink.
+  final Color? iconColor;
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     return Material(
-      color: background,
+      color: background ?? theme.cardTheme.color ?? theme.colorScheme.surface,
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -29,7 +33,11 @@ class AppIconButton extends StatelessWidget {
         child: SizedBox(
           width: size,
           height: size,
-          child: Icon(icon, size: size * 0.45, color: iconColor),
+          child: Icon(
+            icon,
+            size: size * 0.45,
+            color: iconColor ?? theme.colorScheme.onSurface,
+          ),
         ),
       ),
     );

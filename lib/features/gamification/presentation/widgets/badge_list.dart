@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -16,10 +17,7 @@ class BadgeList extends StatelessWidget {
     if (badges.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
-        child: Text(
-          'Пока нет наград — всё впереди!',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textMuted),
-        ),
+        child: Text(context.l10n.badgeEmpty, style: context.text.bodySmall),
       );
     }
 
@@ -69,20 +67,20 @@ class _BadgeTile extends StatelessWidget {
             children: <Widget>[
               Text(
                 def.name,
-                style: AppTextStyles.bodyLarge.copyWith(fontSize: 14),
+                style: context.text.bodyLarge?.copyWith(fontSize: 14),
               ),
               const SizedBox(height: 2),
               Text(
                 def.description,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.bodySmall,
+                style: context.text.bodySmall,
               ),
             ],
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
-        Text(dateStr, style: AppTextStyles.labelSmall),
+        Text(dateStr, style: context.text.labelSmall),
       ],
     );
   }

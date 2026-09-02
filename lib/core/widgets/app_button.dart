@@ -36,16 +36,20 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
+    final Color card = theme.cardTheme.color ?? cs.surface;
+
     final Color background = switch (variant) {
-      AppButtonVariant.dark => AppColors.dark,
-      AppButtonVariant.lime => AppColors.lime,
-      AppButtonVariant.light => AppColors.white,
+      AppButtonVariant.dark => cs.primary,
+      AppButtonVariant.lime => cs.tertiary,
+      AppButtonVariant.light => card,
     };
 
     final Color foreground = switch (variant) {
-      AppButtonVariant.dark => AppColors.white,
-      AppButtonVariant.lime => AppColors.dark,
-      AppButtonVariant.light => AppColors.dark,
+      AppButtonVariant.dark => cs.onPrimary,
+      AppButtonVariant.lime => cs.onTertiary,
+      AppButtonVariant.light => cs.onSurface,
     };
 
     return PressableScale(
@@ -59,8 +63,9 @@ class AppButton extends StatelessWidget {
             elevation: 0,
             backgroundColor: background,
             foregroundColor: foreground,
-            disabledBackgroundColor: AppColors.border,
-            disabledForegroundColor: AppColors.textMuted,
+            disabledBackgroundColor: cs.outline,
+            // labelSmall carries the palette's muted ink in both themes.
+            disabledForegroundColor: theme.textTheme.labelSmall?.color,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
@@ -72,9 +77,12 @@ class AppButton extends StatelessWidget {
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      variant == AppButtonVariant.dark
+                      // Lime pops on the dark CTA; in dark mode that CTA is
+                      // itself lime, so fall back to the button's own ink.
+                      variant == AppButtonVariant.dark &&
+                              theme.brightness == Brightness.light
                           ? AppColors.lime
-                          : AppColors.dark,
+                          : foreground,
                     ),
                   ),
                 )
@@ -90,7 +98,7 @@ class AppButton extends StatelessWidget {
                       child: Text(
                         text,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.labelLarge.copyWith(
+                        style: context.text.labelLarge?.copyWith(
                           color: foreground,
                           fontSize: 15,
                         ),

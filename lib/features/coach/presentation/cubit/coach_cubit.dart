@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stay_alive/features/coach/coach_l10n.dart';
 import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
 import 'package:stay_alive/features/coach/domain/usecases/invoke_coach_usecase.dart';
 import 'package:stay_alive/features/coach/presentation/cubit/coach_state.dart';
@@ -20,7 +21,7 @@ class CoachCubit extends Cubit<CoachState> {
     if (!isPremium && !current.canNudgeFree) {
       emit(
         current.copyWith(
-          errorMessage: 'Дневной лимит подсказок исчерпан. Открой Pro-чат.',
+          errorMessage: coachL10n().coachNudgeLimitReached,
         ),
       );
       return;

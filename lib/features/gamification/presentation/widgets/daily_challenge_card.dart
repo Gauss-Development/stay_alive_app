@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/motion/motion_config.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
@@ -53,7 +54,9 @@ class DailyChallengeCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: AppBadge(
-                    label: locked ? 'Квест · Premium' : 'Квест дня',
+                    label: locked
+                        ? context.l10n.challengeBadgeDailyPremium
+                        : context.l10n.challengeBadgeDaily,
                     accent: completed ? AppColors.green : AppColors.lime,
                   ),
                 ),
@@ -62,7 +65,7 @@ class DailyChallengeCard extends StatelessWidget {
                   delay: const Duration(milliseconds: 150),
                   child: Text(
                     '+${challenge.xpReward}',
-                    style: AppTextStyles.titleMedium.copyWith(
+                    style: context.text.titleMedium?.copyWith(
                       color: AppColors.green,
                     ),
                   ),
@@ -74,16 +77,16 @@ class DailyChallengeCard extends StatelessWidget {
               challenge.title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.titleMedium,
+              style: context.text.titleMedium,
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               locked
-                  ? 'Открой Premium, чтобы получать бонусные очки за этот квест.'
+                  ? context.l10n.challengeLockedDaily
                   : challenge.description,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.bodySmall,
+              style: context.text.bodySmall,
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
@@ -98,10 +101,12 @@ class DailyChallengeCard extends StatelessWidget {
                   locked
                       ? '—'
                       : completed
-                      ? 'Готово!'
+                      ? context.l10n.challengeDone
                       : '${challenge.progress}/${challenge.target}',
-                  style: AppTextStyles.labelMedium.copyWith(
-                    color: completed ? AppColors.green : AppColors.textMuted,
+                  style: context.text.labelMedium?.copyWith(
+                    color: completed
+                        ? AppColors.green
+                        : context.colors.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -224,24 +229,27 @@ class _WeeklyHeroCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const AppBadge(label: 'ЧЕЛЛЕНДЖ НЕДЕЛИ', onDark: true),
+                AppBadge(
+                  label: context.l10n.challengeBadgeWeekly,
+                  onDark: true,
+                ),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   challenge.title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.headlineMedium.copyWith(
+                  style: context.text.headlineMedium?.copyWith(
                     color: AppColors.white,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   locked
-                      ? 'Открой Premium, чтобы участвовать в недельном челлендже.'
+                      ? context.l10n.challengeLockedWeekly
                       : challenge.description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.bodySmall.copyWith(
+                  style: context.text.bodySmall?.copyWith(
                     color: AppColors.textMuted,
                   ),
                 ),
@@ -254,17 +262,20 @@ class _WeeklyHeroCard extends StatelessWidget {
                       locked
                           ? 'Premium'
                           : completed
-                          ? 'Выполнено!'
-                          : '${challenge.progress} из ${challenge.target}',
-                      style: AppTextStyles.bodySmall.copyWith(
+                          ? context.l10n.challengeCompleted
+                          : context.l10n.challengeProgressOf(
+                              challenge.progress,
+                              challenge.target,
+                            ),
+                      style: context.text.bodySmall?.copyWith(
                         color: AppColors.textMuted,
                       ),
                     ),
                     BadgePop(
                       delay: const Duration(milliseconds: 250),
                       child: Text(
-                        '+${challenge.xpReward} очков',
-                        style: AppTextStyles.titleMedium.copyWith(
+                        context.l10n.challengeXpReward(challenge.xpReward),
+                        style: context.text.titleMedium?.copyWith(
                           color: AppColors.lime,
                         ),
                       ),

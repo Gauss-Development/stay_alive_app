@@ -18,7 +18,7 @@ class AppSectionHeader extends StatelessWidget {
             title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.titleLarge,
+            style: context.text.titleLarge,
           ),
         ),
         if (trailing != null) ...<Widget>[const SizedBox(width: 8), trailing!],

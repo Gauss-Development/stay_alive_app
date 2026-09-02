@@ -38,7 +38,7 @@ class AppScaffold extends StatelessWidget {
                       const SizedBox(width: 44),
                     Expanded(
                       child: Center(
-                        child: Text(title!, style: AppTextStyles.titleLarge),
+                        child: Text(title!, style: context.text.titleLarge),
                       ),
                     ),
                     if (actions == null || actions!.isEmpty)

@@ -7,10 +7,9 @@
 -keep class com.revenuecat.purchases.** { *; }
 -dontwarn com.revenuecat.purchases.**
 
-# Appwrite / Gson reflection
+# Gson reflection (used transitively by the RevenueCat Android SDK)
 -keepattributes Signature
 -keepattributes *Annotation*
--keep class io.appwrite.** { *; }
 -keep class com.google.gson.** { *; }
 -keepclassmembers,allowobfuscation class * {
     @com.google.gson.annotations.SerializedName <fields>;

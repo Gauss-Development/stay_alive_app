@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:stay_alive/core/constants/category_assets.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
-import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/animations/animated_check_button.dart';
 import 'package:stay_alive/core/widgets/animations/pressable_scale.dart';
 import 'package:stay_alive/features/daily_tracker/domain/entities/daily_log_item.dart';
@@ -28,12 +28,16 @@ class CategoryProgressTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isCompleted = item.isCompleted;
+    final ThemeData theme = Theme.of(context);
+    // The muted ink only surfaces through labelSmall — ColorScheme has no
+    // role for it.
+    final Color? mutedInk = theme.textTheme.labelSmall?.color;
 
     return PressableScale(
       pressedScale: 0.98,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: theme.cardTheme.color ?? theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: <BoxShadow>[
             BoxShadow(
@@ -62,15 +66,14 @@ class CategoryProgressTile extends StatelessWidget {
                       item.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.bodyLarge.copyWith(
+                      style: theme.textTheme.bodyLarge?.copyWith(
                         fontSize: 15,
-                        color: isCompleted
-                            ? AppColors.textMuted
-                            : AppColors.textPrimary,
+                        // null keeps bodyLarge's own primary ink.
+                        color: isCompleted ? mutedInk : null,
                         decoration: isCompleted
                             ? TextDecoration.lineThrough
                             : TextDecoration.none,
-                        decorationColor: AppColors.textMuted,
+                        decorationColor: mutedInk,
                       ),
                     ),
                     const SizedBox(height: 6),
@@ -148,10 +151,7 @@ class _CategoryIcon extends StatelessWidget {
             : null,
       ),
       child: assetPath != null
-          ? _CategoryAssetIcon(
-              assetPath: assetPath,
-              isCompleted: isCompleted,
-            )
+          ? _CategoryAssetIcon(assetPath: assetPath, isCompleted: isCompleted)
           : Icon(
               _icons[iconKey.toLowerCase()] ?? Icons.eco_rounded,
               color: AppColors.textPrimary.withValues(
@@ -185,9 +185,7 @@ class _CategoryAssetIcon extends StatelessWidget {
     );
 
     return Center(
-      child: isCompleted
-          ? Opacity(opacity: 0.45, child: image)
-          : image,
+      child: isCompleted ? Opacity(opacity: 0.45, child: image) : image,
     );
   }
 }
@@ -205,12 +203,17 @@ class _CategoryProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final Color? labelColor = isCompleted
+        ? AppColors.green
+        : theme.textTheme.labelSmall?.color;
+
     if (total <= 1) {
       return Text(
-        isCompleted ? 'Готово · +очки' : 'Нажми, чтобы отметить',
-        style: AppTextStyles.labelMedium.copyWith(
-          color: isCompleted ? AppColors.green : AppColors.textMuted,
-        ),
+        isCompleted
+            ? context.l10n.homeTileDone
+            : context.l10n.homeTileTapToMark,
+        style: theme.textTheme.labelMedium?.copyWith(color: labelColor),
       );
     }
 
@@ -225,7 +228,9 @@ class _CategoryProgress extends StatelessWidget {
               width: filled ? 10 : 8,
               height: filled ? 10 : 8,
               decoration: BoxDecoration(
-                color: filled ? AppColors.lime : AppColors.border,
+                color: filled
+                    ? AppColors.lime
+                    : theme.colorScheme.outlineVariant,
                 shape: BoxShape.circle,
               ),
             ),
@@ -236,9 +241,7 @@ class _CategoryProgress extends StatelessWidget {
 
     return Text(
       '$completed / $total',
-      style: AppTextStyles.labelMedium.copyWith(
-        color: isCompleted ? AppColors.green : AppColors.textMuted,
-      ),
+      style: theme.textTheme.labelMedium?.copyWith(color: labelColor),
     );
   }
 }
@@ -278,12 +281,18 @@ class _TileControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    // Inset pill on top of the tile: the chip colour, so it stays a shade
+    // apart from the card in both themes.
+    final Color pill =
+        theme.chipTheme.backgroundColor ?? theme.colorScheme.surface;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
         if (completedCount > 0) ...<Widget>[
           Semantics(
-            label: 'Убрать порцию: $categoryTitle',
+            label: context.l10n.homeRemoveServingSemantics(categoryTitle),
             button: true,
             child: GestureDetector(
               onTap: _handleDecrement,
@@ -295,14 +304,14 @@ class _TileControls extends StatelessWidget {
                   child: Container(
                     width: 30,
                     height: 30,
-                    decoration: const BoxDecoration(
-                      color: AppColors.surface,
+                    decoration: BoxDecoration(
+                      color: pill,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.remove_rounded,
                       size: 16,
-                      color: AppColors.textMuted,
+                      color: theme.textTheme.labelSmall?.color,
                     ),
                   ),
                 ),
@@ -313,9 +322,12 @@ class _TileControls extends StatelessWidget {
         ],
         Semantics(
           label: isCompleted
-              ? '$categoryTitle — выполнено'
-              : 'Добавить порцию: $categoryTitle '
-                    '($completedCount из $totalTarget)',
+              ? context.l10n.homeCategoryCompletedSemantics(categoryTitle)
+              : context.l10n.homeAddServingSemantics(
+                  categoryTitle,
+                  completedCount,
+                  totalTarget,
+                ),
           button: true,
           enabled: !isCompleted,
           child: GestureDetector(

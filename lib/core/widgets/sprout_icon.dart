@@ -61,7 +61,9 @@ class SproutEmblem extends StatelessWidget {
         height: size * 0.68,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color:
+              Theme.of(context).cardTheme.color ??
+              Theme.of(context).colorScheme.surface,
           shape: BoxShape.circle,
           boxShadow: <BoxShadow>[
             BoxShadow(

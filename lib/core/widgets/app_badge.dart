@@ -22,10 +22,14 @@ class AppBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    // The chip theme carries the inset-pill tone: soft surface / dark chip.
+    final Color chip =
+        theme.chipTheme.backgroundColor ?? theme.colorScheme.surface;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: onDark ? AppColors.darkChip : AppColors.surface,
+        color: onDark ? AppColors.darkChip : chip,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
@@ -44,8 +48,8 @@ class AppBadge extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.labelMedium.copyWith(
-                color: onDark ? accent : AppColors.textPrimary,
+              style: context.text.labelMedium?.copyWith(
+                color: onDark ? accent : context.colors.onSurface,
               ),
             ),
           ),

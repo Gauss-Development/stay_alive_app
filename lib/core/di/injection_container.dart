@@ -1,5 +1,8 @@
 import 'package:get_it/get_it.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
+import 'package:stay_alive/core/settings/settings_cubit.dart';
+import 'package:stay_alive/core/settings/app_settings.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stay_alive/core/env/env_config.dart';
 import 'package:stay_alive/core/logger/app_logger.dart';
 import 'package:stay_alive/core/logger/logger_service.dart';
@@ -50,7 +53,6 @@ import 'package:stay_alive/features/history/data/repositories_impl/history_repos
 import 'package:stay_alive/features/history/domain/repositories/history_repository.dart';
 import 'package:stay_alive/features/history/domain/usecases/get_history_summary_usecase.dart';
 import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dart';
-import 'package:stay_alive/features/subscription/data/datasources/mock_subscription_data_source.dart';
 import 'package:stay_alive/features/subscription/data/datasources/revenue_cat_subscription_data_source.dart';
 import 'package:stay_alive/features/subscription/data/repositories_impl/subscription_repository_impl.dart';
 import 'package:stay_alive/features/subscription/domain/repositories/subscription_repository.dart';
@@ -70,6 +72,16 @@ final GetIt sl = GetIt.instance;
 Future<void> configureDependencies(AppFlavor flavor) async {
   await sl.reset();
   sl.registerSingleton<AppFlavor>(flavor);
+  // Settings are read synchronously after this await, so the first frame
+  // already knows the user's language and theme.
+  final SettingsStore settingsStore = SettingsStore(
+    await SharedPreferences.getInstance(),
+  );
+  sl
+    ..registerSingleton<SettingsStore>(settingsStore)
+    ..registerSingleton<SettingsCubit>(
+      SettingsCubit(store: settingsStore, initial: settingsStore.read()),
+    );
   _registerCore();
   _registerAuthFeature();
   _registerDailyTrackerFeature();
@@ -320,25 +332,14 @@ void _registerSubscriptionFeature() {
     ..registerLazySingleton<RevenueCatGateway>(
       () => const PurchasesRevenueCatGateway(),
     )
-    ..registerLazySingleton<SubscriptionRemoteDataSource>(() {
-      final EnvConfig envConfig = sl<EnvConfig>();
-      // Dev on the committed test_ keys = no real store reachable → simulate
-      // the store so the paywall/purchase flow is testable on simulators.
-      final bool mockStore = envConfig.appFlavor.isDevelopment &&
-          envConfig.revenueCatIosApiKey.startsWith('test_');
-      if (mockStore) {
-        return MockSubscriptionRemoteDataSource(
-          auth: sl<GoTrueClient>(),
-          logger: sl<AppLogger>(),
-        );
-      }
-      return RevenueCatSubscriptionRemoteDataSource(
+    ..registerLazySingleton<SubscriptionRemoteDataSource>(
+      () => RevenueCatSubscriptionRemoteDataSource(
         revenueCatGateway: sl<RevenueCatGateway>(),
         auth: sl<GoTrueClient>(),
         envConfig: sl<EnvConfig>(),
         logger: sl<AppLogger>(),
-      );
-    })
+      ),
+    )
     ..registerLazySingleton<SubscriptionRepository>(
       () => SubscriptionRepositoryImpl(sl<SubscriptionRemoteDataSource>()),
     )

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
@@ -14,6 +15,9 @@ import 'package:stay_alive/features/history/presentation/cubit/history_cubit.dar
 import 'package:stay_alive/features/subscription/presentation/cubit/subscription_cubit.dart';
 import 'package:stay_alive/features/user/presentation/cubit/user_profile_cubit.dart';
 import 'package:stay_alive/router.dart';
+import 'package:stay_alive/core/settings/app_settings.dart';
+import 'package:stay_alive/core/settings/settings_cubit.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_theme.dart';
 
 class DailyDozenApp extends StatefulWidget {
@@ -57,16 +61,30 @@ class _DailyDozenAppState extends State<DailyDozenApp> {
         BlocProvider<HistoryCubit>(create: (_) => sl<HistoryCubit>()),
         BlocProvider<AnalyticsCubit>(create: (_) => sl<AnalyticsCubit>()),
         BlocProvider<SubscriptionCubit>(create: (_) => sl<SubscriptionCubit>()),
+        BlocProvider<SettingsCubit>.value(value: sl<SettingsCubit>()),
       ],
-      child: MaterialApp.router(
-        title: 'Росток',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        routerConfig: _router,
-        builder: (BuildContext context, Widget? child) {
-          return GamificationCelebrationHost(
-            child: child ?? const SizedBox.shrink(),
+      child: BlocBuilder<SettingsCubit, AppSettings>(
+        builder: (BuildContext context, AppSettings settings) {
+          return MaterialApp.router(
+            onGenerateTitle: (BuildContext context) => context.l10n.appTitle,
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            // Null means "follow the device" — Flutter then resolves against
+            // supportedLocales exactly as it did before the picker existed.
+            locale: settings.locale,
+            themeMode: settings.themeMode,
+            routerConfig: _router,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: supportedLocales,
+            builder: (BuildContext context, Widget? child) {
+              // `intl` formats dates through a global, so keep it in step with
+              // the locale Flutter actually resolved for this build.
+              Intl.defaultLocale = Localizations.localeOf(context).languageCode;
+              return GamificationCelebrationHost(
+                child: child ?? const SizedBox.shrink(),
+              );
+            },
           );
         },
       ),

@@ -12,7 +12,7 @@ import 'package:stay_alive/core/theme/app_spacing.dart';
 class AppProgressBar extends StatelessWidget {
   const AppProgressBar({
     required this.value,
-    this.backgroundColor = AppColors.border,
+    this.backgroundColor,
     this.valueColor = AppColors.lime,
     this.height = 8,
     super.key,
@@ -20,13 +20,16 @@ class AppProgressBar extends StatelessWidget {
 
   /// 0.0–1.0.
   final double value;
-  final Color backgroundColor;
+
+  /// Track colour; defaults to the theme's hairline tone.
+  final Color? backgroundColor;
   final Color valueColor;
   final double height;
 
   @override
   Widget build(BuildContext context) {
     final bool reduceMotion = MotionConfig.reduceMotionOf(context);
+    final Color track = backgroundColor ?? Theme.of(context).colorScheme.outline;
     return ClipRRect(
       borderRadius: BorderRadius.circular(AppRadius.pill),
       child: SizedBox(
@@ -37,7 +40,7 @@ class AppProgressBar extends StatelessWidget {
           curve: AppCurves.standard,
           builder: (BuildContext context, double animatedValue, Widget? _) {
             return DecoratedBox(
-              decoration: BoxDecoration(color: backgroundColor),
+              decoration: BoxDecoration(color: track),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: FractionallySizedBox(

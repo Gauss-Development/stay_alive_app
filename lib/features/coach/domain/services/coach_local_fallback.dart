@@ -1,110 +1,178 @@
 import 'package:stay_alive/features/coach/domain/entities/coach_entities.dart';
 import 'package:stay_alive/features/gamification/domain/entities/personalized_challenge_draft.dart';
 
+/// Copy for [CoachLocalFallback], as plain Dart.
+///
+/// The domain layer must not import Flutter, so it only declares the shape of
+/// the text it needs; the data layer fills it in from `AppLocalizations`
+/// (see `lib/features/coach/coach_l10n.dart`).
+class CoachFallbackStrings {
+  const CoachFallbackStrings({
+    required this.nudgeWilting,
+    required this.nudgeNextStep,
+    required this.nudgeAllDone,
+    required this.chatIntro,
+    required this.chatGaps,
+    required this.chatAllDone,
+    required this.weeklyMessage,
+    required this.weeklyStreakTitle,
+    required this.weeklyStreakBody,
+    required this.weeklyStreakKeepRhythm,
+    required this.weeklyStreakComeBack,
+    required this.weeklyGapsTitle,
+    required this.weeklyGapsNone,
+    required this.weeklyGapsList,
+    required this.weeklyAdviceTitle,
+    required this.weeklyAdviceBody,
+    required this.challengeMessage,
+    required this.challengeTitle,
+    required this.challengeDescription,
+    required this.educationTip,
+  });
+
+  final String Function(int streak) nudgeWilting;
+  final String Function(int completed, int target, String category)
+      nudgeNextStep;
+  final String nudgeAllDone;
+
+  final String Function(int streak) chatIntro;
+  final String Function(String categories, String levelTitle) chatGaps;
+  final String chatAllDone;
+
+  final String weeklyMessage;
+  final String weeklyStreakTitle;
+  final String Function(int streak, int activityStreak, String levelTitle)
+      weeklyStreakBody;
+  final String weeklyStreakKeepRhythm;
+  final String weeklyStreakComeBack;
+  final String weeklyGapsTitle;
+  final String weeklyGapsNone;
+  final String Function(String categories) weeklyGapsList;
+  final String weeklyAdviceTitle;
+  final String weeklyAdviceBody;
+
+  final String challengeMessage;
+  final String Function(String category) challengeTitle;
+  final String Function(String category) challengeDescription;
+
+  final String Function(String category) educationTip;
+}
+
 /// Rule-based coach responses used when the ai_coach edge function is unavailable.
 abstract final class CoachLocalFallback {
   static CoachResponse respond({
     required CoachMode mode,
     required CoachContextPayload context,
+    required CoachFallbackStrings strings,
   }) {
     return switch (mode) {
-      CoachMode.nudge => _nudge(context),
-      CoachMode.chat => _chat(context),
-      CoachMode.weeklyInsight => _weekly(context),
-      CoachMode.personalizeChallenge => _challenge(context),
-      CoachMode.educationTip => _education(context),
+      CoachMode.nudge => _nudge(context, strings),
+      CoachMode.chat => _chat(context, strings),
+      CoachMode.weeklyInsight => _weekly(context, strings),
+      CoachMode.personalizeChallenge => _challenge(context, strings),
+      CoachMode.educationTip => _education(context, strings),
     };
   }
 
-  static CoachResponse _nudge(CoachContextPayload context) {
+  static CoachResponse _nudge(
+    CoachContextPayload context,
+    CoachFallbackStrings strings,
+  ) {
     if (context.wilting) {
       return CoachResponse(
-        message:
-            'Росток слегка вянет — даже одна порция сегодня поддержит серию '
-            '(сейчас ${context.streak} дн.).',
+        message: strings.nudgeWilting(context.streak),
         fromFallback: true,
       );
     }
     if (context.incompleteCategories.isNotEmpty) {
-      final String next = context.incompleteCategories.first;
       return CoachResponse(
-        message:
-            'Отличный прогресс: ${context.todayCompleted}/${context.todayTarget}. '
-            'Следующий шаг — $next.',
+        message: strings.nudgeNextStep(
+          context.todayCompleted,
+          context.todayTarget,
+          context.incompleteCategories.first,
+        ),
         fromFallback: true,
       );
     }
-    return const CoachResponse(
-      message: 'День закрыт по всем категориям — росток благодарен!',
+    return CoachResponse(
+      message: strings.nudgeAllDone,
       fromFallback: true,
     );
   }
 
-  static CoachResponse _chat(CoachContextPayload context) {
+  static CoachResponse _chat(
+    CoachContextPayload context,
+    CoachFallbackStrings strings,
+  ) {
     final String ask = context.userMessage?.trim() ?? '';
     if (ask.isEmpty) {
       return CoachResponse(
-        message:
-            'Я коуч «Ростка». Спроси, что добрать сегодня, или как удержать '
-            'серию ${context.streak} дн. Я не ставлю диагнозов — только мотивацию '
-            'по Daily Dozen.',
+        message: strings.chatIntro(context.streak),
         fromFallback: true,
       );
     }
     if (context.incompleteCategories.isNotEmpty) {
       return CoachResponse(
-        message:
-            'По твоим логам не хватает: ${context.incompleteCategories.join(', ')}. '
-            'Выбери одну категорию и отметь порцию — маленькие шаги копят уровень '
-            '${context.levelTitle}.',
+        message: strings.chatGaps(
+          context.incompleteCategories.join(', '),
+          context.levelTitle,
+        ),
         fromFallback: true,
       );
     }
-    return const CoachResponse(
-      message:
-          'Сегодня всё закрыто. Завтра сфокусируйся на раннем логе до 9:00 — '
-          'это даёт бонусные очки и поддерживает росток.',
+    return CoachResponse(
+      message: strings.chatAllDone,
       fromFallback: true,
     );
   }
 
-  static CoachResponse _weekly(CoachContextPayload context) {
+  static CoachResponse _weekly(
+    CoachContextPayload context,
+    CoachFallbackStrings strings,
+  ) {
     return CoachResponse(
-      message: 'Недельный разбор готов.',
+      message: strings.weeklyMessage,
       insightCards: <WeeklyInsightCard>[
         WeeklyInsightCard(
-          title: 'Серия',
-          body:
-              'Идеальная серия: ${context.streak} дн., активность: '
-              '${context.activityStreak} дн. Уровень ${context.levelTitle}.',
-          emphasis: context.streak > 0 ? 'держи ритм' : 'вернись сегодня',
+          title: strings.weeklyStreakTitle,
+          body: strings.weeklyStreakBody(
+            context.streak,
+            context.activityStreak,
+            context.levelTitle,
+          ),
+          emphasis: context.streak > 0
+              ? strings.weeklyStreakKeepRhythm
+              : strings.weeklyStreakComeBack,
         ),
         WeeklyInsightCard(
-          title: 'Пробелы',
+          title: strings.weeklyGapsTitle,
           body: context.incompleteCategories.isEmpty
-              ? 'Категории сегодня закрыты — отличный ориентир на неделю.'
-              : 'Чаще всего остаются: ${context.incompleteCategories.take(3).join(', ')}.',
+              ? strings.weeklyGapsNone
+              : strings.weeklyGapsList(
+                  context.incompleteCategories.take(3).join(', '),
+                ),
         ),
         WeeklyInsightCard(
-          title: 'Совет коуча',
-          body:
-              context.weekSummary ??
-              'Планируй 1–2 «якоря» (зелень + бобы) в первой половине дня.',
+          title: strings.weeklyAdviceTitle,
+          body: context.weekSummary ?? strings.weeklyAdviceBody,
         ),
       ],
       fromFallback: true,
     );
   }
 
-  static CoachResponse _challenge(CoachContextPayload context) {
+  static CoachResponse _challenge(
+    CoachContextPayload context,
+    CoachFallbackStrings strings,
+  ) {
     final String focus = context.incompleteCategories.isNotEmpty
         ? context.incompleteCategories.first
         : 'greens';
     return CoachResponse(
-      message: 'Персональный квест сада на сегодня.',
+      message: strings.challengeMessage,
       challengeDraft: PersonalizedChallengeDraft(
-        title: 'Focus: $focus',
-        description: 'Закрой категорию $focus сегодня — росток вырастет крепче.',
+        title: strings.challengeTitle(focus),
+        description: strings.challengeDescription(focus),
         target: 1,
         xpReward: 45,
         categoryId: focus,
@@ -114,12 +182,12 @@ abstract final class CoachLocalFallback {
     );
   }
 
-  static CoachResponse _education(CoachContextPayload context) {
-    final String id = context.categoryId ?? 'greens';
+  static CoachResponse _education(
+    CoachContextPayload context,
+    CoachFallbackStrings strings,
+  ) {
     return CoachResponse(
-      message:
-          'Категория «$id» — часть Daily Dozen. Добавляй порции постепенно, '
-          'без жёстких диетических правил. Это привычка, не лечение.',
+      message: strings.educationTip(context.categoryId ?? 'greens'),
       fromFallback: true,
     );
   }

@@ -27,17 +27,6 @@ enum SubscriptionPlan {
     }
   }
 
-  String get defaultPriceLabel {
-    switch (this) {
-      case SubscriptionPlan.free:
-        return r'$0';
-      case SubscriptionPlan.monthly:
-        return r'$9.99';
-      case SubscriptionPlan.annual:
-        return r'$59.99';
-    }
-  }
-
   String get periodLabel {
     switch (this) {
       case SubscriptionPlan.free:

@@ -50,7 +50,7 @@ lib/
 
 - **Presentation** depends on **Domain**
 - **Data** depends on **Domain**
-- **Domain** does not depend on Flutter/Appwrite
+- **Domain** does not depend on Flutter or Supabase
 
 ## Environment Configuration
 

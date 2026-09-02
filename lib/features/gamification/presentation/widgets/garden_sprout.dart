@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/motion/motion_config.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/widgets/sprout_image.dart';
@@ -56,7 +57,7 @@ class GardenSprout extends StatelessWidget {
         if (showWiltingHint && state.wilting) ...<Widget>[
           const SizedBox(height: 8),
           Text(
-            'Росток ждёт тебя сегодня',
+            context.l10n.progressSproutWaiting,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.green,
                   fontWeight: FontWeight.w600,

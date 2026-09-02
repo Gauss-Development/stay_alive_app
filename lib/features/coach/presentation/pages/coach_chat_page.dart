@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
-import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/features/subscription/presentation/paywall.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -38,26 +38,25 @@ class _CoachChatPageState extends State<CoachChatPage> {
 
     if (!isPremium) {
       return AppScaffold(
-        title: 'AI-коуч',
+        title: context.l10n.coachTitle,
         body: Padding(
           padding: const EdgeInsets.all(AppSpacing.screen),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               Text(
-                'Чат с коучем — часть Stay Alive Pro',
-                style: AppTextStyles.headlineMedium,
+                context.l10n.coachPaywallTitle,
+                style: context.text.headlineMedium,
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Персональные советы, разборы недели и квесты сада. '
-                'Это мотивация по Daily Dozen, не медицинские рекомендации.',
-                style: AppTextStyles.bodyMedium,
+                context.l10n.coachPaywallDescription,
+                style: context.text.bodyMedium,
               ),
               const Spacer(),
               AppButton(
-                text: 'Открыть Premium',
-                onPressed: () => context.push(AppRoutes.premium),
+                text: context.l10n.coachPaywallCta,
+                onPressed: () => showPaywall(context),
               ),
             ],
           ),
@@ -66,7 +65,7 @@ class _CoachChatPageState extends State<CoachChatPage> {
     }
 
     return AppScaffold(
-      title: 'AI-коуч',
+      title: context.l10n.coachTitle,
       body: Column(
         children: <Widget>[
           Padding(
@@ -77,10 +76,8 @@ class _CoachChatPageState extends State<CoachChatPage> {
               0,
             ),
             child: Text(
-              'Коуч помогает с привычкой Daily Dozen. Не заменяет врача.',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textMuted,
-              ),
+              context.l10n.coachChatDisclaimer,
+              style: context.text.bodySmall,
             ),
           ),
           Expanded(
@@ -97,9 +94,9 @@ class _CoachChatPageState extends State<CoachChatPage> {
                     child: Padding(
                       padding: const EdgeInsets.all(AppSpacing.screen),
                       child: Text(
-                        'Спроси, что добрать сегодня или как удержать серию.',
+                        context.l10n.coachChatEmptyHint,
                         textAlign: TextAlign.center,
-                        style: AppTextStyles.bodyMedium,
+                        style: context.text.bodyMedium,
                       ),
                     ),
                   );
@@ -120,12 +117,16 @@ class _CoachChatPageState extends State<CoachChatPage> {
                           maxWidth: MediaQuery.sizeOf(context).width * 0.82,
                         ),
                         decoration: BoxDecoration(
-                          color: mine ? AppColors.green : AppColors.surface,
+                          color: mine
+                              ? AppColors.green
+                              : context.colors.surface,
                           borderRadius: BorderRadius.circular(16),
                         ),
                         child: Text(
                           msg.text,
-                          style: AppTextStyles.bodyMedium.copyWith(
+                          // The green bubble is a fixed brand chip in both
+                          // themes, so its ink stays white.
+                          style: context.text.bodyMedium?.copyWith(
                             color: mine ? Colors.white : null,
                           ),
                         ),
@@ -150,8 +151,8 @@ class _CoachChatPageState extends State<CoachChatPage> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      decoration: const InputDecoration(
-                        hintText: 'Напиши коучу…',
+                      decoration: InputDecoration(
+                        hintText: context.l10n.coachChatInputHint,
                       ),
                       onSubmitted: (_) => _send(isPremium),
                     ),

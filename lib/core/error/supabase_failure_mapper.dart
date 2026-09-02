@@ -47,7 +47,7 @@ Failure _mapPostgrestException(PostgrestException exception) {
   final String code = exception.code ?? '';
   final String message = exception.message;
 
-  // 42501: insufficient_privilege — the RLS/grant equivalent of Appwrite 403.
+  // 42501: insufficient_privilege — Postgres' RLS/grant flavour of a 403.
   if (code == '42501') {
     return PermissionFailure(message);
   }

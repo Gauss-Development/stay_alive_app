@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:stay_alive/core/motion/app_curves.dart';
 import 'package:stay_alive/core/motion/app_durations.dart';
-import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/animations/pressable_scale.dart';
 
 /// Pill-shaped chip for categories, filters and tabs.
 ///
-/// Selected: dark background with white text. Unselected: soft surface.
+/// Selected: the theme's primary fill. Unselected: the raised card surface.
 class AppChip extends StatelessWidget {
   const AppChip({
     required this.label,
@@ -23,6 +22,13 @@ class AppChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme cs = theme.colorScheme;
+    // Selected reads as the primary CTA (dark on light, lime on dark);
+    // unselected is a raised card surface.
+    final Color background = selected
+        ? cs.primary
+        : theme.cardTheme.color ?? cs.surface;
     return Semantics(
       button: true,
       selected: selected,
@@ -34,14 +40,14 @@ class AppChip extends StatelessWidget {
           curve: AppCurves.standard,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: selected ? AppColors.dark : AppColors.white,
+            color: background,
             borderRadius: BorderRadius.circular(AppRadius.pill),
           ),
           child: Text(
             label,
-            style: AppTextStyles.labelMedium.copyWith(
+            style: context.text.labelMedium?.copyWith(
               fontSize: 13,
-              color: selected ? AppColors.white : AppColors.textPrimary,
+              color: selected ? cs.onPrimary : cs.onSurface,
             ),
           ),
         ),

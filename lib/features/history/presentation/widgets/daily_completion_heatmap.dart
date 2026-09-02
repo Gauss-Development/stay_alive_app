@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/features/history/domain/entities/daily_history_point.dart';
@@ -11,15 +13,6 @@ class DailyCompletionHeatmap extends StatelessWidget {
 
   final List<DailyHistoryPoint> points;
 
-  static const List<String> _weekdays = <String>[
-    'ПН', 'ВТ', 'СР', 'ЧТ', 'ПТ', 'СБ', 'ВС',
-  ];
-
-  static const List<String> _months = <String>[
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-  ];
-
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
@@ -27,6 +20,15 @@ class DailyCompletionHeatmap extends StatelessWidget {
     }
 
     final ThemeData theme = Theme.of(context);
+    final String locale = Localizations.localeOf(context).toLanguageTag();
+    // The grid is Monday-first, so the headers start from a known Monday
+    // (2024-01-01) rather than from the locale's own first weekday.
+    final DateFormat weekdayFormat = DateFormat.E(locale);
+    final List<String> weekdays = List<String>.generate(
+      7,
+      (int i) => weekdayFormat.format(DateTime(2024, 1, 1 + i)).toUpperCase(),
+      growable: false,
+    );
     final DateTime today = DateTime.now();
     // Календарь показывает месяц самой свежей точки (обычно текущий).
     final DateTime anchor = points.last.date;
@@ -36,13 +38,13 @@ class DailyCompletionHeatmap extends StatelessWidget {
 
     final Map<String, DailyHistoryPoint> byDateKey =
         <String, DailyHistoryPoint>{
-      for (final DailyHistoryPoint point in points) point.dateKey: point,
-    };
+          for (final DailyHistoryPoint point in points) point.dateKey: point,
+        };
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: theme.cardTheme.color ?? theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Column(
@@ -54,15 +56,14 @@ class DailyCompletionHeatmap extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: <Widget>[
               Text(
-                'Карта дней',
+                context.l10n.historyHeatmapTitle,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
                 ),
               ),
               Text(
-                '${_months[anchor.month - 1]} ${anchor.year}',
+                DateFormat.yMMMM(locale).format(anchor),
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -70,14 +71,14 @@ class DailyCompletionHeatmap extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           Row(
-            children: _weekdays
+            children: weekdays
                 .map(
                   (String day) => Expanded(
                     child: Center(
                       child: Text(
                         day,
+                        // labelSmall already carries the muted ink.
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: AppColors.textMuted,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.4,
                         ),
@@ -100,11 +101,15 @@ class DailyCompletionHeatmap extends StatelessWidget {
                 _DayCell(
                   date: DateTime(anchor.year, anchor.month, day),
                   point: byDateKey[_dateKey(anchor.year, anchor.month, day)],
-                  isToday: today.year == anchor.year &&
+                  isToday:
+                      today.year == anchor.year &&
                       today.month == anchor.month &&
                       today.day == day,
-                  isFuture: DateTime(anchor.year, anchor.month, day)
-                      .isAfter(DateTime(today.year, today.month, today.day)),
+                  isFuture: DateTime(
+                    anchor.year,
+                    anchor.month,
+                    day,
+                  ).isAfter(DateTime(today.year, today.month, today.day)),
                 ),
             ],
           ),
@@ -112,10 +117,19 @@ class DailyCompletionHeatmap extends StatelessWidget {
           Wrap(
             spacing: AppSpacing.md,
             runSpacing: AppSpacing.xs,
-            children: const <Widget>[
-              _LegendItem(color: AppColors.green, label: 'Цель выполнена'),
-              _LegendItem(color: AppColors.mutedGreen, label: 'Частично'),
-              _LegendItem(color: AppColors.background, label: 'Нет записи'),
+            children: <Widget>[
+              _LegendItem(
+                color: AppColors.green,
+                label: context.l10n.historyLegendGoalMet,
+              ),
+              _LegendItem(
+                color: AppColors.mutedGreen,
+                label: context.l10n.historyLegendPartial,
+              ),
+              _LegendItem(
+                color: theme.scaffoldBackgroundColor,
+                label: context.l10n.historyLegendNoEntry,
+              ),
             ],
           ),
         ],
@@ -150,22 +164,30 @@ class _DayCell extends StatelessWidget {
         : (point!.completionPercentage / 100).clamp(0.0, 1.0);
     final bool completed = point?.isFullyCompleted ?? false;
 
+    final ThemeData theme = Theme.of(context);
+    // The muted ink only surfaces through labelSmall — ColorScheme has no
+    // role for it.
+    final Color mutedInk =
+        theme.textTheme.labelSmall?.color ?? theme.colorScheme.onSurfaceVariant;
+
     final Color background;
     final Color textColor;
     if (isFuture) {
       background = Colors.transparent;
-      textColor = AppColors.textMuted.withValues(alpha: 0.45);
+      textColor = mutedInk.withValues(alpha: 0.45);
     } else if (completed) {
       background = AppColors.green;
       textColor = AppColors.white;
     } else if (fraction > 0) {
       background =
           Color.lerp(AppColors.mutedGreen, AppColors.green, fraction) ??
-              AppColors.mutedGreen;
+          AppColors.mutedGreen;
+      // The fill is the same pastel in both themes, so the ink stays dark.
       textColor = fraction > 0.6 ? AppColors.white : AppColors.textPrimary;
     } else {
-      background = AppColors.background;
-      textColor = AppColors.textMuted;
+      // Empty day: the page tone, a shade off the card in both themes.
+      background = theme.scaffoldBackgroundColor;
+      textColor = mutedInk;
     }
 
     final Widget cell = Container(
@@ -173,7 +195,7 @@ class _DayCell extends StatelessWidget {
         color: background,
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: isToday
-            ? Border.all(color: AppColors.dark, width: 1.5)
+            ? Border.all(color: theme.colorScheme.onSurface, width: 1.5)
             : null,
       ),
       alignment: Alignment.center,
@@ -192,8 +214,14 @@ class _DayCell extends StatelessWidget {
       return cell;
     }
     return Tooltip(
-      message: '${data.dateKey}: ${data.totalCompleted}/${data.totalTarget} '
-          'порций (${data.completionPercentage.toStringAsFixed(0)}%)',
+      message: context.l10n.historyHeatmapTooltip(
+        DateFormat.yMMMd(
+          Localizations.localeOf(context).toLanguageTag(),
+        ).format(date),
+        data.totalCompleted,
+        data.totalTarget,
+        data.completionPercentage.toStringAsFixed(0),
+      ),
       child: cell,
     );
   }
@@ -216,7 +244,9 @@ class _LegendItem extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
           ),
         ),
         const SizedBox(width: 6),

@@ -136,8 +136,10 @@ class RevenueCatSubscriptionRemoteDataSource
   Future<SubscriptionOffering> getOffering() async {
     await initialize();
     if (!_isConfigured) {
-      return SubscriptionOffering(
-        packages: _fallbackPackages(),
+      // No invented prices: an unconfigured store reports an empty offering
+      // and the caller shows nothing rather than a made-up price tag.
+      return const SubscriptionOffering(
+        packages: <SubscriptionPackage>[],
         isConfigured: false,
       );
     }
@@ -167,7 +169,7 @@ class RevenueCatSubscriptionRemoteDataSource
           );
 
     return SubscriptionOffering(
-      packages: packages.isEmpty ? _fallbackPackages() : packages,
+      packages: packages,
       isConfigured: packages.isNotEmpty,
     );
   }
@@ -288,22 +290,6 @@ class RevenueCatSubscriptionRemoteDataSource
       priceLabel: package.storeProduct.priceString,
       productIdentifier: package.storeProduct.identifier,
     );
-  }
-
-  List<SubscriptionPackage> _fallbackPackages() {
-    return SubscriptionPlan.values
-        .where((SubscriptionPlan plan) => plan.isPaid)
-        .map(
-          (SubscriptionPlan plan) => SubscriptionPackage(
-            id: plan.revenueCatPackageId,
-            plan: plan,
-            title: _titleFor(plan),
-            description: _descriptionFor(plan),
-            priceLabel: plan.defaultPriceLabel,
-            productIdentifier: plan.revenueCatPackageId,
-          ),
-        )
-        .toList(growable: false);
   }
 
   Future<void> _logInCurrentUserIfPossible() async {

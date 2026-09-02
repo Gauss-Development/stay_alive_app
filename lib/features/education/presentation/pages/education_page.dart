@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stay_alive/core/theme/app_colors.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/widgets/app_states.dart';
@@ -28,58 +28,59 @@ class _EducationPageState extends State<EducationPage> {
       if (!mounted) {
         return;
       }
-      final bool isPremium =
-          context.read<SubscriptionCubit>().state.isPremiumActive;
+      final bool isPremium = context
+          .read<SubscriptionCubit>()
+          .state
+          .isPremiumActive;
       context.read<CoachCubit>().loadEducationTip(
-            context: CoachContextBuilder.build(
-              overview: null,
-              categoryId: widget.categoryId,
-            ),
-            isPremium: isPremium,
-          );
+        context: CoachContextBuilder.build(
+          overview: null,
+          categoryId: widget.categoryId,
+        ),
+        isPremium: isPremium,
+      );
       context.read<AnalyticsCubit>().track(
-            eventName: 'coach_education_tip',
-            screenName: 'education',
-            metadata: <String, dynamic>{'categoryId': widget.categoryId},
-          );
+        eventName: 'coach_education_tip',
+        screenName: 'education',
+        metadata: <String, dynamic>{'categoryId': widget.categoryId},
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
-      title: 'Полезное',
+      title: context.l10n.educationTitle,
       body: BlocBuilder<CoachCubit, CoachState>(
         builder: (BuildContext context, CoachState state) {
           if (state is CoachLoading) {
-            return const AppLoadingState(message: 'Готовим подсказку…');
+            return AppLoadingState(message: context.l10n.educationLoading);
           }
           final String? tip = state is CoachLoaded ? state.educationTip : null;
           if (tip == null || tip.isEmpty) {
             return AppEmptyState(
-              title: 'Скоро здесь будет интересно',
-              message:
-                  'Материалы о категории «${widget.categoryId}» уже готовятся.',
+              title: context.l10n.educationEmptyTitle,
+              message: context.l10n.educationEmptyMessage(widget.categoryId),
             );
           }
           return ListView(
             padding: const EdgeInsets.all(AppSpacing.screen),
             children: <Widget>[
-              Text(widget.categoryId, style: AppTextStyles.headlineMedium),
+              Text(widget.categoryId, style: context.text.headlineMedium),
               const SizedBox(height: AppSpacing.md),
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.colors.outlineVariant),
                 ),
-                child: Text(tip, style: AppTextStyles.bodyLarge),
+                child: Text(tip, style: context.text.bodyLarge),
               ),
               const SizedBox(height: AppSpacing.md),
               Text(
-                'Подсказка коуча — мотивация по Daily Dozen, не медицинский совет.',
-                style: AppTextStyles.bodySmall,
+                context.l10n.educationDisclaimer,
+                style: context.text.bodySmall,
               ),
             ],
           );

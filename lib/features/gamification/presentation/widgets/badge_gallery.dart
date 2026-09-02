@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/motion/app_durations.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
@@ -57,7 +58,7 @@ class _BadgeGalleryTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        color: unlocked ? tint.withValues(alpha: 0.55) : AppColors.surface,
+        color: unlocked ? tint.withValues(alpha: 0.55) : context.colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
@@ -71,19 +72,27 @@ class _BadgeGalleryTile extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            unlocked ? item.definition.name : 'Закрыто',
+            unlocked ? item.definition.name : context.l10n.badgeLocked,
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.labelMedium.copyWith(
-              color: unlocked ? AppColors.textPrimary : AppColors.textMuted,
+            style: context.text.labelMedium?.copyWith(
+              // Dark ink on the tint plate in both themes: the tint keeps
+              // enough luminance under the dark background to carry it.
+              color: unlocked
+                  ? context.colors.onTertiary
+                  : context.colors.onSurfaceVariant,
             ),
           ),
           if (item.earnedAt != null) ...<Widget>[
             const SizedBox(height: 4),
             Text(
               DateFormat('d.MM').format(item.earnedAt!),
-              style: AppTextStyles.labelSmall,
+              // Only unlocked tiles carry a date, so this ink sits on the
+              // tint plate too — the muted grey vanishes on it in dark mode.
+              style: context.text.labelSmall?.copyWith(
+                color: context.colors.onTertiary,
+              ),
             ),
           ],
         ],

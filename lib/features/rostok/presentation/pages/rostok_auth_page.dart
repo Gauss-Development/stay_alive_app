@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
 import 'package:stay_alive/core/di/injection_container.dart';
 import 'package:stay_alive/core/error/failures.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
+import 'package:stay_alive/core/theme/app_text_styles.dart';
 import 'package:stay_alive/core/usecase/usecase.dart';
 import 'package:stay_alive/features/auth/domain/entities/auth_user.dart';
 import 'package:stay_alive/features/auth/domain/repositories/auth_repository.dart';
@@ -116,7 +118,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
     return t.length >= 5 && t.contains('@') && t.contains('.');
   }
 
-  bool get _passwordValid => _password.text.length >= 8;
+  static const int _minPasswordLength = 8;
+
+  bool get _passwordValid => _password.text.length >= _minPasswordLength;
   bool get _nameValid => _name.text.trim().length >= 2;
   bool get _formValid =>
       _emailValid && _passwordValid && (!_isRegister || _nameValid);
@@ -181,7 +185,6 @@ class _RostokAuthPageState extends State<RostokAuthPage>
     final bool reduceMotion =
         MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Scaffold(
-      backgroundColor: RostokColors.surface,
       body: SafeArea(
         child: BlocConsumer<AuthCubit, AuthState>(
           listenWhen: (AuthState previous, AuthState current) =>
@@ -224,7 +227,9 @@ class _RostokAuthPageState extends State<RostokAuthPage>
                   _staggered(
                     6,
                     _PrimaryButton(
-                      label: _isRegister ? 'Создать аккаунт' : 'Войти',
+                      label: _isRegister
+                          ? context.l10n.authCreateAccountButton
+                          : context.l10n.authSignInButton,
                       loading: busy,
                       onTap: busy ? null : _submit,
                     ),
@@ -281,8 +286,12 @@ class _RostokAuthPageState extends State<RostokAuthPage>
         ),
         const SizedBox(width: 9),
         Text(
-          'росток',
-          style: RostokText.display(size: 26, weight: FontWeight.w600),
+          context.l10n.authBrandName,
+          style: RostokText.display(
+            size: 26,
+            weight: FontWeight.w600,
+            color: context.colors.onSurface,
+          ),
         ),
       ],
     );
@@ -307,8 +316,10 @@ class _RostokAuthPageState extends State<RostokAuthPage>
         width: 92,
         height: 92,
         alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          // White in light, the dark card tone in dark — the sprout art is
+          // green/lime, so it reads on both.
+          color: Theme.of(context).cardTheme.color,
           shape: BoxShape.circle,
           boxShadow: RostokDimens.softShadow,
         ),
@@ -345,17 +356,25 @@ class _RostokAuthPageState extends State<RostokAuthPage>
         key: ValueKey<bool>(_isRegister),
         children: <Widget>[
           Text(
-            _isRegister ? 'Создай аккаунт' : 'С возвращением!',
+            _isRegister
+                ? context.l10n.authRegisterHeadline
+                : context.l10n.authSignInHeadline,
             textAlign: TextAlign.center,
-            style: RostokText.display(size: 28),
+            style: RostokText.display(
+              size: 28,
+              color: context.colors.onSurface,
+            ),
           ),
           const SizedBox(height: 6),
           Text(
             _isRegister
-                ? 'Пара шагов — и начинаем игру.'
-                : 'Продолжай прокачивать своего ростка.',
+                ? context.l10n.authRegisterSubtitle
+                : context.l10n.authSignInSubtitle,
             textAlign: TextAlign.center,
-            style: RostokText.body(size: 14),
+            style: RostokText.body(
+              size: 14,
+              color: context.colors.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -417,12 +436,12 @@ class _RostokAuthPageState extends State<RostokAuthPage>
                 children: <Widget>[
                   _AuthField(
                     controller: _name,
-                    label: 'Имя',
+                    label: context.l10n.authNameLabel,
                     icon: Icons.person_outline_rounded,
                     textInputAction: TextInputAction.next,
                     enabled: !busy,
                     errorText: _submitted && _isRegister && !_nameValid
-                        ? 'Введите имя'
+                        ? context.l10n.authNameError
                         : null,
                   ),
                   const SizedBox(height: 12),
@@ -433,19 +452,19 @@ class _RostokAuthPageState extends State<RostokAuthPage>
         ),
         _AuthField(
           controller: _email,
-          label: 'Электронная почта',
+          label: context.l10n.authEmailLabel,
           icon: Icons.alternate_email_rounded,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           enabled: !busy,
           errorText: _submitted && !_emailValid
-              ? 'Введите корректную почту'
+              ? context.l10n.authEmailError
               : null,
         ),
         const SizedBox(height: 12),
         _AuthField(
           controller: _password,
-          label: 'Пароль',
+          label: context.l10n.authPasswordLabel,
           icon: Icons.lock_outline_rounded,
           obscure: _obscure,
           enabled: !busy,
@@ -453,7 +472,7 @@ class _RostokAuthPageState extends State<RostokAuthPage>
           onSubmitted: (_) => _submit(),
           onToggleObscure: () => setState(() => _obscure = !_obscure),
           errorText: _submitted && !_passwordValid
-              ? 'Минимум 8 символов'
+              ? context.l10n.authPasswordError(_minPasswordLength)
               : null,
         ),
       ],
@@ -461,21 +480,23 @@ class _RostokAuthPageState extends State<RostokAuthPage>
   }
 
   Widget _buildDivider() {
+    final Widget line = Expanded(
+      child: Divider(color: context.colors.outlineVariant, thickness: 1),
+    );
     return Row(
       children: <Widget>[
-        const Expanded(
-          child: Divider(color: RostokColors.hairline, thickness: 1),
-        ),
+        line,
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            'или',
-            style: RostokText.body(size: 13, color: RostokColors.textFaint),
+            context.l10n.authDividerOr,
+            style: RostokText.body(
+              size: 13,
+              color: context.colors.onSurfaceVariant,
+            ),
           ),
         ),
-        const Expanded(
-          child: Divider(color: RostokColors.hairline, thickness: 1),
-        ),
+        line,
       ],
     );
   }
@@ -550,9 +571,9 @@ class _ModeToggle extends StatelessWidget {
     return Container(
       height: 52,
       padding: const EdgeInsets.all(5),
-      decoration: const BoxDecoration(
-        color: RostokColors.chipBg,
-        borderRadius: BorderRadius.all(Radius.circular(18)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(18)),
       ),
       child: Stack(
         children: <Widget>[
@@ -574,17 +595,25 @@ class _ModeToggle extends StatelessWidget {
             child: FractionallySizedBox(
               widthFactor: 0.5,
               child: Container(
-                decoration: const BoxDecoration(
-                  color: RostokColors.ink,
-                  borderRadius: BorderRadius.all(Radius.circular(14)),
+                decoration: BoxDecoration(
+                  color: context.colors.primary,
+                  borderRadius: const BorderRadius.all(Radius.circular(14)),
                 ),
               ),
             ),
           ),
           Row(
             children: <Widget>[
-              _segment('Вход', RostokAuthMode.signIn),
-              _segment('Регистрация', RostokAuthMode.register),
+              _segment(
+                context,
+                context.l10n.authModeSignIn,
+                RostokAuthMode.signIn,
+              ),
+              _segment(
+                context,
+                context.l10n.authModeRegister,
+                RostokAuthMode.register,
+              ),
             ],
           ),
         ],
@@ -592,7 +621,11 @@ class _ModeToggle extends StatelessWidget {
     );
   }
 
-  Widget _segment(String label, RostokAuthMode segmentMode) {
+  Widget _segment(
+    BuildContext context,
+    String label,
+    RostokAuthMode segmentMode,
+  ) {
     final bool selected = mode == segmentMode;
     return Expanded(
       child: Semantics(
@@ -608,7 +641,9 @@ class _ModeToggle extends StatelessWidget {
               style: RostokText.body(
                 size: 14,
                 weight: FontWeight.w700,
-                color: selected ? Colors.white : RostokColors.chipText,
+                color: selected
+                    ? context.colors.onPrimary
+                    : context.colors.onSurface,
               ),
               child: Text(label),
             ),
@@ -683,7 +718,7 @@ class _AuthFieldState extends State<_AuthField> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 18),
           decoration: BoxDecoration(
-            color: RostokColors.card,
+            color: Theme.of(context).cardTheme.color,
             borderRadius: const BorderRadius.all(Radius.circular(20)),
             boxShadow: RostokDimens.softShadow,
             border: Border.all(color: borderColor, width: 1.5),
@@ -693,7 +728,9 @@ class _AuthFieldState extends State<_AuthField> {
               Icon(
                 widget.icon,
                 size: 20,
-                color: _focused ? RostokColors.inkText : RostokColors.textFaint,
+                color: _focused
+                    ? context.colors.onSurface
+                    : context.colors.onSurfaceVariant,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -705,11 +742,11 @@ class _AuthFieldState extends State<_AuthField> {
                   keyboardType: widget.keyboardType,
                   textInputAction: widget.textInputAction,
                   onSubmitted: widget.onSubmitted,
-                  cursorColor: RostokColors.inkText,
+                  cursorColor: context.colors.onSurface,
                   style: RostokText.body(
                     size: 16,
                     weight: FontWeight.w600,
-                    color: RostokColors.inkText,
+                    color: context.colors.onSurface,
                   ),
                   // Override the global InputDecorationTheme's OutlineInputBorder
                   // in every state — that stray rounded outline was showing
@@ -727,7 +764,7 @@ class _AuthFieldState extends State<_AuthField> {
                     hintText: widget.label,
                     hintStyle: RostokText.body(
                       size: 16,
-                      color: RostokColors.textFaint,
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -735,7 +772,9 @@ class _AuthFieldState extends State<_AuthField> {
               if (widget.onToggleObscure != null)
                 Semantics(
                   button: true,
-                  label: widget.obscure ? 'Показать пароль' : 'Скрыть пароль',
+                  label: widget.obscure
+                      ? context.l10n.authShowPassword
+                      : context.l10n.authHidePassword,
                   child: IconButton(
                     onPressed: widget.onToggleObscure,
                     visualDensity: VisualDensity.compact,
@@ -744,7 +783,7 @@ class _AuthFieldState extends State<_AuthField> {
                           ? Icons.visibility_off_outlined
                           : Icons.visibility_outlined,
                       size: 20,
-                      color: RostokColors.textFaint,
+                      color: context.colors.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -783,9 +822,9 @@ class _PrimaryButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: RostokColors.ink,
-        borderRadius: BorderRadius.all(Radius.circular(22)),
+      decoration: BoxDecoration(
+        color: context.colors.primary,
+        borderRadius: const BorderRadius.all(Radius.circular(22)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -796,13 +835,17 @@ class _PrimaryButton extends StatelessWidget {
             height: 60,
             child: Center(
               child: loading
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.4,
+                        // Lime on the dark pill (light), dark ink on the lime
+                        // pill (dark) — the spinner tracks the button.
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          RostokColors.accent,
+                          context.colors.brightness == Brightness.dark
+                              ? context.colors.onPrimary
+                              : RostokColors.accent,
                         ),
                       ),
                     )
@@ -814,7 +857,7 @@ class _PrimaryButton extends StatelessWidget {
                         style: RostokText.display(
                           size: 18,
                           weight: FontWeight.w600,
-                          color: Colors.white,
+                          color: context.colors.onPrimary,
                         ),
                       ),
                     ),
@@ -836,9 +879,9 @@ class _SocialButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: RostokColors.card,
-        borderRadius: BorderRadius.all(Radius.circular(18)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color,
+        borderRadius: const BorderRadius.all(Radius.circular(18)),
         boxShadow: RostokDimens.buttonShadow,
       ),
       child: Material(
@@ -851,14 +894,14 @@ class _SocialButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Icon(icon, size: 22, color: RostokColors.inkText),
+                Icon(icon, size: 22, color: context.colors.onSurface),
                 const SizedBox(width: 8),
                 Text(
                   label,
                   style: RostokText.body(
                     size: 15,
                     weight: FontWeight.w600,
-                    color: RostokColors.inkText,
+                    color: context.colors.onSurface,
                   ),
                 ),
               ],

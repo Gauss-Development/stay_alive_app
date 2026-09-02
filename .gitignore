@@ -57,3 +57,9 @@ app.*.map.json
 
 # Local tooling — untracked on purpose. Kept on disk, not shared via git.
 /scripts/
+
+# Agent session worktrees — scratch copies of the repo, never shared.
+/.claude/worktrees/
+
+# QA screenshots — regenerate with `flutter drive` against a local stack.
+/screenshots/

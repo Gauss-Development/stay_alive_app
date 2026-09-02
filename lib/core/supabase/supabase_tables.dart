@@ -1,6 +1,5 @@
 /// Postgres table names (public schema). Fixed by the schema migration in
-/// `supabase/migrations/`, so they are code constants, not configuration —
-/// unlike the old per-environment Appwrite collection ids.
+/// `supabase/migrations/`, so they are code constants, not configuration.
 abstract final class SupabaseTables {
   static const String profiles = 'profiles';
   static const String categoryDefinitions = 'category_definitions';

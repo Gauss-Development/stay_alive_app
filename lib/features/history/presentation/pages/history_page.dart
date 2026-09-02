@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/config/app_flavor.dart';
-import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/features/subscription/presentation/paywall.dart';
 import 'package:stay_alive/core/di/injection_container.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -101,7 +101,7 @@ class _HistoryBodyState extends State<_HistoryBody> {
     return BlocBuilder<HistoryCubit, HistoryState>(
       builder: (BuildContext context, HistoryState state) {
         if (state is HistoryInitial || state is HistoryLoading) {
-          return const AppLoadingState(message: 'Считаем твой прогресс...');
+          return AppLoadingState(message: context.l10n.historyLoading);
         }
 
         if (state is HistoryError) {
@@ -131,16 +131,18 @@ class _HistoryBodyState extends State<_HistoryBody> {
             children: <Widget>[
               FadeSlideIn(
                 child: Text(
-                  summary.periodLabel,
-                  style: AppTextStyles.headlineMedium,
+                  // Not `summary.periodLabel`: the domain builds that in
+                  // English. It stays for the coach prompt below.
+                  context.l10n.historyLastDays(summary.totalDays),
+                  style: context.text.headlineMedium,
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
               FadeSlideIn(
                 delay: const Duration(milliseconds: 80),
                 child: Text(
-                  'Смотри, как растёт твоя полезная привычка.',
-                  style: AppTextStyles.bodyMedium,
+                  context.l10n.historySubtitle,
+                  style: context.text.bodyMedium,
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -161,30 +163,30 @@ class _HistoryBodyState extends State<_HistoryBody> {
                         .isPremiumActive;
                     final gState = context.read<GamificationCubit>().state;
                     context.read<CoachCubit>().loadWeeklyInsights(
-                          context: CoachContextBuilder.build(
-                            overview: gState is GamificationLoaded
-                                ? gState.overview
-                                : null,
-                            weekSummary: summary.periodLabel,
-                          ),
-                          isPremium: isPremium,
-                        );
+                      context: CoachContextBuilder.build(
+                        overview: gState is GamificationLoaded
+                            ? gState.overview
+                            : null,
+                        weekSummary: summary.periodLabel,
+                      ),
+                      isPremium: isPremium,
+                    );
                     context.read<AnalyticsCubit>().track(
-                          eventName: 'coach_weekly_insight',
-                          screenName: 'history',
-                        );
+                      eventName: 'coach_weekly_insight',
+                      screenName: 'history',
+                    );
                   },
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               CompletionTrendChart(
                 points: weeklyPoints,
-                title: 'Последние 7 дней',
+                title: context.l10n.historyLastDays(7),
               ),
               const SizedBox(height: AppSpacing.lg),
               CompletionTrendChart(
                 points: monthlyPoints,
-                title: 'Последние 30 дней',
+                title: context.l10n.historyLastDays(summary.totalDays),
               ),
             ],
           ),
@@ -210,36 +212,35 @@ class _HistoryPaywallPrompt extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.lg),
         Text(
-          'Полная статистика — в Premium',
-          style: AppTextStyles.headlineMedium,
+          context.l10n.historyPaywallTitle,
+          style: context.text.headlineMedium,
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
-          'Отмечать полезные продукты можно бесплатно. С Premium ты увидишь '
-          'тренды, серии, графики порций и прогресс за месяц.',
+          context.l10n.historyPaywallBody,
           textAlign: TextAlign.center,
-          style: AppTextStyles.bodyMedium,
+          style: context.text.bodyMedium,
         ),
         if (message != null) ...<Widget>[
           const SizedBox(height: AppSpacing.md),
           Text(
             message!,
             textAlign: TextAlign.center,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
+            style: context.text.bodySmall?.copyWith(color: AppColors.error),
           ),
         ],
         const SizedBox(height: AppSpacing.xl),
         AppButton(
-          text: 'Посмотреть Premium',
-          onPressed: () => context.go(AppRoutes.premium),
+          text: context.l10n.historyPaywallCta,
+          onPressed: () => showPaywall(context),
         ),
         const SizedBox(height: AppSpacing.sm),
         TextButton(
           // Restore, not just a status re-read: recovers a real purchase in
           // prod and activates the mock store's premium in dev.
           onPressed: () => context.read<SubscriptionCubit>().restore(),
-          child: const Text('Я уже подписан — обновить'),
+          child: Text(context.l10n.historyPaywallRestore),
         ),
       ],
     );

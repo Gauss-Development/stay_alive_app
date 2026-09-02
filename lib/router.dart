@@ -11,7 +11,6 @@ import 'package:stay_alive/features/auth/presentation/pages/splash_page.dart';
 import 'package:stay_alive/features/education/presentation/pages/education_page.dart';
 import 'package:stay_alive/features/coach/presentation/pages/coach_chat_page.dart';
 import 'package:stay_alive/features/gamification/presentation/pages/progress_page.dart';
-import 'package:stay_alive/features/subscription/presentation/pages/premium_page.dart';
 import 'package:stay_alive/features/rostok/presentation/pages/rostok_auth_page.dart';
 import 'package:stay_alive/shared/widgets/main_shell_page.dart';
 
@@ -139,11 +138,6 @@ class AppRouter {
         path: AppRoutes.progress,
         pageBuilder: (BuildContext context, GoRouterState state) =>
             _fadeSlidePage(state, const ProgressPage()),
-      ),
-      GoRoute(
-        path: AppRoutes.premium,
-        pageBuilder: (BuildContext context, GoRouterState state) =>
-            _fadeSlidePage(state, const PremiumPage()),
       ),
       GoRoute(
         path: AppRoutes.education,

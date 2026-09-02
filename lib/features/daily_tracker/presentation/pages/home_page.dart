@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stay_alive/core/di/injection_container.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/services/daily_goal_widget_service.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
@@ -102,7 +103,7 @@ class _HomePageState extends State<HomePage> {
           builder: (BuildContext context, DailyTrackerState state) {
             if (state.status == DailyTrackerStatus.initial ||
                 state.status == DailyTrackerStatus.loading) {
-              return const AppLoadingState(message: 'Готовим твой день...');
+              return AppLoadingState(message: context.l10n.homeLoading);
             }
 
             if (state.status == DailyTrackerStatus.error) {
@@ -137,7 +138,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                     );
                   },
-                child: RefreshIndicator(
+              child: RefreshIndicator(
                 color: AppColors.green,
                 onRefresh: () async {
                   await context.read<DailyTrackerCubit>().loadToday();
@@ -184,24 +185,21 @@ class _HomePageState extends State<HomePage> {
     }
     _lastNudgedCompleted = log.totalCompleted;
     await context.read<CoachCubit>().requestNudge(
-          context: CoachContextBuilder.build(
-            overview: gState.overview,
-            todayLog: log,
-          ),
-          isPremium: isPremium,
-        );
+      context: CoachContextBuilder.build(
+        overview: gState.overview,
+        todayLog: log,
+      ),
+      isPremium: isPremium,
+    );
     if (!context.mounted) {
       return;
     }
     unawaited(
       context.read<AnalyticsCubit>().track(
-            eventName: 'coach_nudge_shown',
-            screenName: 'home',
-            metadata: <String, dynamic>{
-              'wilting': true,
-              'premium': isPremium,
-            },
-          ),
+        eventName: 'coach_nudge_shown',
+        screenName: 'home',
+        metadata: <String, dynamic>{'wilting': true, 'premium': isPremium},
+      ),
     );
   }
 
@@ -284,7 +282,7 @@ class _HomePageState extends State<HomePage> {
                         child: TextButton.icon(
                           onPressed: () => context.push(AppRoutes.coach),
                           icon: const Icon(Icons.spa_rounded, size: 18),
-                          label: const Text('AI-коуч'),
+                          label: Text(context.l10n.homeAiCoach),
                         ),
                       ),
                     ],
@@ -303,22 +301,24 @@ class _HomePageState extends State<HomePage> {
         FadeSlideIn(
           delay: const Duration(milliseconds: 280),
           child: AppSectionHeader(
-            title: 'Съедено сегодня',
+            title: context.l10n.homeEatenToday,
             trailing: Text(
               '$eaten/${log.items.length}',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textMuted,
+              // The muted ink only surfaces through labelSmall — ColorScheme
+              // has no role for it.
+              style: context.text.labelMedium?.copyWith(
+                color: context.text.labelSmall?.color,
               ),
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
         if (items.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.xl),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: AppEmptyState(
-              title: 'Пока пусто',
-              message: 'Добавь первый полезный продукт и получи очки',
+              title: context.l10n.homeEmptyTitle,
+              message: context.l10n.homeEmptyMessage,
             ),
           )
         else
@@ -345,9 +345,9 @@ class _HomePageState extends State<HomePage> {
           child: TextButton(
             onPressed: () => context.read<DailyTrackerCubit>().resetToday(),
             child: Text(
-              'Сбросить день',
-              style: AppTextStyles.labelMedium.copyWith(
-                color: AppColors.textMuted,
+              context.l10n.homeResetDay,
+              style: context.text.labelMedium?.copyWith(
+                color: context.text.labelSmall?.color,
               ),
             ),
           ),
@@ -362,19 +362,19 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         children: <Widget>[
           AppChip(
-            label: 'Все',
+            label: context.l10n.homeFilterAll,
             selected: _filter == _CategoryFilter.all,
             onTap: () => setState(() => _filter = _CategoryFilter.all),
           ),
           const SizedBox(width: AppSpacing.sm),
           AppChip(
-            label: 'Осталось',
+            label: context.l10n.homeFilterRemaining,
             selected: _filter == _CategoryFilter.remaining,
             onTap: () => setState(() => _filter = _CategoryFilter.remaining),
           ),
           const SizedBox(width: AppSpacing.sm),
           AppChip(
-            label: 'Готово',
+            label: context.l10n.homeFilterDone,
             selected: _filter == _CategoryFilter.done,
             onTap: () => setState(() => _filter = _CategoryFilter.done),
           ),
@@ -403,14 +403,14 @@ class _HomeHeader extends StatelessWidget {
                 children: <Widget>[
                   Text(
                     name == null || name.isEmpty
-                        ? 'Привет! 🌱'
-                        : 'Привет, $name 🌱',
-                    style: AppTextStyles.bodyMedium,
+                        ? context.l10n.homeGreeting
+                        : context.l10n.homeGreetingNamed(name),
+                    style: context.text.bodyMedium,
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Что съедим полезного?',
-                    style: AppTextStyles.headlineMedium,
+                    context.l10n.homeGreetingQuestion,
+                    style: context.text.headlineMedium,
                   ),
                 ],
               );
@@ -425,7 +425,13 @@ class _HomeHeader extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.mutedGreen,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.white, width: 3),
+            // Card colour, not white: the ring separates the avatar from the
+            // page in both themes.
+            border: Border.all(
+              color:
+                  Theme.of(context).cardTheme.color ?? context.colors.surface,
+              width: 3,
+            ),
             boxShadow: <BoxShadow>[
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.05),

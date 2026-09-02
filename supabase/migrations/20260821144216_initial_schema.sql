@@ -1,14 +1,14 @@
 -- Stay Alive — initial Supabase schema.
--- Ported from the Appwrite provisioning script (scripts/appwrite_provision.py, deleted).
--- Column names intentionally match the old Appwrite attribute names so the Dart
--- model mapping stays mechanical (including the misleading `*_json` array names).
+-- Column names are inherited from the pre-migration backend so the Dart model
+-- mapping stays mechanical. That includes the misleading `*_json` names: those
+-- columns are `text[]`, not JSON.
 --
--- Ownership model: real `user_id` FK columns + RLS replace Appwrite's per-document
+-- Ownership model: real `user_id` FK columns + RLS, instead of per-document
 -- permissions. `on delete cascade` from auth.users replaces the client-side
 -- account-deletion sweep (and fixes rows that previously survived deletion).
 
 -- ---------------------------------------------------------------------------
--- profiles — was Appwrite `users` collection (document id == auth user id)
+-- profiles — one row per auth user (id == auth.users.id)
 -- ---------------------------------------------------------------------------
 create table public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,

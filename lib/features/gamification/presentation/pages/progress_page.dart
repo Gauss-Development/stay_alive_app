@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stay_alive/core/constants/app_routes.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -61,7 +62,7 @@ class _ProgressPageState extends State<ProgressPage> {
         child: BlocBuilder<GamificationCubit, GamificationState>(
           builder: (BuildContext context, GamificationState state) {
             if (state is GamificationInitial || state is GamificationLoading) {
-              return const AppLoadingState(message: 'Загружаем квесты...');
+              return AppLoadingState(message: context.l10n.progressLoading);
             }
 
             if (state is GamificationError) {
@@ -117,8 +118,8 @@ class _ProgressPageState extends State<ProgressPage> {
                       Expanded(
                         child: Center(
                           child: Text(
-                            'Челленджи',
-                            style: AppTextStyles.titleLarge,
+                            context.l10n.progressTitle,
+                            style: context.text.titleLarge,
                           ),
                         ),
                       ),
@@ -135,9 +136,11 @@ class _ProgressPageState extends State<ProgressPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  const FadeSlideIn(
-                    delay: Duration(milliseconds: 180),
-                    child: AppSectionHeader(title: 'Ежедневные'),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 180),
+                    child: AppSectionHeader(
+                      title: context.l10n.progressSectionDaily,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   FadeSlideIn(
@@ -173,8 +176,10 @@ class _ProgressPageState extends State<ProgressPage> {
                           if (overview.isPremium) ...<Widget>[
                             const SizedBox(height: AppSpacing.md),
                             Text(
-                              'Premium активен · ${overview.xpMultiplier}x очков',
-                              style: AppTextStyles.labelMedium.copyWith(
+                              context.l10n.progressPremiumActive(
+                                overview.xpMultiplier,
+                              ),
+                              style: context.text.labelMedium?.copyWith(
                                 color: AppColors.green,
                               ),
                             ),
@@ -185,23 +190,23 @@ class _ProgressPageState extends State<ProgressPage> {
                             runSpacing: AppSpacing.sm,
                             children: <Widget>[
                               _StreakStat(
-                                label: 'Идеальная серия',
+                                label: context.l10n.progressStreakPerfect,
                                 value: '${profile.currentStreak}',
                               ),
                               _StreakStat(
-                                label: 'Активная серия',
+                                label: context.l10n.progressStreakActive,
                                 value: '${profile.activityStreak}',
                               ),
                               _StreakStat(
-                                label: 'Рекорд',
+                                label: context.l10n.progressStreakRecord,
                                 value: '${profile.longestStreak}',
                               ),
                               _StreakStat(
-                                label: 'Идеальные дни',
+                                label: context.l10n.progressPerfectDays,
                                 value: '${profile.completedDates.length}',
                               ),
                               _StreakStat(
-                                label: 'Заморозки',
+                                label: context.l10n.progressStreakFreezes,
                                 value: '${profile.streakFreezesRemaining}',
                               ),
                             ],
@@ -211,9 +216,11 @@ class _ProgressPageState extends State<ProgressPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  const FadeSlideIn(
-                    delay: Duration(milliseconds: 380),
-                    child: AppSectionHeader(title: 'Достижения'),
+                  FadeSlideIn(
+                    delay: const Duration(milliseconds: 380),
+                    child: AppSectionHeader(
+                      title: context.l10n.progressSectionAchievements,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   FadeSlideIn(
@@ -221,15 +228,21 @@ class _ProgressPageState extends State<ProgressPage> {
                     child: BadgeGallery(items: overview.badgeGallery),
                   ),
                   const SizedBox(height: AppSpacing.xl),
-                  const AppSectionHeader(title: 'Недавние награды'),
+                  AppSectionHeader(
+                    title: context.l10n.progressSectionRecentBadges,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   AppCard(child: BadgeList(badges: profile.earnedBadges)),
                   const SizedBox(height: AppSpacing.xl),
-                  const AppSectionHeader(title: 'Прогресс по категориям'),
+                  AppSectionHeader(
+                    title: context.l10n.progressSectionCategories,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   CategoryMasteryList(items: overview.categoryMastery),
                   const SizedBox(height: AppSpacing.xl),
-                  const AppSectionHeader(title: 'История очков'),
+                  AppSectionHeader(
+                    title: context.l10n.progressSectionXpHistory,
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   AppCard(
                     child: XpEventTimeline(events: overview.recentXpEvents),
@@ -284,7 +297,7 @@ class _PersonalizedQuestBlock extends StatelessWidget {
     }
 
     return AppButton(
-      text: 'Сгенерировать квест сада',
+      text: context.l10n.progressGenerateQuest,
       onPressed: () async {
         final bool isPremium =
             context.read<SubscriptionCubit>().state.isPremiumActive;
@@ -335,15 +348,17 @@ class _StreakStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        // Inset pill on top of a card: the chip role, not `surface` — in the
+        // dark theme `surface` is the card colour and the pill would vanish.
+        color: Theme.of(context).chipTheme.backgroundColor,
         borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Text(value, style: AppTextStyles.labelLarge.copyWith(fontSize: 13)),
+          Text(value, style: context.text.labelLarge?.copyWith(fontSize: 13)),
           const SizedBox(width: 6),
-          Text(label, style: AppTextStyles.labelMedium),
+          Text(label, style: context.text.labelMedium),
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -46,7 +47,10 @@ class OnboardingPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
-                      Text('росток', style: AppTextStyles.titleLarge),
+                      Text(
+                        context.l10n.authBrandName,
+                        style: context.text.titleLarge,
+                      ),
                     ],
                   ),
                 ),
@@ -66,6 +70,8 @@ class OnboardingPage extends StatelessWidget {
                           height: 130,
                           alignment: Alignment.center,
                           decoration: BoxDecoration(
+                            // Fixed brand plate on the green panel: stays
+                            // white in both themes.
                             color: AppColors.white,
                             shape: BoxShape.circle,
                             boxShadow: <BoxShadow>[
@@ -89,19 +95,18 @@ class OnboardingPage extends StatelessWidget {
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 300),
                   child: Text(
-                    'Ешь полезное —\nнабирай очки',
+                    context.l10n.onboardingTitle,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.headlineLarge,
+                    style: context.text.headlineLarge,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 FadeSlideIn(
                   delay: const Duration(milliseconds: 400),
                   child: Text(
-                    'Отмечай полезные продукты, выполняй квесты '
-                    'и выращивай свой уровень.',
+                    context.l10n.onboardingSubtitle,
                     textAlign: TextAlign.center,
-                    style: AppTextStyles.bodyMedium,
+                    style: context.text.bodyMedium,
                   ),
                 ),
                 const Spacer(),
@@ -112,7 +117,7 @@ class OnboardingPage extends StatelessWidget {
                     builder: (BuildContext context, AuthState state) {
                       return PressableScale(
                         child: AppButton(
-                          text: 'Начать игру',
+                          text: context.l10n.onboardingStartButton,
                           isLoading: state is AuthLoading,
                           onPressed: () =>
                               context.read<AuthCubit>().completeOnboarding(),

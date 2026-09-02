@@ -14,6 +14,8 @@
     {"id": "secretKeeper", "file": "secretKeeper.png", "meaning": "secret keeper"},
     {"id": "premiumPatron", "file": "premiumPatron.png", "meaning": "premium patron"},
     {"id": "firstBloom", "file": "firstBloom.png", "meaning": "first bloom"},
-    {"id": "streakGardener", "file": "streakGardener.png", "meaning": "streak gardener"}
+    {"id": "streakGardener", "file": "streakGardener.png", "meaning": "streak gardener"},
+    {"id": "rainbowPlate", "file": "rainbowPlate.png", "meaning": "rainbow plate — all 12 categories completed at least once", "status": "pending art — badge_art.dart temporarily borrows perfectDay.png"},
+    {"id": "nightOwl", "file": "nightOwl.png", "meaning": "night owl — logged after 9 PM on 5 days", "status": "pending art — badge_art.dart temporarily borrows earlyBird.png"}
   ]
 }

@@ -89,7 +89,8 @@ class WeeklyInsightCard extends Equatable {
 
   factory WeeklyInsightCard.fromJson(Map<String, dynamic> json) {
     return WeeklyInsightCard(
-      title: json['title']?.toString() ?? 'Инсайт',
+      // Untitled cards are labelled by the widget — the domain stays language-free.
+      title: json['title']?.toString() ?? '',
       body: json['body']?.toString() ?? '',
       emphasis: json['emphasis']?.toString(),
     );

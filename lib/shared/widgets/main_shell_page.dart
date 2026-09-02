@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
 import 'package:stay_alive/core/theme/app_spacing.dart';
 import 'package:stay_alive/core/theme/app_text_styles.dart';
@@ -86,16 +87,21 @@ class _RostokNavBar extends StatelessWidget {
   final int index;
   final ValueChanged<int> onSelected;
 
-  static const List<(IconData, IconData, String)> _tabs =
-      <(IconData, IconData, String)>[
-        (Icons.eco_outlined, Icons.eco_rounded, 'Главная'),
-        (Icons.insights_outlined, Icons.insights_rounded, 'Статистика'),
-        (Icons.person_outline_rounded, Icons.person_rounded, 'Профиль'),
-      ];
+  static const List<(IconData, IconData)> _tabIcons = <(IconData, IconData)>[
+    (Icons.eco_outlined, Icons.eco_rounded),
+    (Icons.insights_outlined, Icons.insights_rounded),
+    (Icons.person_outline_rounded, Icons.person_rounded),
+  ];
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
     final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final List<String> labels = <String>[
+      context.l10n.navHome,
+      context.l10n.navStats,
+      context.l10n.navProfile,
+    ];
     return Container(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -103,25 +109,29 @@ class _RostokNavBar extends StatelessWidget {
         AppSpacing.lg,
         bottomInset > 0 ? bottomInset : AppSpacing.md,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+      decoration: BoxDecoration(
+        color: theme.cardTheme.color ?? theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
         boxShadow: <BoxShadow>[
           BoxShadow(
-            color: Color(0x0F000000),
+            color: Colors.black.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.28 : 0.06,
+            ),
             blurRadius: 20,
-            offset: Offset(0, -4),
+            offset: const Offset(0, -4),
           ),
         ],
       ),
       child: Row(
         children: <Widget>[
-          for (int i = 0; i < _tabs.length; i++)
+          for (int i = 0; i < _tabIcons.length; i++)
             Expanded(
               child: _NavItem(
-                icon: _tabs[i].$1,
-                selectedIcon: _tabs[i].$2,
-                label: _tabs[i].$3,
+                icon: _tabIcons[i].$1,
+                selectedIcon: _tabIcons[i].$2,
+                label: labels[i],
                 selected: i == index,
                 onTap: () => onSelected(i),
               ),
@@ -149,6 +159,9 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    // labelSmall carries the palette's muted ink in both themes.
+    final Color? muted = theme.textTheme.labelSmall?.color;
     return Semantics(
       button: true,
       selected: selected,
@@ -170,15 +183,16 @@ class _NavItem extends StatelessWidget {
               child: Icon(
                 selected ? selectedIcon : icon,
                 size: 24,
-                color: selected ? AppColors.dark : AppColors.textMuted,
+                // Selected icons sit on the lime pill, not on the bar.
+                color: selected ? theme.colorScheme.onTertiary : muted,
               ),
             ),
             const SizedBox(height: 4),
             Text(
               label,
-              style: AppTextStyles.labelMedium.copyWith(
+              style: context.text.labelMedium?.copyWith(
                 fontSize: 11,
-                color: selected ? AppColors.textPrimary : AppColors.textMuted,
+                color: selected ? theme.colorScheme.onSurface : muted,
               ),
             ),
           ],

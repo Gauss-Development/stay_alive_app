@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:stay_alive/core/l10n/l10n.dart';
 import 'package:stay_alive/core/motion/app_curves.dart';
 import 'package:stay_alive/core/motion/app_durations.dart';
 import 'package:stay_alive/core/theme/app_colors.dart';
@@ -61,14 +62,19 @@ class DailyProgressCard extends StatelessWidget {
                   children: <Widget>[
                     AnimatedPointsCounter(
                       value: done,
-                      style: AppTextStyles.headlineMedium.copyWith(
+                      style: context.text.headlineMedium?.copyWith(
                         color: AppColors.white,
                         height: 1,
                       ),
                     ),
                     Text(
-                      'из $goal',
-                      style: AppTextStyles.labelSmall.copyWith(height: 1.1),
+                      context.l10n.homeProgressOfGoal(goal),
+                      style: context.text.labelSmall?.copyWith(
+                        // Pinned: the card is dark in both themes, so the ink
+                        // must not follow the theme.
+                        color: AppColors.textMuted,
+                        height: 1.1,
+                      ),
                     ),
                   ],
                 ),
@@ -80,38 +86,19 @@ class DailyProgressCard extends StatelessWidget {
                   children: <Widget>[
                     if (level != null)
                       AppBadge(
-                        label: 'Уровень $level · ${levelTitle ?? ''}',
+                        label: context.l10n.homeLevelBadge(
+                          level!,
+                          levelTitle ?? '',
+                        ),
                         onDark: true,
                       ),
                     const SizedBox(height: AppSpacing.md),
-                    Text.rich(
-                      TextSpan(
-                        style: AppTextStyles.bodyLarge.copyWith(
-                          color: AppColors.white,
-                          height: 1.3,
-                        ),
-                        children: <InlineSpan>[
-                          const TextSpan(text: 'Осталось '),
-                          TextSpan(
-                            text: '$remaining',
-                            style: AppTextStyles.bodyLarge.copyWith(
-                              color: AppColors.lime,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          TextSpan(
-                            text: remaining == 0
-                                ? ' — цель дня выполнена!'
-                                : ' порций до цели дня',
-                          ),
-                        ],
-                      ),
-                    ),
+                    _remainingText(context, remaining),
                     if (streak != null && streak! > 0) ...<Widget>[
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        '🔥 $streak дней подряд',
-                        style: AppTextStyles.bodySmall.copyWith(
+                        context.l10n.homeStreakDays(streak!),
+                        style: context.text.bodySmall?.copyWith(
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -121,6 +108,41 @@ class DailyProgressCard extends StatelessWidget {
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+
+  /// The remaining-servings line, with the count highlighted in lime.
+  ///
+  /// Word order differs per language, so the sentence comes from one ICU
+  /// message and the count is re-styled by locating it in the result.
+  // ponytail: highlights the first occurrence of the digits; fine because the
+  // count is the only number in every translation of this message.
+  static Widget _remainingText(BuildContext context, int remaining) {
+    final String text = remaining == 0
+        ? context.l10n.homeGoalReached
+        : context.l10n.homeRemainingServings(remaining);
+    final TextStyle base = (context.text.bodyLarge ?? const TextStyle())
+        .copyWith(color: AppColors.white, height: 1.3);
+    final String number = '$remaining';
+    final int start = text.indexOf(number);
+    if (start < 0) {
+      return Text(text, style: base);
+    }
+    return Text.rich(
+      TextSpan(
+        style: base,
+        children: <InlineSpan>[
+          TextSpan(text: text.substring(0, start)),
+          TextSpan(
+            text: number,
+            style: base.copyWith(
+              color: AppColors.lime,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          TextSpan(text: text.substring(start + number.length)),
         ],
       ),
     );
